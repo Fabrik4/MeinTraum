@@ -247,7 +247,7 @@ export default function Home() {
               Datenschutz
             </a>
             <a href="#" className="hover:text-white/70">
-              Impressum
+              Impressum Fabrik4
             </a>
           </div>
         </div>
