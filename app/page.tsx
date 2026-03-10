@@ -1,4 +1,5 @@
 "use client"
+import { Analytics } from "@vercel/analytics/next"
 import { Moon, Brain, Sparkles, Search } from "lucide-react"
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
