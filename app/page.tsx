@@ -8,7 +8,7 @@ export default function Home() {
         <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-24 md:px-10 md:pb-32 md:pt-32">
           <div className="max-w-3xl">
             <div className="mb-6 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-1 text-sm text-white/70 backdrop-blur">
-              Ein Projekt aus der Schweiz
+              Ein Schweizer Projekt
             </div>
 
             <h1 className="text-5xl font-semibold tracking-tight text-white md:text-7xl">
@@ -16,7 +16,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-6 text-2xl font-medium text-white/90 md:text-3xl">
-              Verstehe deine Träume – und dich selbst.
+              Verstehe deine Träume. Und dich selbst.
             </p>
 
             <p className="mt-6 max-w-2xl text-base leading-8 text-white/70 md:text-lg">
@@ -109,14 +109,14 @@ export default function Home() {
                 <li>• sammelt Träume über längere Zeit</li>
                 <li>• erkennt wiederkehrende Muster</li>
                 <li>• verbindet Träume mit Schlaf und Kontext</li>
-                <li>• unterstützt Selbstreflexion statt fertige Deutungen</li>
+                <li>• unterstützt Selbstreflexion statt wagen Deutungen</li>
               </ul>
             </div>
           </div>
 
           <p className="mt-8 max-w-3xl leading-8 text-white/70">
             Das Ziel ist nicht, dir zu sagen, was dein Traum bedeutet. Sondern
-            dir zu helfen zu verstehen, was deine Träume über dich erzählen.
+            dir zu helfen zu verstehen, was deine Träume über dich erzählen und wie wir Muster erkennen.
           </p>
         </div>
       </section>
