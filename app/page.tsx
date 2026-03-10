@@ -521,7 +521,7 @@ export default function Home() {
   <div className="flex flex-col gap-4 border-t border-white/10 pt-6 md:flex-row md:items-center md:justify-between">
 
     <p>
-      MeinTraum - Ein Projekt aus der Schweiz.
+      MeinTraum - Ein Projekt aus der Schweiz von Fabrik4.
     </p>
 
     <div className="flex gap-6">
