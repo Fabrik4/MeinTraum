@@ -1,4 +1,25 @@
+"use client"
+
+import { useState } from "react"
+import { supabase } from "@/lib/supabase"
 export default function Home() {
+   const [email, setEmail] = useState("")
+  const [message, setMessage] = useState("")
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    const { error } = await supabase
+      .from("waitlist")
+      .insert([{ email }])
+
+    if (error) {
+      setMessage("Diese E-Mail ist bereits eingetragen oder ungültig.")
+    } else {
+      setMessage("Danke! Du bist auf der Warteliste.")
+      setEmail("")
+    }
+  }
   return (
     <main className="min-h-screen bg-[#070b14] text-white">
       <section className="relative overflow-hidden">
@@ -191,22 +212,30 @@ export default function Home() {
           </h2>
           <p className="mx-auto mt-4 max-w-2xl leading-8 text-white/70">
             MeinTraum befindet sich aktuell in Entwicklung. Trage dich ein und
-            erhalte Zugang zur ersten Version.
+            erhalte Zugang zur ersten Version und weiteren Vorteilen.
           </p>
 
-          <form className="mx-auto mt-8 flex max-w-xl flex-col gap-4 sm:flex-row">
-            <input
-              type="email"
-              placeholder="Deine E-Mail-Adresse"
-              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#0b1220] px-5 py-3 text-white placeholder:text-white/35 outline-none ring-0 transition focus:border-cyan-300/40"
-            />
-            <button
-              type="submit"
-              className="rounded-2xl bg-white px-6 py-3 font-medium text-[#070b14] transition hover:scale-[1.02]"
-            >
-              Early Access sichern
-            </button>
-          </form>
+<form onSubmit={handleSubmit} className="mx-auto mt-8 flex max-w-xl flex-col gap-4 sm:flex-row">
+  <input
+    type="email"
+    required
+    value={email}
+    onChange={(e)=>setEmail(e.target.value)}
+    placeholder="Deine E-Mail-Adresse"
+    className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#0b1220] px-5 py-3 text-white placeholder:text-white/35"
+  />
+
+  <button
+    type="submit"
+    className="rounded-2xl bg-white px-6 py-3 font-medium text-[#070b14]"
+  >
+    Early Access sichern
+  </button>
+</form>
+
+{message && (
+  <p className="mt-4 text-sm text-white/70">{message}</p>
+)}
         </div>
       </section>
 
