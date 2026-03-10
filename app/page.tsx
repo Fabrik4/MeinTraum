@@ -193,8 +193,8 @@ export default function Home() {
           <p className="mt-6 max-w-3xl leading-8 text-white/70">
             Mit jeder Nacht wächst dein persönliches Traumarchiv. Über Wochen
             und Monate entsteht ein Bild deiner inneren Landschaft: Themen,
-            emotionale Muster und Veränderungen über Zeit. MeinTraum macht
-            sichtbar, was sonst im Unterbewusstsein verborgen bleibt.
+            Ängste, emotionale Muster und Veränderungen über Zeit. MeinTraum 
+            macht sichtbar, was sonst im Unterbewusstsein verborgen bleibt.
           </p>
         </div>
       </section>
