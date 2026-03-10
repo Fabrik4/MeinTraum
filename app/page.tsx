@@ -1,5 +1,5 @@
 "use client"
-
+import { Moon, Brain, Sparkles, Search } from "lucide-react"
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 export default function Home() {
@@ -37,7 +37,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-6 text-2xl font-medium text-white/90 md:text-3xl">
-              Verstehe deine Träume. Und dich selbst.
+              Verstehe deine Träume & entdecke Muster in dir selbst.
             </p>
 
             <p className="mt-6 max-w-2xl text-base leading-8 text-white/70 md:text-lg">
@@ -153,33 +153,40 @@ export default function Home() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            {
-              title: "Traum sofort festhalten",
-              text: "Per Stichwort, Text oder Sprachnachricht direkt nach dem Aufwachen.",
-            },
-            {
-              title: "Erinnerungen ergänzen",
-              text: "Wenn später Details zurückkommen, kannst du sie jederzeit anpassen oder ergänzen.",
-            },
-            {
-              title: "Kontext erfassen",
-              text: "Emotionen, Schlafdauer oder Faktoren wie Alkohol lassen sich einfach festhalten.",
-            },
-            {
-              title: "Muster erkennen",
-              text: "Wiederkehrende Personen, Orte und Emotionen werden über Zeit sichtbar.",
-            },
-          ].map((item) => (
-            <div
-              key={item.title}
-              className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur"
-            >
-              <h3 className="text-lg font-semibold">{item.title}</h3>
-              <p className="mt-4 leading-8 text-white/70">{item.text}</p>
-            </div>
-          ))}
-        </div>
+{[
+  {
+    icon: Moon,
+    title: "Traum sofort festhalten",
+    text: "Per Stichwort, Text oder Sprachnachricht direkt nach dem Aufwachen.",
+  },
+  {
+    icon: Sparkles,
+    title: "Erinnerung ergänzen",
+    text: "Wenn später Details zurückkommen, kannst du sie jederzeit bearbeiten.",
+  },
+  {
+    icon: Brain,
+    title: "Kontext erfassen",
+    text: "Emotionen, Schlaf oder Faktoren wie Alkohol lassen sich einfach festhalten.",
+  },
+  {
+    icon: Search,
+    title: "Muster erkennen",
+    text: "Wiederkehrende Personen, Orte und Emotionen werden über Zeit sichtbar.",
+  },
+].map((item) => {
+  const Icon = item.icon
+  return (
+    <div
+      key={item.title}
+      className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur"
+    >
+      <Icon className="mb-4 h-8 w-8 text-cyan-300" />
+      <h3 className="text-lg font-semibold">{item.title}</h3>
+      <p className="mt-4 leading-8 text-white/70">{item.text}</p>
+    </div>
+  )
+})}        </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-8 md:px-10 md:py-12">
@@ -198,7 +205,33 @@ export default function Home() {
           </p>
         </div>
       </section>
+<section className="mx-auto max-w-6xl px-6 py-16 md:px-10">
+  <div className="grid gap-6 md:grid-cols-3 text-center">
 
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h3 className="text-lg font-semibold">Schweizer Projekt</h3>
+      <p className="mt-3 text-white/70">
+        Entwickelt mit Fokus auf Qualität, Datenschutz und langfristige Perspektive.
+      </p>
+    </div>
+
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h3 className="text-lg font-semibold">Keine esoterische Deutung</h3>
+      <p className="mt-3 text-white/70">
+        MeinTraum liefert keine fertigen Antworten sondern hilft dir,
+        deine eigenen Muster zu erkennen.
+      </p>
+    </div>
+
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h3 className="text-lg font-semibold">Privat und bewusst</h3>
+      <p className="mt-3 text-white/70">
+        Deine Traumwelt gehört dir. Keine Werbung, kein Verkauf deiner Daten.
+      </p>
+    </div>
+
+  </div>
+</section>
       <section
         id="early-access"
         className="mx-auto max-w-4xl px-6 py-20 md:px-10"
