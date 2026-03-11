@@ -80,7 +80,7 @@ export default function DreamEntryPage() {
       return
     }
 
-    setMessage("Traum gespeichert.")
+    setMessage("Traum gespeichert. ✓")
     resetForm()
     setIsSubmitting(false)
   }
@@ -140,7 +140,7 @@ export default function DreamEntryPage() {
                 <button
                   key={emotion}
                   type="button"
-                  onClick={() => setDominantEmotion(emotion)}
+                  onClick={() => setDominantEmotion(emotion === dominantEmotion ? "" : emotion)}
                   className={`rounded-full border px-4 py-2 text-sm transition ${
                     dominantEmotion === emotion
                       ? "border-cyan-300/30 bg-cyan-300/20 text-cyan-100"
@@ -162,7 +162,7 @@ export default function DreamEntryPage() {
                 <button
                   key={clarity}
                   type="button"
-                  onClick={() => setDreamClarity(clarity)}
+                  onClick={() => setDreamClarity(clarity === dreamClarity ? "" : clarity)}
                   className={`rounded-full border px-4 py-2 text-sm transition ${
                     dreamClarity === clarity
                       ? "border-cyan-300/30 bg-cyan-300/20 text-cyan-100"
@@ -176,7 +176,7 @@ export default function DreamEntryPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 cursor-pointer hover:bg-white/8 transition">
               <input
                 type="checkbox"
                 checked={familiarPersonFlag}
@@ -185,7 +185,7 @@ export default function DreamEntryPage() {
               <span className="text-sm text-white/80">Bekannte Person</span>
             </label>
 
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 cursor-pointer hover:bg-white/8 transition">
               <input
                 type="checkbox"
                 checked={familiarPlaceFlag}
@@ -194,7 +194,7 @@ export default function DreamEntryPage() {
               <span className="text-sm text-white/80">Bekannter Ort</span>
             </label>
 
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 cursor-pointer hover:bg-white/8 transition">
               <input
                 type="checkbox"
                 checked={nightmareFlag}

@@ -37,7 +37,7 @@ export default function DashboardPage() {
   const totalDreams = dreams.length
   const nightmareCount = dreams.filter((dream) => dream.nightmare_flag).length
   const lastDream = dreams[0] || null
-  const lastEmotion = lastDream?.dominant_emotion || "–"
+  const lastEmotion = lastDream?.dominant_emotion || "—"
 
   return (
     <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
