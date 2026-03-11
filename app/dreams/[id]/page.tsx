@@ -7,13 +7,12 @@ import { supabase } from "@/lib/supabase"
 
 // ── Typen ────────────────────────────────────────────────────
 type LinkedEntity = {
-  id: number           // dream_entry_entities.id
+  id: number
   user_entity_id: number
   entity_type: string
   entity_category: string
   entity_label: string
-  display_label: string  // editierbarer Anzeigename
-  editing: boolean
+  display_label: string
 }
 
 type Dream = {
@@ -28,7 +27,33 @@ type Dream = {
   created_at: string
 }
 
+type Analysis = {
+  summary: string
+  themes: string[]
+  emotions: string[]
+  reflection: string
+  question: string
+  caution: string
+}
+
+type SavedAnalysis = {
+  id: number
+  mode: string
+  summary: string
+  themes: string[]
+  emotions: string[]
+  caution_note: string | null
+  created_at: string
+}
+
 // ── Konstanten ───────────────────────────────────────────────
+const ANALYSIS_MODES = [
+  { value: "psychological", label: "Psychologisch",     emoji: "🧠", desc: "Neutral & reflektiert" },
+  { value: "poetic",        label: "Poetisch",          emoji: "🌙", desc: "Märchenhaft & bildhaft" },
+  { value: "humorous",      label: "Humorvoll",         emoji: "😄", desc: "Mit Augenzwinkern" },
+  { value: "scientific",    label: "Wissenschaftlich",  emoji: "🔬", desc: "Neurowissenschaftlich" },
+]
+
 const PERSON_PRESETS = [
   { category: "family",  label: "Mutter" },
   { category: "family",  label: "Vater" },
@@ -55,9 +80,9 @@ const PLACE_PRESETS = [
   { category: "fantasy", label: "Unbekannter Ort" },
 ]
 
-const EMOTIONS = ["Angst", "Freude", "Trauer", "Verwirrung", "Neugier", "Ruhe", "Wut", "Ekel"]
+const EMOTIONS        = ["Angst", "Freude", "Trauer", "Verwirrung", "Neugier", "Ruhe", "Wut", "Ekel"]
 const CLARITY_OPTIONS = ["Verschwommen", "Mittel", "Sehr klar"]
-const TONE_OPTIONS = [
+const TONE_OPTIONS    = [
   { value: "nightmare", label: "Albtraum" },
   { value: "neutral",   label: "Neutral" },
   { value: "pleasant",  label: "Schöner Traum" },
@@ -73,17 +98,18 @@ function toneToIndex(tone: string | null, nightmareFlag: boolean) {
   if (tone === "pleasant") return 2
   return 1
 }
+function modeLabel(mode: string) {
+  return ANALYSIS_MODES.find((m) => m.value === mode)?.label ?? mode
+}
+function modeEmoji(mode: string) {
+  return ANALYSIS_MODES.find((m) => m.value === mode)?.emoji ?? "✨"
+}
 
 // ── Supabase Helpers ─────────────────────────────────────────
-async function getOrCreateUserEntity(
-  userId: string, type: string, category: string, label: string
-): Promise<number | null> {
-  const { data: existing } = await supabase
-    .from("user_entities").select("id")
-    .eq("user_id", userId).eq("entity_type", type).eq("entity_label", label)
-    .maybeSingle()
+async function getOrCreateUserEntity(userId: string, type: string, category: string, label: string) {
+  const { data: existing } = await supabase.from("user_entities").select("id")
+    .eq("user_id", userId).eq("entity_type", type).eq("entity_label", label).maybeSingle()
   if (existing) return existing.id
-
   const { data } = await supabase.from("user_entities")
     .insert({ user_id: userId, entity_type: type, entity_category: category, entity_label: label, is_confirmed: true })
     .select("id").single()
@@ -91,8 +117,7 @@ async function getOrCreateUserEntity(
 }
 
 async function linkEntityToDream(dreamId: number, entityId: number) {
-  const { data: existing } = await supabase
-    .from("dream_entry_entities").select("id")
+  const { data: existing } = await supabase.from("dream_entry_entities").select("id")
     .eq("dream_entry_id", dreamId).eq("user_entity_id", entityId).maybeSingle()
   if (existing) return
   await supabase.from("dream_entry_entities").insert({
@@ -101,9 +126,7 @@ async function linkEntityToDream(dreamId: number, entityId: number) {
 }
 
 // ── Inline-Edit Tag ──────────────────────────────────────────
-function EntityTag({
-  entity, color, onDelete, onRename,
-}: {
+function EntityTag({ entity, color, onDelete, onRename }: {
   entity: LinkedEntity
   color: "violet" | "amber"
   onDelete: () => void
@@ -117,48 +140,83 @@ function EntityTag({
     violet: "border-violet-300/30 bg-violet-300/10 text-violet-100",
     amber:  "border-amber-300/30 bg-amber-300/10 text-amber-100",
   }
-  const icon = color === "violet" ? "👤" : "📍"
 
   function commit() {
     setEditing(false)
-    if (val.trim() && val.trim() !== entity.display_label) {
-      onRename(val.trim())
-    } else {
-      setVal(entity.display_label)
-    }
+    if (val.trim() && val.trim() !== entity.display_label) onRename(val.trim())
+    else setVal(entity.display_label)
   }
 
   useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
 
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border pl-3 pr-1.5 py-1.5 text-sm ${colorMap[color]}`}>
-      <span className="mr-0.5">{icon}</span>
-
+      <span className="mr-0.5">{color === "violet" ? "👤" : "📍"}</span>
       {editing ? (
-        <input
-          ref={inputRef}
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
+        <input ref={inputRef} value={val} onChange={(e) => setVal(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setEditing(false); setVal(entity.display_label) } }}
-          className="w-24 bg-transparent outline-none text-sm"
-        />
+          className="w-24 bg-transparent outline-none text-sm" />
       ) : (
         <button type="button" onClick={() => setEditing(true)}
-          className="hover:underline underline-offset-2 transition text-left"
-          title="Klicken zum Umbenennen">
+          className="hover:underline underline-offset-2 transition" title="Klicken zum Umbenennen">
           {entity.display_label}
         </button>
       )}
-
-      {/* Kategorie-Badge klein */}
       <span className="mx-1 text-xs opacity-40">({entity.entity_category})</span>
-
-      <button type="button" onClick={onDelete}
-        className="rounded-full p-0.5 opacity-50 hover:opacity-100 transition text-xs">
-        ✕
-      </button>
+      <button type="button" onClick={onDelete} className="rounded-full p-0.5 opacity-50 hover:opacity-100 transition text-xs">✕</button>
     </span>
+  )
+}
+
+// ── Analyse-Karte ────────────────────────────────────────────
+function AnalysisCard({ analysis, mode, onSave, saving }: {
+  analysis: Analysis
+  mode: string
+  onSave: () => void
+  saving: boolean
+}) {
+  return (
+    <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/5 p-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">{modeEmoji(mode)}</span>
+          <div>
+            <p className="text-xs uppercase tracking-[0.15em] text-cyan-300/60">KI-Analyse</p>
+            <p className="font-medium text-white">{modeLabel(mode)}</p>
+          </div>
+        </div>
+        <button onClick={onSave} disabled={saving}
+          className="rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-sm text-cyan-100 transition hover:bg-cyan-300/20 disabled:opacity-50">
+          {saving ? "Wird gespeichert…" : "Analyse speichern"}
+        </button>
+      </div>
+
+      <p className="leading-8 text-white/80">{analysis.summary}</p>
+
+      {analysis.themes.length > 0 && (
+        <div>
+          <p className="mb-2 text-xs uppercase tracking-[0.15em] text-white/40">Themen</p>
+          <div className="flex flex-wrap gap-2">
+            {analysis.themes.map((t) => (
+              <span key={t} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">{t}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <p className="mb-2 text-xs uppercase tracking-[0.15em] text-white/40">Reflexion</p>
+        <p className="leading-8 text-white/70">{analysis.reflection}</p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+        <p className="text-sm text-white/50 mb-1">Frage für dich</p>
+        <p className="text-white/85 leading-7 italic">"{analysis.question}"</p>
+      </div>
+
+      <p className="text-xs text-white/30 border-t border-white/5 pt-4">{analysis.caution}</p>
+    </div>
   )
 }
 
@@ -168,12 +226,14 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
 
   const [dream, setDream] = useState<Dream | null>(null)
   const [linkedEntities, setLinkedEntities] = useState<LinkedEntity[]>([])
+  const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
   const [isEditing, setIsEditing] = useState(false)
   const [resolvedId, setResolvedId] = useState("")
 
+  // Edit-State
   const [rawInputText, setRawInputText] = useState("")
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([])
   const [dreamClarity, setDreamClarity] = useState(1)
@@ -181,29 +241,43 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
   const [customPersonInput, setCustomPersonInput] = useState("")
   const [customPlaceInput, setCustomPlaceInput] = useState("")
 
+  // Analyse-State
+  const [selectedMode, setSelectedMode] = useState("psychological")
+  const [analyzing, setAnalyzing] = useState(false)
+  const [currentAnalysis, setCurrentAnalysis] = useState<Analysis | null>(null)
+  const [currentAnalysisMode, setCurrentAnalysisMode] = useState("")
+  const [savingAnalysis, setSavingAnalysis] = useState(false)
+  const [showAnalysisPanel, setShowAnalysisPanel] = useState(false)
+
   useEffect(() => { params.then((r) => setResolvedId(r.id)) }, [params])
 
   useEffect(() => {
     if (!resolvedId) return
     fetchAll()
     if (searchParams.get("edit") === "true") setIsEditing(true)
+    if (searchParams.get("analyze") === "true") setShowAnalysisPanel(true)
   }, [resolvedId])
 
   async function fetchAll() {
-    const [dreamRes, entitiesRes] = await Promise.all([
+    const [dreamRes, entitiesRes, analysisRes] = await Promise.all([
       supabase.from("dream_entries").select("*").eq("id", resolvedId).single(),
       supabase.from("dream_entry_entities")
         .select("id, user_entity_id, user_entities(entity_type, entity_category, entity_label)")
         .eq("dream_entry_id", resolvedId),
+      supabase.from("dream_analysis")
+        .select("id, mode, summary, themes, emotions, caution_note, created_at")
+        .eq("dream_entry_id", resolvedId)
+        .order("created_at", { ascending: false }),
     ])
 
-    if (dreamRes.error || !dreamRes.data) { setLoading(false); return }
-    const d = dreamRes.data
-    setDream(d)
-    setRawInputText(d.raw_input_text || "")
-    setSelectedEmotions(d.dominant_emotion?.split(", ").filter(Boolean) ?? [])
-    setDreamClarity(clarityToIndex(d.dream_clarity))
-    setDreamTone(toneToIndex(d.dream_tone, d.nightmare_flag))
+    if (!dreamRes.error && dreamRes.data) {
+      const d = dreamRes.data
+      setDream(d)
+      setRawInputText(d.raw_input_text || "")
+      setSelectedEmotions(d.dominant_emotion?.split(", ").filter(Boolean) ?? [])
+      setDreamClarity(clarityToIndex(d.dream_clarity))
+      setDreamTone(toneToIndex(d.dream_tone, d.nightmare_flag))
+    }
 
     if (!entitiesRes.error && entitiesRes.data) {
       setLinkedEntities(entitiesRes.data.map((e: any) => ({
@@ -213,9 +287,13 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
         entity_category: e.user_entities?.entity_category ?? "",
         entity_label: e.user_entities?.entity_label ?? "",
         display_label: e.user_entities?.entity_label ?? "",
-        editing: false,
       })))
     }
+
+    if (!analysisRes.error && analysisRes.data) {
+      setSavedAnalyses(analysisRes.data)
+    }
+
     setLoading(false)
   }
 
@@ -228,35 +306,19 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   function renameLinkedEntity(linkId: number, newLabel: string) {
-    // Lokal umbenennen – beim Speichern wird ein neues user_entity erstellt
-    setLinkedEntities((prev) =>
-      prev.map((e) => e.id === linkId ? { ...e, display_label: newLabel } : e)
-    )
+    setLinkedEntities((prev) => prev.map((e) => e.id === linkId ? { ...e, display_label: newLabel } : e))
   }
 
   async function addPreset(type: string, preset: { category: string; label: string }) {
-    const alreadyLinked = linkedEntities.some(
-      (e) => e.entity_type === type && e.entity_label === preset.label
-    )
-    if (alreadyLinked) return
-
+    if (linkedEntities.some((e) => e.entity_type === type && e.entity_label === preset.label)) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     const entityId = await getOrCreateUserEntity(user.id, type, preset.category, preset.label)
     if (!entityId) return
-
     await linkEntityToDream(Number(resolvedId), entityId)
-
-    // Sofort lokal hinzufügen ohne reload
     setLinkedEntities((prev) => [...prev, {
-      id: Date.now(), // temp ID, wird bei fetchAll ersetzt
-      user_entity_id: entityId,
-      entity_type: type,
-      entity_category: preset.category,
-      entity_label: preset.label,
-      display_label: preset.label,
-      editing: false,
+      id: Date.now(), user_entity_id: entityId, entity_type: type,
+      entity_category: preset.category, entity_label: preset.label, display_label: preset.label,
     }])
   }
 
@@ -264,19 +326,12 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
     if (!label.trim()) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     const entityId = await getOrCreateUserEntity(user.id, type, category, label.trim())
     if (!entityId) return
-
     await linkEntityToDream(Number(resolvedId), entityId)
     setLinkedEntities((prev) => [...prev, {
-      id: Date.now(),
-      user_entity_id: entityId,
-      entity_type: type,
-      entity_category: category,
-      entity_label: label.trim(),
-      display_label: label.trim(),
-      editing: false,
+      id: Date.now(), user_entity_id: entityId, entity_type: type,
+      entity_category: category, entity_label: label.trim(), display_label: label.trim(),
     }])
   }
 
@@ -284,20 +339,14 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
     e.preventDefault()
     setSaving(true)
     setMessage("")
-
     const selectedTone = TONE_OPTIONS[dreamTone].value
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Umbenannte Entities: neues user_entity erstellen und Verknüpfung updaten
     if (user) {
       for (const entity of linkedEntities) {
         if (entity.display_label !== entity.entity_label) {
-          // Alten Link löschen
           await supabase.from("dream_entry_entities").delete().eq("id", entity.id)
-          // Neues Entity mit gleichem category aber neuem label
-          const newId = await getOrCreateUserEntity(
-            user.id, entity.entity_type, entity.entity_category, entity.display_label
-          )
+          const newId = await getOrCreateUserEntity(user.id, entity.entity_type, entity.entity_category, entity.display_label)
           if (newId) await linkEntityToDream(Number(resolvedId), newId)
         }
       }
@@ -319,6 +368,62 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
     setSaving(false)
   }
 
+  // ── KI-Analyse ───────────────────────────────────────────
+  async function runAnalysis() {
+    if (!dream) return
+    setAnalyzing(true)
+    setCurrentAnalysis(null)
+
+    const persons = linkedEntities.filter((e) => e.entity_type === "person").map((e) => e.display_label)
+    const places  = linkedEntities.filter((e) => e.entity_type === "place").map((e) => e.display_label)
+
+    try {
+      const res = await fetch("/api/analyze-dream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dreamText: dream.raw_input_text,
+          emotion: dream.dominant_emotion,
+          clarity: dream.dream_clarity,
+          tone: dream.dream_tone,
+          entities: { persons, places },
+          mode: selectedMode,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.analysis) {
+        setCurrentAnalysis(data.analysis)
+        setCurrentAnalysisMode(selectedMode)
+      } else {
+        setMessage("Analyse fehlgeschlagen. Bitte erneut versuchen.")
+      }
+    } catch {
+      setMessage("Analyse konnte nicht erstellt werden.")
+    }
+
+    setAnalyzing(false)
+  }
+
+  async function saveAnalysis() {
+    if (!currentAnalysis) return
+    setSavingAnalysis(true)
+
+    await supabase.from("dream_analysis").insert({
+      dream_entry_id: Number(resolvedId),
+      mode: currentAnalysisMode,
+      summary: currentAnalysis.summary,
+      themes: currentAnalysis.themes,
+      emotions: currentAnalysis.emotions,
+      caution_note: currentAnalysis.caution,
+      based_on_confirmed_entities_only: false,
+    })
+
+    setCurrentAnalysis(null)
+    setSavingAnalysis(false)
+    fetchAll()
+  }
+
   // ── Render ────────────────────────────────────────────────
   if (loading) return (
     <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
@@ -338,18 +443,24 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
 
   return (
     <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-3xl space-y-10">
 
         {/* Header */}
-        <div className="mb-10 flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <Link href="/dreams" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 transition hover:bg-white/10 hover:text-white">
             ← Zurück
           </Link>
           {!isEditing && (
-            <button onClick={() => setIsEditing(true)}
-              className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] transition hover:scale-[1.02]">
-              Bearbeiten
-            </button>
+            <div className="flex gap-3">
+              <button onClick={() => setShowAnalysisPanel(!showAnalysisPanel)}
+                className={`rounded-xl border px-4 py-2 text-sm transition ${showAnalysisPanel ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-100" : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"}`}>
+                🧠 KI-Analyse
+              </button>
+              <button onClick={() => setIsEditing(true)}
+                className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] transition hover:scale-[1.02]">
+                Bearbeiten
+              </button>
+            </div>
           )}
         </div>
 
@@ -360,7 +471,7 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
               {new Date(dream.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
             </p>
             <p className="leading-8 text-white/85 whitespace-pre-wrap text-lg">{dream.raw_input_text}</p>
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="flex flex-wrap gap-2">
               {toneLabel && toneLabel.value !== "neutral" && (
                 <span className={`rounded-full border px-3 py-1 text-sm ${toneLabel.value === "nightmare" ? "border-red-300/20 bg-red-300/10 text-red-100" : "border-emerald-300/20 bg-emerald-300/10 text-emerald-100"}`}>
                   {toneLabel.label}
@@ -382,18 +493,85 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
 
+        {/* ── KI-Analyse Panel ── */}
+        {!isEditing && showAnalysisPanel && (
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+              <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80 mb-6">Analyse-Modus wählen</p>
+
+              <div className="grid gap-3 sm:grid-cols-2 mb-8">
+                {ANALYSIS_MODES.map((mode) => (
+                  <button key={mode.value} type="button" onClick={() => setSelectedMode(mode.value)}
+                    className={`rounded-2xl border p-4 text-left transition-all ${selectedMode === mode.value ? "border-cyan-300/30 bg-cyan-300/10" : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8"}`}>
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-xl">{mode.emoji}</span>
+                      <span className="font-medium text-white text-sm">{mode.label}</span>
+                    </div>
+                    <p className="text-xs text-white/45 ml-8">{mode.desc}</p>
+                  </button>
+                ))}
+              </div>
+
+              <button onClick={runAnalysis} disabled={analyzing}
+                className="w-full rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60">
+                {analyzing ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="animate-spin">✦</span> Analysiere…
+                  </span>
+                ) : "Traum analysieren"}
+              </button>
+            </div>
+
+            {/* Aktuelle Analyse (noch nicht gespeichert) */}
+            {currentAnalysis && (
+              <AnalysisCard
+                analysis={currentAnalysis}
+                mode={currentAnalysisMode}
+                onSave={saveAnalysis}
+                saving={savingAnalysis}
+              />
+            )}
+
+            {/* Gespeicherte Analysen */}
+            {savedAnalyses.length > 0 && (
+              <div className="space-y-4">
+                <p className="text-sm uppercase tracking-[0.15em] text-white/40">Gespeicherte Analysen</p>
+                {savedAnalyses.map((a) => (
+                  <div key={a.id} className="rounded-3xl border border-white/10 bg-white/5 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-xl">{modeEmoji(a.mode)}</span>
+                      <div>
+                        <p className="font-medium text-white text-sm">{modeLabel(a.mode)}</p>
+                        <p className="text-xs text-white/35">
+                          {new Date(a.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric" })}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="leading-7 text-white/70 text-sm">{a.summary}</p>
+                    {a.themes?.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        {a.themes.map((t: string) => (
+                          <span key={t} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">{t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── Bearbeiten ── */}
         {isEditing && (
           <form onSubmit={handleSave} className="space-y-10">
 
-            {/* Traumtext */}
             <div>
               <label className="mb-3 block text-sm font-medium text-white/80">Traumtext</label>
               <textarea value={rawInputText} onChange={(e) => setRawInputText(e.target.value)} rows={6}
                 className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white focus:border-cyan-300/40 focus:outline-none transition resize-none" />
             </div>
 
-            {/* Emotionen */}
             <div>
               <p className="mb-3 text-sm font-medium text-white/80">
                 Emotionen <span className="font-normal text-white/35">(mehrere möglich)</span>
@@ -411,7 +589,6 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* Stimmungs-Regler */}
             <div>
               <p className="mb-4 text-sm font-medium text-white/80">Stimmung des Traums</p>
               <div className="flex justify-between mb-2">
@@ -427,7 +604,6 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setDreamTone(Number(e.target.value))} className="w-full accent-cyan-300 cursor-pointer" />
             </div>
 
-            {/* Klarheits-Regler */}
             <div>
               <p className="mb-4 text-sm font-medium text-white/80">Klarheit des Traums</p>
               <div className="flex justify-between mb-2">
@@ -443,12 +619,10 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setDreamClarity(Number(e.target.value))} className="w-full accent-cyan-300 cursor-pointer" />
             </div>
 
-            {/* ── Personen ── */}
+            {/* Personen */}
             <div>
               <p className="mb-1 text-sm font-medium text-white/80">Personen im Traum</p>
               <p className="mb-4 text-xs text-white/35">Tag anklicken zum Umbenennen (z.B. "Kind" → "Sofia")</p>
-
-              {/* Verknüpfte Personen als editierbare Tags */}
               {linkedPersons.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {linkedPersons.map((e) => (
@@ -458,8 +632,6 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                   ))}
                 </div>
               )}
-
-              {/* Presets – bereits verknüpfte ausblenden */}
               <div className="flex flex-wrap gap-2 mb-3">
                 {PERSON_PRESETS.map((p) => {
                   if (linkedPersons.some((e) => e.entity_label === p.label)) return null
@@ -471,8 +643,6 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                   )
                 })}
               </div>
-
-              {/* Freitext */}
               <div className="flex gap-2">
                 <input value={customPersonInput} onChange={(e) => setCustomPersonInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomEntity("person", "other", customPersonInput); setCustomPersonInput("") } }}
@@ -486,11 +656,10 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* ── Orte ── */}
+            {/* Orte */}
             <div>
               <p className="mb-1 text-sm font-medium text-white/80">Orte im Traum</p>
               <p className="mb-4 text-xs text-white/35">Tag anklicken zum Umbenennen</p>
-
               {linkedPlaces.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {linkedPlaces.map((e) => (
@@ -500,7 +669,6 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                   ))}
                 </div>
               )}
-
               <div className="flex flex-wrap gap-2 mb-3">
                 {PLACE_PRESETS.map((p) => {
                   if (linkedPlaces.some((e) => e.entity_label === p.label)) return null
@@ -512,7 +680,6 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                   )
                 })}
               </div>
-
               <div className="flex gap-2">
                 <input value={customPlaceInput} onChange={(e) => setCustomPlaceInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomEntity("place", "other", customPlaceInput); setCustomPlaceInput("") } }}
@@ -526,7 +693,6 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* Buttons */}
             <div className="flex gap-4">
               <button type="submit" disabled={saving}
                 className="flex-1 rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60">
@@ -539,18 +705,13 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             {message && (
-              <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100">
-                {message}
-              </div>
+              <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100">{message}</div>
             )}
-
           </form>
         )}
 
         {message && !isEditing && (
-          <div className="mt-6 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100">
-            {message}
-          </div>
+          <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100">{message}</div>
         )}
 
       </div>
