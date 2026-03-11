@@ -28,7 +28,7 @@ export default function Datenschutz() {
         </p>
 
         <p>
-          info@fabrik4.ch
+          team@fabrik4.ch
         </p>
 
         <p>
