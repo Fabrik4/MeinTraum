@@ -4,25 +4,20 @@ import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 const emotions = [
-  "Angst",
-  "Freude",
-  "Trauer",
-  "Verwirrung",
-  "Neugier",
-  "Ruhe",
-  "Wut",
-  "Ekel",
+  "Angst", "Freude", "Trauer", "Verwirrung",
+  "Neugier", "Ruhe", "Wut", "Ekel",
 ]
 
-const clarityOptions = ["Sehr klar", "Mittel", "Verschwommen"]
+const clarityOptions = ["Verschwommen", "Mittel", "Sehr klar"]
+const dreamToneOptions = ["Albtraum", "Neutral", "Schöner Traum"]
 
 export default function DreamEntryPage() {
   const [rawInputText, setRawInputText] = useState("")
-  const [dominantEmotion, setDominantEmotion] = useState("")
-  const [dreamClarity, setDreamClarity] = useState("")
+  const [dominantEmotions, setDominantEmotions] = useState<string[]>([])
+  const [dreamClarity, setDreamClarity] = useState(1) // 0=Verschwommen, 1=Mittel, 2=Sehr klar
+  const [dreamTone, setDreamTone] = useState(1)       // 0=Albtraum, 1=Neutral, 2=Schöner Traum
   const [familiarPersonFlag, setFamiliarPersonFlag] = useState(false)
   const [familiarPlaceFlag, setFamiliarPlaceFlag] = useState(false)
-  const [nightmareFlag, setNightmareFlag] = useState(false)
   const [dreamedAt, setDreamedAt] = useState(() => {
     const now = new Date()
     const tzOffset = now.getTimezoneOffset() * 60000
@@ -32,14 +27,21 @@ export default function DreamEntryPage() {
   const [message, setMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const toggleEmotion = (emotion: string) => {
+    setDominantEmotions((prev) =>
+      prev.includes(emotion)
+        ? prev.filter((e) => e !== emotion)
+        : [...prev, emotion]
+    )
+  }
+
   const resetForm = () => {
     setRawInputText("")
-    setDominantEmotion("")
-    setDreamClarity("")
+    setDominantEmotions([])
+    setDreamClarity(1)
+    setDreamTone(1)
     setFamiliarPersonFlag(false)
     setFamiliarPlaceFlag(false)
-    setNightmareFlag(false)
-
     const now = new Date()
     const tzOffset = now.getTimezoneOffset() * 60000
     setDreamedAt(new Date(now.getTime() - tzOffset).toISOString().slice(0, 16))
@@ -50,13 +52,10 @@ export default function DreamEntryPage() {
     setIsSubmitting(true)
     setMessage("")
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user) {
-      setMessage("Bitte logge dich zuerst ein, bevor du einen Traum speicherst.")
+      setMessage("Bitte logge dich zuerst ein.")
       setIsSubmitting(false)
       return
     }
@@ -65,11 +64,11 @@ export default function DreamEntryPage() {
       {
         user_id: user.id,
         raw_input_text: rawInputText,
-        dominant_emotion: dominantEmotion || null,
-        dream_clarity: dreamClarity || null,
+        dominant_emotion: dominantEmotions.length > 0 ? dominantEmotions.join(", ") : null,
+        dream_clarity: clarityOptions[dreamClarity],
+        nightmare_flag: dreamTone === 0,
         familiar_person_flag: familiarPersonFlag,
         familiar_place_flag: familiarPlaceFlag,
-        nightmare_flag: nightmareFlag,
         dreamed_at: dreamedAt ? new Date(dreamedAt).toISOString() : new Date().toISOString(),
       },
     ])
@@ -91,17 +90,16 @@ export default function DreamEntryPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">
           Neuer Traum
         </p>
-
         <h1 className="mt-4 text-4xl font-semibold">
           Was ist dir geblieben?
         </h1>
-
-        <p className="mt-4 leading-8 text-white/70">
-          Halte deinen Traum schnell fest. Du kannst später weitere Details
-          ergänzen und bearbeiten.
+        <p className="mt-3 text-sm leading-7 text-white/50">
+          Halte deinen Traum schnell fest – Stichworte genügen.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-10 space-y-8">
+        <form onSubmit={handleSubmit} className="mt-10 space-y-10">
+
+          {/* Traumtext */}
           <div>
             <label className="mb-3 block text-sm font-medium text-white/80">
               Traumtext oder Stichworte
@@ -109,13 +107,14 @@ export default function DreamEntryPage() {
             <textarea
               value={rawInputText}
               onChange={(e) => setRawInputText(e.target.value)}
-              placeholder="z.B. Haus, Hund, Stieftante Margrit, Angst ..."
+              placeholder="z.B. Haus, Hund, alter Freund, Angst ..."
               required
               rows={6}
-              className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/35 focus:border-cyan-300/40 focus:outline-none"
+              className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/30 focus:border-cyan-300/40 focus:outline-none transition"
             />
           </div>
 
+          {/* Datum & Uhrzeit – kompakt */}
           <div>
             <label className="mb-3 block text-sm font-medium text-white/80">
               Wann war dieser Traum?
@@ -124,90 +123,127 @@ export default function DreamEntryPage() {
               type="datetime-local"
               value={dreamedAt}
               onChange={(e) => setDreamedAt(e.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white focus:border-cyan-300/40 focus:outline-none"
+              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white focus:border-cyan-300/40 focus:outline-none transition"
             />
-            <p className="mt-2 text-sm text-white/45">
-              Falls du einen Traum nachträglich erfasst, kannst du hier Datum und Uhrzeit anpassen.
-            </p>
           </div>
 
+          {/* Emotionen – Multi-Select */}
           <div>
-            <p className="mb-3 text-sm font-medium text-white/80">
-              Dominante Emotion
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {emotions.map((emotion) => (
+            <div className="flex items-baseline justify-between mb-4">
+              <p className="text-sm font-medium text-white/80">Emotionen</p>
+              <span className="text-xs text-white/35">Mehrere möglich</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {emotions.map((emotion) => {
+                const active = dominantEmotions.includes(emotion)
+                return (
+                  <button
+                    key={emotion}
+                    type="button"
+                    onClick={() => toggleEmotion(emotion)}
+                    className={`rounded-full border px-4 py-2 text-sm transition hover:scale-[1.04] active:scale-[0.97] ${
+                      active
+                        ? "border-cyan-300/40 bg-cyan-300/20 text-cyan-100 shadow-[0_0_12px_rgba(103,232,249,0.15)]"
+                        : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    {emotion}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Klarheit – Segment-Regler */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-medium text-white/80">Klarheit</p>
+              <span className="text-sm text-cyan-300/70">{clarityOptions[dreamClarity]}</span>
+            </div>
+            <div className="flex rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+              {clarityOptions.map((option, i) => (
                 <button
-                  key={emotion}
+                  key={option}
                   type="button"
-                  onClick={() => setDominantEmotion(emotion === dominantEmotion ? "" : emotion)}
-                  className={`rounded-full border px-4 py-2 text-sm transition ${
-                    dominantEmotion === emotion
-                      ? "border-cyan-300/30 bg-cyan-300/20 text-cyan-100"
-                      : "border-white/10 bg-white/5 text-white/70"
+                  onClick={() => setDreamClarity(i)}
+                  className={`flex-1 py-3 text-sm transition hover:bg-white/8 active:scale-[0.98] ${
+                    dreamClarity === i
+                      ? "bg-cyan-300/15 text-cyan-100 font-medium"
+                      : "text-white/45 hover:text-white/70"
                   }`}
                 >
-                  {emotion}
+                  {option}
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Traumton – Segment-Regler mit Farben */}
           <div>
-            <p className="mb-3 text-sm font-medium text-white/80">
-              Klarheit des Traums
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {clarityOptions.map((clarity) => (
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-medium text-white/80">Stimmung</p>
+              <span className={`text-sm transition ${
+                dreamTone === 0 ? "text-red-300/80" :
+                dreamTone === 2 ? "text-emerald-300/80" :
+                "text-white/45"
+              }`}>
+                {dreamToneOptions[dreamTone]}
+              </span>
+            </div>
+            <div className="flex rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+              {dreamToneOptions.map((option, i) => (
                 <button
-                  key={clarity}
+                  key={option}
                   type="button"
-                  onClick={() => setDreamClarity(clarity === dreamClarity ? "" : clarity)}
-                  className={`rounded-full border px-4 py-2 text-sm transition ${
-                    dreamClarity === clarity
-                      ? "border-cyan-300/30 bg-cyan-300/20 text-cyan-100"
-                      : "border-white/10 bg-white/5 text-white/70"
+                  onClick={() => setDreamTone(i)}
+                  className={`flex-1 py-3 text-sm transition hover:bg-white/8 active:scale-[0.98] ${
+                    dreamTone === i
+                      ? i === 0
+                        ? "bg-red-400/15 text-red-200 font-medium"
+                        : i === 2
+                        ? "bg-emerald-400/15 text-emerald-200 font-medium"
+                        : "bg-white/10 text-white font-medium"
+                      : "text-white/45 hover:text-white/70"
                   }`}
                 >
-                  {clarity}
+                  {option}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 cursor-pointer hover:bg-white/8 transition">
+          {/* Bekannte Person / Ort */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 cursor-pointer transition hover:bg-white/8 ${
+              familiarPersonFlag ? "border-cyan-300/30 bg-cyan-300/10" : "border-white/10 bg-white/5"
+            }`}>
               <input
                 type="checkbox"
                 checked={familiarPersonFlag}
                 onChange={(e) => setFamiliarPersonFlag(e.target.checked)}
+                className="accent-cyan-300"
               />
               <span className="text-sm text-white/80">Bekannte Person</span>
             </label>
 
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 cursor-pointer hover:bg-white/8 transition">
+            <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 cursor-pointer transition hover:bg-white/8 ${
+              familiarPlaceFlag ? "border-cyan-300/30 bg-cyan-300/10" : "border-white/10 bg-white/5"
+            }`}>
               <input
                 type="checkbox"
                 checked={familiarPlaceFlag}
                 onChange={(e) => setFamiliarPlaceFlag(e.target.checked)}
+                className="accent-cyan-300"
               />
               <span className="text-sm text-white/80">Bekannter Ort</span>
             </label>
-
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 cursor-pointer hover:bg-white/8 transition">
-              <input
-                type="checkbox"
-                checked={nightmareFlag}
-                onChange={(e) => setNightmareFlag(e.target.checked)}
-              />
-              <span className="text-sm text-white/80">Albtraum</span>
-            </label>
           </div>
 
+          {/* Speichern */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] disabled:opacity-60"
+            className="w-full rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
           >
             {isSubmitting ? "Speichert..." : "Traum speichern"}
           </button>
@@ -217,6 +253,7 @@ export default function DreamEntryPage() {
               {message}
             </div>
           )}
+
         </form>
       </div>
     </main>
