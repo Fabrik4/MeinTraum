@@ -13,8 +13,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "MeinTraum",
-    description:
-      "Träume festhalten, Muster erkennen, dich selbst besser verstehen.",
+    description: "Träume festhalten, Muster erkennen, dich selbst besser verstehen.",
     url: "https://www.meintraum.app",
     siteName: "MeinTraum",
     locale: "de_CH",
