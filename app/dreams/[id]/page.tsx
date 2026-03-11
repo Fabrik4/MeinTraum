@@ -1,16 +1,19 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 // ── Typen ────────────────────────────────────────────────────
 type LinkedEntity = {
-  id: number              // dream_entry_entities.id
+  id: number           // dream_entry_entities.id
   user_entity_id: number
   entity_type: string
+  entity_category: string
   entity_label: string
+  display_label: string  // editierbarer Anzeigename
+  editing: boolean
 }
 
 type Dream = {
@@ -29,6 +32,10 @@ type Dream = {
 const PERSON_PRESETS = [
   { category: "family",  label: "Mutter" },
   { category: "family",  label: "Vater" },
+  { category: "family",  label: "Bruder" },
+  { category: "family",  label: "Schwester" },
+  { category: "family",  label: "Schwägerin" },
+  { category: "family",  label: "Schwager" },
   { category: "partner", label: "Partner/in" },
   { category: "family",  label: "Geschwister" },
   { category: "social",  label: "Freund/in" },
@@ -67,47 +74,95 @@ function toneToIndex(tone: string | null, nightmareFlag: boolean) {
   return 1
 }
 
-// ── Hilfsfunktionen Supabase ─────────────────────────────────
-async function getOrCreateUserEntity(userId: string, type: string, category: string, label: string) {
+// ── Supabase Helpers ─────────────────────────────────────────
+async function getOrCreateUserEntity(
+  userId: string, type: string, category: string, label: string
+): Promise<number | null> {
   const { data: existing } = await supabase
-    .from("user_entities")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("entity_type", type)
-    .eq("entity_label", label)
+    .from("user_entities").select("id")
+    .eq("user_id", userId).eq("entity_type", type).eq("entity_label", label)
     .maybeSingle()
-
   if (existing) return existing.id
 
-  const { data } = await supabase
-    .from("user_entities")
+  const { data } = await supabase.from("user_entities")
     .insert({ user_id: userId, entity_type: type, entity_category: category, entity_label: label, is_confirmed: true })
-    .select("id")
-    .single()
-
-  return data?.id
+    .select("id").single()
+  return data?.id ?? null
 }
 
 async function linkEntityToDream(dreamId: number, entityId: number) {
-  // Erst prüfen ob Verknüpfung schon existiert
   const { data: existing } = await supabase
-    .from("dream_entry_entities")
-    .select("id")
-    .eq("dream_entry_id", dreamId)
-    .eq("user_entity_id", entityId)
-    .maybeSingle()
-
-  if (existing) return // bereits verknüpft, kein Duplikat
-
+    .from("dream_entry_entities").select("id")
+    .eq("dream_entry_id", dreamId).eq("user_entity_id", entityId).maybeSingle()
+  if (existing) return
   await supabase.from("dream_entry_entities").insert({
-    dream_entry_id: dreamId,
-    user_entity_id: entityId,
-    source: "manual",
-    confidence: 1,
+    dream_entry_id: dreamId, user_entity_id: entityId, source: "manual", confidence: 1,
   })
 }
 
-// ── Komponente ───────────────────────────────────────────────
+// ── Inline-Edit Tag ──────────────────────────────────────────
+function EntityTag({
+  entity, color, onDelete, onRename,
+}: {
+  entity: LinkedEntity
+  color: "violet" | "amber"
+  onDelete: () => void
+  onRename: (newLabel: string) => void
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [editing, setEditing] = useState(false)
+  const [val, setVal] = useState(entity.display_label)
+
+  const colorMap = {
+    violet: "border-violet-300/30 bg-violet-300/10 text-violet-100",
+    amber:  "border-amber-300/30 bg-amber-300/10 text-amber-100",
+  }
+  const icon = color === "violet" ? "👤" : "📍"
+
+  function commit() {
+    setEditing(false)
+    if (val.trim() && val.trim() !== entity.display_label) {
+      onRename(val.trim())
+    } else {
+      setVal(entity.display_label)
+    }
+  }
+
+  useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border pl-3 pr-1.5 py-1.5 text-sm ${colorMap[color]}`}>
+      <span className="mr-0.5">{icon}</span>
+
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setEditing(false); setVal(entity.display_label) } }}
+          className="w-24 bg-transparent outline-none text-sm"
+        />
+      ) : (
+        <button type="button" onClick={() => setEditing(true)}
+          className="hover:underline underline-offset-2 transition text-left"
+          title="Klicken zum Umbenennen">
+          {entity.display_label}
+        </button>
+      )}
+
+      {/* Kategorie-Badge klein */}
+      <span className="mx-1 text-xs opacity-40">({entity.entity_category})</span>
+
+      <button type="button" onClick={onDelete}
+        className="rounded-full p-0.5 opacity-50 hover:opacity-100 transition text-xs">
+        ✕
+      </button>
+    </span>
+  )
+}
+
+// ── Haupt-Komponente ─────────────────────────────────────────
 export default function DreamDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const searchParams = useSearchParams()
 
@@ -119,20 +174,14 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
   const [isEditing, setIsEditing] = useState(false)
   const [resolvedId, setResolvedId] = useState("")
 
-  // Edit-State
   const [rawInputText, setRawInputText] = useState("")
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([])
   const [dreamClarity, setDreamClarity] = useState(1)
   const [dreamTone, setDreamTone] = useState(1)
-  // Neue Entities (noch nicht gespeichert)
-  const [newPeople, setNewPeople] = useState<{ category: string; label: string }[]>([])
-  const [newPlaces, setNewPlaces] = useState<{ category: string; label: string }[]>([])
   const [customPersonInput, setCustomPersonInput] = useState("")
   const [customPlaceInput, setCustomPlaceInput] = useState("")
 
-  useEffect(() => {
-    params.then((r) => setResolvedId(r.id))
-  }, [params])
+  useEffect(() => { params.then((r) => setResolvedId(r.id)) }, [params])
 
   useEffect(() => {
     if (!resolvedId) return
@@ -143,53 +192,92 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
   async function fetchAll() {
     const [dreamRes, entitiesRes] = await Promise.all([
       supabase.from("dream_entries").select("*").eq("id", resolvedId).single(),
-      supabase
-        .from("dream_entry_entities")
-        .select("id, user_entity_id, user_entities(entity_type, entity_label)")
+      supabase.from("dream_entry_entities")
+        .select("id, user_entity_id, user_entities(entity_type, entity_category, entity_label)")
         .eq("dream_entry_id", resolvedId),
     ])
 
-    if (dreamRes.error || !dreamRes.data) {
-      setMessage("Traum konnte nicht geladen werden.")
-      setLoading(false)
-      return
-    }
-
+    if (dreamRes.error || !dreamRes.data) { setLoading(false); return }
     const d = dreamRes.data
     setDream(d)
     setRawInputText(d.raw_input_text || "")
-    setSelectedEmotions(d.dominant_emotion ? d.dominant_emotion.split(", ").filter(Boolean) : [])
+    setSelectedEmotions(d.dominant_emotion?.split(", ").filter(Boolean) ?? [])
     setDreamClarity(clarityToIndex(d.dream_clarity))
     setDreamTone(toneToIndex(d.dream_tone, d.nightmare_flag))
 
     if (!entitiesRes.error && entitiesRes.data) {
-      const mapped: LinkedEntity[] = entitiesRes.data.map((e: any) => ({
+      setLinkedEntities(entitiesRes.data.map((e: any) => ({
         id: e.id,
         user_entity_id: e.user_entity_id,
         entity_type: e.user_entities?.entity_type ?? "",
+        entity_category: e.user_entities?.entity_category ?? "",
         entity_label: e.user_entities?.entity_label ?? "",
-      }))
-      setLinkedEntities(mapped)
+        display_label: e.user_entities?.entity_label ?? "",
+        editing: false,
+      })))
     }
-
     setLoading(false)
   }
 
   const toggleEmotion = (e: string) =>
     setSelectedEmotions((prev) => prev.includes(e) ? prev.filter((x) => x !== e) : [...prev, e])
 
-  const toggleNewEntity = (
-    list: { category: string; label: string }[],
-    setList: (v: { category: string; label: string }[]) => void,
-    item: { category: string; label: string }
-  ) => {
-    const exists = list.find((x) => x.label === item.label)
-    setList(exists ? list.filter((x) => x.label !== item.label) : [...list, item])
-  }
-
   async function removeLinkedEntity(linkId: number) {
     await supabase.from("dream_entry_entities").delete().eq("id", linkId)
     setLinkedEntities((prev) => prev.filter((e) => e.id !== linkId))
+  }
+
+  function renameLinkedEntity(linkId: number, newLabel: string) {
+    // Lokal umbenennen – beim Speichern wird ein neues user_entity erstellt
+    setLinkedEntities((prev) =>
+      prev.map((e) => e.id === linkId ? { ...e, display_label: newLabel } : e)
+    )
+  }
+
+  async function addPreset(type: string, preset: { category: string; label: string }) {
+    const alreadyLinked = linkedEntities.some(
+      (e) => e.entity_type === type && e.entity_label === preset.label
+    )
+    if (alreadyLinked) return
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const entityId = await getOrCreateUserEntity(user.id, type, preset.category, preset.label)
+    if (!entityId) return
+
+    await linkEntityToDream(Number(resolvedId), entityId)
+
+    // Sofort lokal hinzufügen ohne reload
+    setLinkedEntities((prev) => [...prev, {
+      id: Date.now(), // temp ID, wird bei fetchAll ersetzt
+      user_entity_id: entityId,
+      entity_type: type,
+      entity_category: preset.category,
+      entity_label: preset.label,
+      display_label: preset.label,
+      editing: false,
+    }])
+  }
+
+  async function addCustomEntity(type: string, category: string, label: string) {
+    if (!label.trim()) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const entityId = await getOrCreateUserEntity(user.id, type, category, label.trim())
+    if (!entityId) return
+
+    await linkEntityToDream(Number(resolvedId), entityId)
+    setLinkedEntities((prev) => [...prev, {
+      id: Date.now(),
+      user_entity_id: entityId,
+      entity_type: type,
+      entity_category: category,
+      entity_label: label.trim(),
+      display_label: label.trim(),
+      editing: false,
+    }])
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -198,43 +286,34 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
     setMessage("")
 
     const selectedTone = TONE_OPTIONS[dreamTone].value
-
-    const { error } = await supabase
-      .from("dream_entries")
-      .update({
-        raw_input_text: rawInputText,
-        dominant_emotion: selectedEmotions.length > 0 ? selectedEmotions.join(", ") : null,
-        dream_clarity: CLARITY_OPTIONS[dreamClarity],
-        dream_tone: selectedTone,
-        nightmare_flag: selectedTone === "nightmare",
-        familiar_person_flag: linkedEntities.some((e) => e.entity_type === "person") || newPeople.length > 0,
-        familiar_place_flag: linkedEntities.some((e) => e.entity_type === "place") || newPlaces.length > 0,
-      })
-      .eq("id", resolvedId)
-
-    if (error) {
-      setMessage("Änderungen konnten nicht gespeichert werden.")
-      setSaving(false)
-      return
-    }
-
     const { data: { user } } = await supabase.auth.getUser()
+
+    // Umbenannte Entities: neues user_entity erstellen und Verknüpfung updaten
     if (user) {
-      for (const p of newPeople) {
-        const entityId = await getOrCreateUserEntity(user.id, "person", p.category, p.label)
-        if (entityId) await linkEntityToDream(Number(resolvedId), entityId)
-      }
-      for (const p of newPlaces) {
-        const entityId = await getOrCreateUserEntity(user.id, "place", p.category, p.label)
-        if (entityId) await linkEntityToDream(Number(resolvedId), entityId)
+      for (const entity of linkedEntities) {
+        if (entity.display_label !== entity.entity_label) {
+          // Alten Link löschen
+          await supabase.from("dream_entry_entities").delete().eq("id", entity.id)
+          // Neues Entity mit gleichem category aber neuem label
+          const newId = await getOrCreateUserEntity(
+            user.id, entity.entity_type, entity.entity_category, entity.display_label
+          )
+          if (newId) await linkEntityToDream(Number(resolvedId), newId)
+        }
       }
     }
 
-    setNewPeople([])
-    setNewPlaces([])
-    setCustomPersonInput("")
-    setCustomPlaceInput("")
-    setMessage("Änderungen gespeichert. ✓")
+    await supabase.from("dream_entries").update({
+      raw_input_text: rawInputText,
+      dominant_emotion: selectedEmotions.length > 0 ? selectedEmotions.join(", ") : null,
+      dream_clarity: CLARITY_OPTIONS[dreamClarity],
+      dream_tone: selectedTone,
+      nightmare_flag: selectedTone === "nightmare",
+      familiar_person_flag: linkedEntities.some((e) => e.entity_type === "person"),
+      familiar_place_flag: linkedEntities.some((e) => e.entity_type === "place"),
+    }).eq("id", resolvedId)
+
+    setMessage("Gespeichert. ✓")
     setIsEditing(false)
     fetchAll()
     setSaving(false)
@@ -246,7 +325,6 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
       <div className="mx-auto max-w-3xl"><p className="text-white/50">Traum wird geladen…</p></div>
     </main>
   )
-
   if (!dream) return (
     <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
       <div className="mx-auto max-w-3xl"><p className="text-white/50">Traum nicht gefunden.</p></div>
@@ -256,7 +334,7 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
   const displayEmotions = dream.dominant_emotion?.split(", ").filter(Boolean) ?? []
   const toneLabel = TONE_OPTIONS.find((t) => t.value === (dream.dream_tone || (dream.nightmare_flag ? "nightmare" : "neutral")))
   const linkedPersons = linkedEntities.filter((e) => e.entity_type === "person")
-  const linkedPlaces = linkedEntities.filter((e) => e.entity_type === "place")
+  const linkedPlaces  = linkedEntities.filter((e) => e.entity_type === "place")
 
   return (
     <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
@@ -269,7 +347,7 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
           </Link>
           {!isEditing && (
             <button onClick={() => setIsEditing(true)}
-              className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] transition hover:scale-[1.02] active:scale-[0.99]">
+              className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] transition hover:scale-[1.02]">
               Bearbeiten
             </button>
           )}
@@ -281,36 +359,24 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
             <p className="text-sm text-white/40">
               {new Date(dream.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
             </p>
-
-            <p className="leading-8 text-white/85 whitespace-pre-wrap text-lg">
-              {dream.raw_input_text}
-            </p>
-
+            <p className="leading-8 text-white/85 whitespace-pre-wrap text-lg">{dream.raw_input_text}</p>
             <div className="flex flex-wrap gap-2 pt-2">
               {toneLabel && toneLabel.value !== "neutral" && (
                 <span className={`rounded-full border px-3 py-1 text-sm ${toneLabel.value === "nightmare" ? "border-red-300/20 bg-red-300/10 text-red-100" : "border-emerald-300/20 bg-emerald-300/10 text-emerald-100"}`}>
                   {toneLabel.label}
                 </span>
               )}
-              {displayEmotions.map((emotion) => (
-                <span key={emotion} className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-sm text-cyan-100">
-                  💭 {emotion}
-                </span>
+              {displayEmotions.map((em) => (
+                <span key={em} className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-sm text-cyan-100">💭 {em}</span>
               ))}
               {dream.dream_clarity && (
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/60">
-                  ✨ {dream.dream_clarity}
-                </span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/60">✨ {dream.dream_clarity}</span>
               )}
               {linkedPersons.map((e) => (
-                <span key={e.id} className="rounded-full border border-violet-300/20 bg-violet-300/10 px-3 py-1 text-sm text-violet-100">
-                  👤 {e.entity_label}
-                </span>
+                <span key={e.id} className="rounded-full border border-violet-300/20 bg-violet-300/10 px-3 py-1 text-sm text-violet-100">👤 {e.display_label}</span>
               ))}
               {linkedPlaces.map((e) => (
-                <span key={e.id} className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-sm text-amber-100">
-                  📍 {e.entity_label}
-                </span>
+                <span key={e.id} className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-sm text-amber-100">📍 {e.display_label}</span>
               ))}
             </div>
           </div>
@@ -333,12 +399,12 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                 Emotionen <span className="font-normal text-white/35">(mehrere möglich)</span>
               </p>
               <div className="flex flex-wrap gap-2">
-                {EMOTIONS.map((emotion) => {
-                  const active = selectedEmotions.includes(emotion)
+                {EMOTIONS.map((em) => {
+                  const active = selectedEmotions.includes(em)
                   return (
-                    <button key={emotion} type="button" onClick={() => toggleEmotion(emotion)}
+                    <button key={em} type="button" onClick={() => toggleEmotion(em)}
                       className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${active ? "border-cyan-300/40 bg-cyan-300/20 text-cyan-100 scale-[1.04]" : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:bg-white/10 hover:text-white"}`}>
-                      {emotion}
+                      {em}
                     </button>
                   )
                 })}
@@ -351,15 +417,14 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
               <div className="flex justify-between mb-2">
                 {TONE_OPTIONS.map((o, i) => (
                   <span key={o.value} onClick={() => setDreamTone(i)}
-                    className={`text-xs cursor-pointer transition-all select-none ${dreamTone === i ? "text-cyan-200 font-medium" : "text-white/35 hover:text-white/60"}`}
+                    className={`text-xs cursor-pointer select-none transition ${dreamTone === i ? "text-cyan-200 font-medium" : "text-white/35 hover:text-white/60"}`}
                     style={{ width: "33.33%", textAlign: i === 0 ? "left" : i === 2 ? "right" : "center" }}>
                     {o.label}
                   </span>
                 ))}
               </div>
               <input type="range" min={0} max={2} step={1} value={dreamTone}
-                onChange={(e) => setDreamTone(Number(e.target.value))}
-                className="w-full accent-cyan-300 cursor-pointer" />
+                onChange={(e) => setDreamTone(Number(e.target.value))} className="w-full accent-cyan-300 cursor-pointer" />
             </div>
 
             {/* Klarheits-Regler */}
@@ -368,47 +433,40 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
               <div className="flex justify-between mb-2">
                 {CLARITY_OPTIONS.map((label, i) => (
                   <span key={label} onClick={() => setDreamClarity(i)}
-                    className={`text-xs cursor-pointer transition-all select-none ${dreamClarity === i ? "text-cyan-200 font-medium" : "text-white/35 hover:text-white/60"}`}
+                    className={`text-xs cursor-pointer select-none transition ${dreamClarity === i ? "text-cyan-200 font-medium" : "text-white/35 hover:text-white/60"}`}
                     style={{ width: "33.33%", textAlign: i === 0 ? "left" : i === 2 ? "right" : "center" }}>
                     {label}
                   </span>
                 ))}
               </div>
               <input type="range" min={0} max={2} step={1} value={dreamClarity}
-                onChange={(e) => setDreamClarity(Number(e.target.value))}
-                className="w-full accent-cyan-300 cursor-pointer" />
+                onChange={(e) => setDreamClarity(Number(e.target.value))} className="w-full accent-cyan-300 cursor-pointer" />
             </div>
 
             {/* ── Personen ── */}
             <div>
-              <p className="mb-3 text-sm font-medium text-white/80">Personen im Traum</p>
+              <p className="mb-1 text-sm font-medium text-white/80">Personen im Traum</p>
+              <p className="mb-4 text-xs text-white/35">Tag anklicken zum Umbenennen (z.B. "Kind" → "Sofia")</p>
 
-              {/* Bereits verknüpfte Personen */}
+              {/* Verknüpfte Personen als editierbare Tags */}
               {linkedPersons.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {linkedPersons.map((e) => (
-                    <span key={e.id} className="flex items-center gap-1.5 rounded-full border border-violet-300/30 bg-violet-300/10 pl-3 pr-2 py-1.5 text-sm text-violet-100">
-                      👤 {e.entity_label}
-                      <button type="button" onClick={() => removeLinkedEntity(e.id)}
-                        className="ml-1 rounded-full hover:text-white text-violet-300/60 transition text-xs leading-none">
-                        ✕
-                      </button>
-                    </span>
+                    <EntityTag key={e.id} entity={e} color="violet"
+                      onDelete={() => removeLinkedEntity(e.id)}
+                      onRename={(newLabel) => renameLinkedEntity(e.id, newLabel)} />
                   ))}
                 </div>
               )}
 
-              {/* Presets für neue */}
+              {/* Presets – bereits verknüpfte ausblenden */}
               <div className="flex flex-wrap gap-2 mb-3">
                 {PERSON_PRESETS.map((p) => {
-                  const alreadyLinked = linkedPersons.some((e) => e.entity_label === p.label)
-                  const inNew = newPeople.some((x) => x.label === p.label)
-                  if (alreadyLinked) return null
+                  if (linkedPersons.some((e) => e.entity_label === p.label)) return null
                   return (
-                    <button key={p.label} type="button"
-                      onClick={() => toggleNewEntity(newPeople, setNewPeople, p)}
-                      className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${inNew ? "border-violet-300/40 bg-violet-300/20 text-violet-100 scale-[1.04]" : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:bg-white/10 hover:text-white"}`}>
-                      {p.label}
+                    <button key={p.label} type="button" onClick={() => addPreset("person", p)}
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 hover:border-violet-300/30 hover:bg-violet-300/10 hover:text-violet-100 transition-all duration-150">
+                      + {p.label}
                     </button>
                   )
                 })}
@@ -417,61 +475,39 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
               {/* Freitext */}
               <div className="flex gap-2">
                 <input value={customPersonInput} onChange={(e) => setCustomPersonInput(e.target.value)}
-                  placeholder="Eigene Person hinzufügen…"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomEntity("person", "other", customPersonInput); setCustomPersonInput("") } }}
+                  placeholder="z.B. Bruder Max, Kollegin Anna …"
                   className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-300/40 focus:outline-none transition" />
                 <button type="button"
-                  onClick={() => {
-                    if (!customPersonInput.trim()) return
-                    setNewPeople([...newPeople, { category: "other", label: customPersonInput.trim() }])
-                    setCustomPersonInput("")
-                  }}
+                  onClick={() => { addCustomEntity("person", "other", customPersonInput); setCustomPersonInput("") }}
                   className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white transition">
                   + Hinzufügen
                 </button>
               </div>
-
-              {/* Neu hinzugefügte (noch nicht gespeichert) */}
-              {newPeople.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {newPeople.map((p, i) => (
-                    <span key={i} className="flex items-center gap-1.5 rounded-full border border-violet-300/20 bg-violet-300/5 pl-3 pr-2 py-1 text-xs text-violet-200/70">
-                      👤 {p.label}
-                      <button type="button" onClick={() => setNewPeople(newPeople.filter((_, j) => j !== i))}
-                        className="hover:text-white text-violet-300/40 transition">✕</button>
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* ── Orte ── */}
             <div>
-              <p className="mb-3 text-sm font-medium text-white/80">Orte im Traum</p>
+              <p className="mb-1 text-sm font-medium text-white/80">Orte im Traum</p>
+              <p className="mb-4 text-xs text-white/35">Tag anklicken zum Umbenennen</p>
 
               {linkedPlaces.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {linkedPlaces.map((e) => (
-                    <span key={e.id} className="flex items-center gap-1.5 rounded-full border border-amber-300/30 bg-amber-300/10 pl-3 pr-2 py-1.5 text-sm text-amber-100">
-                      📍 {e.entity_label}
-                      <button type="button" onClick={() => removeLinkedEntity(e.id)}
-                        className="ml-1 rounded-full hover:text-white text-amber-300/60 transition text-xs leading-none">
-                        ✕
-                      </button>
-                    </span>
+                    <EntityTag key={e.id} entity={e} color="amber"
+                      onDelete={() => removeLinkedEntity(e.id)}
+                      onRename={(newLabel) => renameLinkedEntity(e.id, newLabel)} />
                   ))}
                 </div>
               )}
 
               <div className="flex flex-wrap gap-2 mb-3">
                 {PLACE_PRESETS.map((p) => {
-                  const alreadyLinked = linkedPlaces.some((e) => e.entity_label === p.label)
-                  const inNew = newPlaces.some((x) => x.label === p.label)
-                  if (alreadyLinked) return null
+                  if (linkedPlaces.some((e) => e.entity_label === p.label)) return null
                   return (
-                    <button key={p.label} type="button"
-                      onClick={() => toggleNewEntity(newPlaces, setNewPlaces, p)}
-                      className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${inNew ? "border-amber-300/40 bg-amber-300/20 text-amber-100 scale-[1.04]" : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:bg-white/10 hover:text-white"}`}>
-                      {p.label}
+                    <button key={p.label} type="button" onClick={() => addPreset("place", p)}
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 hover:border-amber-300/30 hover:bg-amber-300/10 hover:text-amber-100 transition-all duration-150">
+                      + {p.label}
                     </button>
                   )
                 })}
@@ -479,30 +515,15 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
 
               <div className="flex gap-2">
                 <input value={customPlaceInput} onChange={(e) => setCustomPlaceInput(e.target.value)}
-                  placeholder="Eigenen Ort hinzufügen…"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomEntity("place", "other", customPlaceInput); setCustomPlaceInput("") } }}
+                  placeholder="z.B. Grossmutters Küche, der alte Bahnhof …"
                   className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-300/40 focus:outline-none transition" />
                 <button type="button"
-                  onClick={() => {
-                    if (!customPlaceInput.trim()) return
-                    setNewPlaces([...newPlaces, { category: "other", label: customPlaceInput.trim() }])
-                    setCustomPlaceInput("")
-                  }}
+                  onClick={() => { addCustomEntity("place", "other", customPlaceInput); setCustomPlaceInput("") }}
                   className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white transition">
                   + Hinzufügen
                 </button>
               </div>
-
-              {newPlaces.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {newPlaces.map((p, i) => (
-                    <span key={i} className="flex items-center gap-1.5 rounded-full border border-amber-300/20 bg-amber-300/5 pl-3 pr-2 py-1 text-xs text-amber-200/70">
-                      📍 {p.label}
-                      <button type="button" onClick={() => setNewPlaces(newPlaces.filter((_, j) => j !== i))}
-                        className="hover:text-white text-amber-300/40 transition">✕</button>
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Buttons */}
