@@ -27,15 +27,13 @@ type Dream = {
 
 function formatMonthYear(dateString: string) {
   return new Date(dateString).toLocaleDateString("de-CH", {
-    month: "long",
-    year: "numeric",
+    month: "long", year: "numeric",
   })
 }
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("de-CH", {
-    day: "numeric",
-    month: "short",
+    day: "numeric", month: "short",
   })
 }
 
@@ -46,22 +44,24 @@ function truncateText(text: string, maxLength = 120) {
 
 function getToneTag(dream: Dream) {
   const tone = dream.dream_tone
-  if (tone === "nightmare" || dream.nightmare_flag) {
+  if (tone === "nightmare" || (!tone && dream.nightmare_flag))
     return { label: "Albtraum", style: "border-red-300/20 bg-red-300/10 text-red-100" }
-  }
-  if (tone === "pleasant") {
+  if (tone === "pleasant")
     return { label: "Schöner Traum", style: "border-emerald-300/20 bg-emerald-300/10 text-emerald-100" }
-  }
   return null
+}
+
+function clarityIcon(clarity: string) {
+  if (clarity === "Sehr klar") return "✨"
+  if (clarity === "Verschwommen") return "🌫"
+  return "◎"
 }
 
 export default function DreamsPage() {
   const [dreams, setDreams] = useState<Dream[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchDreams()
-  }, [])
+  useEffect(() => { fetchDreams() }, [])
 
   async function fetchDreams() {
     const { data, error } = await supabase
@@ -70,10 +70,7 @@ export default function DreamsPage() {
         *,
         dream_entry_entities (
           user_entity_id,
-          user_entities (
-            entity_type,
-            entity_label
-          )
+          user_entities ( entity_type, entity_label )
         )
       `)
       .order("created_at", { ascending: false })
@@ -93,15 +90,10 @@ export default function DreamsPage() {
     <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
       <div className="mx-auto max-w-4xl">
 
-        {/* Header */}
         <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">
-              Traumarchiv
-            </p>
-            <h1 className="mt-4 text-4xl font-semibold">
-              Deine Traum-Timeline
-            </h1>
+            <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">Traumarchiv</p>
+            <h1 className="mt-4 text-4xl font-semibold">Deine Traum-Timeline</h1>
             <p className="mt-3 text-sm leading-7 text-white/50">
               Deine Träume im zeitlichen Verlauf – ein Archiv deiner inneren Welt.
             </p>
@@ -114,9 +106,7 @@ export default function DreamsPage() {
           </Link>
         </div>
 
-        {loading && (
-          <p className="text-white/50">Träume werden geladen…</p>
-        )}
+        {loading && <p className="text-white/50">Träume werden geladen…</p>}
 
         {!loading && dreams.length === 0 && (
           <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-white/50 backdrop-blur">
@@ -139,13 +129,19 @@ export default function DreamsPage() {
                   ? dream.dominant_emotion.split(", ").filter(Boolean)
                   : []
 
-                const persons = dream.dream_entry_entities
-                  ?.filter((e) => e.user_entities?.entity_type === "person")
-                  .map((e) => e.user_entities.entity_label) ?? []
+                // Deduplizierte Entities
+                const persons = [...new Set(
+                  dream.dream_entry_entities
+                    ?.filter((e) => e.user_entities?.entity_type === "person")
+                    .map((e) => e.user_entities.entity_label) ?? []
+                )]
+                const places = [...new Set(
+                  dream.dream_entry_entities
+                    ?.filter((e) => e.user_entities?.entity_type === "place")
+                    .map((e) => e.user_entities.entity_label) ?? []
+                )]
 
-                const places = dream.dream_entry_entities
-                  ?.filter((e) => e.user_entities?.entity_type === "place")
-                  .map((e) => e.user_entities.entity_label) ?? []
+                const hasTags = emotions.length > 0 || persons.length > 0 || places.length > 0 || tone
 
                 return (
                   <div key={dream.id} className="relative flex gap-5">
@@ -154,25 +150,33 @@ export default function DreamsPage() {
                       <div className="absolute inset-[10px] rounded-full bg-cyan-200" />
                     </div>
 
-                    {/* Karte */}
                     <div className="flex-1 rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur transition hover:border-white/20">
 
-                      {/* Datum + Stimmung + Klarheit */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                        <p className="text-sm text-white/40">
-                          {formatDate(dream.created_at)}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {tone && (
-                            <span className={`rounded-full border px-3 py-1 text-xs ${tone.style}`}>
-                              {tone.label}
-                            </span>
-                          )}
+                      {/* Datum + Aktions-Buttons oben rechts */}
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm text-white/40">{formatDate(dream.created_at)}</p>
                           {dream.dream_clarity && (
-                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/50">
-                              {dream.dream_clarity}
+                            <span className="text-xs text-white/35">
+                              {clarityIcon(dream.dream_clarity)} {dream.dream_clarity}
                             </span>
                           )}
+                        </div>
+
+                        {/* Buttons oben rechts */}
+                        <div className="flex shrink-0 gap-2">
+                          <Link
+                            href={`/dreams/${dream.id}`}
+                            className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10 hover:text-white"
+                          >
+                            Ansehen
+                          </Link>
+                          <Link
+                            href={`/dreams/${dream.id}?edit=true`}
+                            className="rounded-xl bg-white px-3 py-1.5 text-xs font-medium text-[#070b14] transition hover:scale-[1.02]"
+                          >
+                            Bearbeiten
+                          </Link>
                         </div>
                       </div>
 
@@ -181,12 +185,17 @@ export default function DreamsPage() {
                         {truncateText(dream.raw_input_text)}
                       </p>
 
-                      {/* Tags: Emotionen, Personen, Orte */}
-                      {(emotions.length > 0 || persons.length > 0 || places.length > 0 || dream.familiar_person_flag || dream.familiar_place_flag) && (
-                        <div className="flex flex-wrap gap-2 mb-5">
+                      {/* Tags */}
+                      {hasTags && (
+                        <div className="flex flex-wrap gap-2">
+                          {tone && (
+                            <span className={`rounded-full border px-3 py-1 text-xs ${tone.style}`}>
+                              {tone.label}
+                            </span>
+                          )}
                           {emotions.map((emotion) => (
                             <span key={emotion} className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs text-cyan-100">
-                              {emotion}
+                              💭 {emotion}
                             </span>
                           ))}
                           {persons.map((person) => (
@@ -199,34 +208,8 @@ export default function DreamsPage() {
                               📍 {place}
                             </span>
                           ))}
-                          {persons.length === 0 && dream.familiar_person_flag && (
-                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/50">
-                              Bekannte Person
-                            </span>
-                          )}
-                          {places.length === 0 && dream.familiar_place_flag && (
-                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/50">
-                              Bekannter Ort
-                            </span>
-                          )}
                         </div>
                       )}
-
-                      {/* Aktions-Buttons */}
-                      <div className="flex gap-3">
-                        <Link
-                          href={`/dreams/${dream.id}`}
-                          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
-                        >
-                          Ansehen
-                        </Link>
-                        <Link
-                          href={`/dreams/${dream.id}?edit=true`}
-                          className="rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-xs font-medium text-cyan-100 transition hover:bg-cyan-300/20"
-                        >
-                          Bearbeiten
-                        </Link>
-                      </div>
 
                     </div>
                   </div>
