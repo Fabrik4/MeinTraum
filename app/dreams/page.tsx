@@ -34,6 +34,11 @@ function truncateText(text: string, maxLength = 140) {
   return text.slice(0, maxLength).trim() + "…"
 }
 
+function dreamToneLabel(dream: Dream) {
+  if (dream.nightmare_flag) return { label: "Albtraum", color: "border-red-300/20 bg-red-300/10 text-red-100" }
+  return null
+}
+
 export default function DreamsPage() {
   const [dreams, setDreams] = useState<Dream[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,10 +53,7 @@ export default function DreamsPage() {
       .select("*")
       .order("created_at", { ascending: false })
 
-    if (!error && data) {
-      setDreams(data)
-    }
-
+    if (!error && data) setDreams(data)
     setLoading(false)
   }
 
@@ -65,6 +67,7 @@ export default function DreamsPage() {
   return (
     <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
       <div className="mx-auto max-w-4xl">
+
         <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">
@@ -73,49 +76,53 @@ export default function DreamsPage() {
             <h1 className="mt-4 text-4xl font-semibold">
               Deine Traum-Timeline
             </h1>
-            <p className="mt-4 max-w-2xl leading-8 text-white/70">
-              Hier siehst du deine gespeicherten Träume im zeitlichen Verlauf.
-              Mit der Zeit entsteht daraus ein persönliches Archiv deiner inneren Welt.
+            <p className="mt-3 text-sm leading-7 text-white/50">
+              Deine Träume im zeitlichen Verlauf – ein Archiv deiner inneren Welt.
             </p>
           </div>
-
           <Link
             href="/entry"
-            className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-medium text-[#070b14] transition hover:scale-[1.02]"
+            className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-medium text-[#070b14] transition hover:scale-[1.02] active:scale-[0.99]"
           >
             Neuer Traum
           </Link>
         </div>
 
         {loading && (
-          <p className="text-white/60">Träume werden geladen...</p>
+          <p className="text-white/50">Träume werden geladen…</p>
         )}
 
         {!loading && dreams.length === 0 && (
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-white/65 backdrop-blur">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-white/50 backdrop-blur">
             Noch keine Träume gespeichert.
           </div>
         )}
 
-        {!loading &&
-          Object.entries(groupedDreams).map(([month, monthDreams]) => (
-            <section key={month} className="mb-14">
-              <h2 className="mb-8 text-xl font-semibold text-white/90">
-                {month}
-              </h2>
+        {!loading && Object.entries(groupedDreams).map(([month, monthDreams]) => (
+          <section key={month} className="mb-14">
+            <h2 className="mb-8 text-base font-medium uppercase tracking-[0.15em] text-white/40">
+              {month}
+            </h2>
 
-              <div className="relative space-y-8">
-                <div className="absolute bottom-0 left-[17px] top-0 w-px bg-white/10" />
+            <div className="relative space-y-6">
+              <div className="absolute bottom-0 left-[17px] top-0 w-px bg-white/8" />
 
-                {monthDreams.map((dream) => (
+              {monthDreams.map((dream) => {
+                const tone = dreamToneLabel(dream)
+                const emotions = dream.dominant_emotion
+                  ? dream.dominant_emotion.split(", ").filter(Boolean)
+                  : []
+
+                return (
                   <div key={dream.id} className="relative flex gap-5">
-                    <div className="relative z-10 mt-2 h-9 w-9 shrink-0 rounded-full border border-cyan-300/20 bg-cyan-300/10 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
+                    {/* Timeline dot */}
+                    <div className="relative z-10 mt-3 h-9 w-9 shrink-0 rounded-full border border-cyan-300/20 bg-cyan-300/10 shadow-[0_0_20px_rgba(34,211,238,0.08)]">
                       <div className="absolute inset-[10px] rounded-full bg-cyan-200" />
                     </div>
 
                     <Link
                       href={`/dreams/${dream.id}`}
-                      className="block flex-1 rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur transition hover:bg-white/10"
+                      className="block flex-1 rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur transition hover:bg-white/8 hover:border-white/20"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="text-sm text-white/40">
@@ -123,47 +130,52 @@ export default function DreamsPage() {
                         </p>
 
                         <div className="flex flex-wrap gap-2">
-                          {dream.dominant_emotion && (
-                            <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs text-cyan-100">
-                              {dream.dominant_emotion}
+                          {emotions.map((emotion) => (
+                            <span
+                              key={emotion}
+                              className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs text-cyan-100"
+                            >
+                              {emotion}
                             </span>
-                          )}
+                          ))}
 
-                          {dream.nightmare_flag && (
-                            <span className="rounded-full border border-red-300/20 bg-red-300/10 px-3 py-1 text-xs text-red-100">
-                              Albtraum
+                          {tone && (
+                            <span className={`rounded-full border px-3 py-1 text-xs ${tone.color}`}>
+                              {tone.label}
                             </span>
                           )}
 
                           {dream.familiar_person_flag && (
-                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">
                               Bekannte Person
                             </span>
                           )}
 
                           {dream.familiar_place_flag && (
-                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">
                               Bekannter Ort
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <p className="mt-4 leading-8 text-white/85">
+                      <p className="mt-4 leading-7 text-white/80">
                         {truncateText(dream.raw_input_text)}
                       </p>
 
                       {dream.dream_clarity && (
-                        <p className="mt-4 text-sm text-white/45">
+                        <p className="mt-3 text-xs text-white/35">
                           Klarheit: {dream.dream_clarity}
                         </p>
                       )}
                     </Link>
                   </div>
-                ))}
-              </div>
-            </section>
-          ))}
+                )
+              })}
+            </div>
+          </section>
+        ))}
+
       </div>
     </main>
   )
