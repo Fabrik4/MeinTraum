@@ -2,7 +2,56 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { createClient } from "@supabase/supabase-js"
+import { supabase } from "@/lib/supabase"
+
+async function getOrCreateUserEntity(
+  userId: string,
+  type: string,
+  category: string,
+  label: string
+) {
+  const { data: existing } = await supabase
+    .from("user_entities")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("entity_category", category)
+    .eq("entity_label", label)
+    .maybeSingle()
+
+  if (existing) return existing.id
+
+  const { data } = await supabase
+    .from("user_entities")
+    .insert({
+      user_id: userId,
+      entity_type: type,
+      entity_category: category,
+      entity_label: label,
+      is_confirmed: true,
+    })
+    .select()
+    .single()
+
+  return data.id
+}
+
+async function linkEntityToDream(dreamId: number, entityId: number) {
+  await supabase.from("dream_entry_entities").insert({
+    dream_entry_id: dreamId,
+    user_entity_id: entityId,
+    source: "manual",
+    confidence: 1,
+  })
+}
+
+const PERSON_PRESETS = [
+  { category: "mother", label: "Mutter" },
+  { category: "father", label: "Vater" },
+  { category: "partner", label: "Partner" },
+  { category: "child", label: "Kind" },
+  { category: "friend", label: "Freund" },
+  { category: "boss", label: "Chef" },
+]
 
 type Dream = {
   id: number
@@ -39,7 +88,7 @@ export default function DreamDetailPage({
   const [message, setMessage] = useState("")
   const [isEditing, setIsEditing] = useState(false)
 
-  const [resolvedId, setResolvedId] = useState<string>("")
+  const [resolvedId, setResolvedId] = useState("")
 
   const [rawInputText, setRawInputText] = useState("")
   const [dominantEmotion, setDominantEmotion] = useState("")
@@ -47,6 +96,10 @@ export default function DreamDetailPage({
   const [familiarPersonFlag, setFamiliarPersonFlag] = useState(false)
   const [familiarPlaceFlag, setFamiliarPlaceFlag] = useState(false)
   const [nightmareFlag, setNightmareFlag] = useState(false)
+
+  const [people, setPeople] = useState<
+    { category: string; label: string }[]
+  >([])
 
   useEffect(() => {
     async function resolveParams() {
@@ -62,17 +115,6 @@ export default function DreamDetailPage({
   }, [resolvedId])
 
   async function fetchDream() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (!supabaseUrl || !supabaseKey) {
-      setMessage("Konfigurationsfehler.")
-      setLoading(false)
-      return
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
     const { data, error } = await supabase
       .from("dream_entries")
       .select("*")
@@ -92,6 +134,7 @@ export default function DreamDetailPage({
     setFamiliarPersonFlag(data.familiar_person_flag || false)
     setFamiliarPlaceFlag(data.familiar_place_flag || false)
     setNightmareFlag(data.nightmare_flag || false)
+
     setLoading(false)
   }
 
@@ -99,17 +142,6 @@ export default function DreamDetailPage({
     e.preventDefault()
     setSaving(true)
     setMessage("")
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (!supabaseUrl || !supabaseKey) {
-      setMessage("Konfigurationsfehler.")
-      setSaving(false)
-      return
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey)
 
     const { error } = await supabase
       .from("dream_entries")
@@ -125,12 +157,30 @@ export default function DreamDetailPage({
 
     if (error) {
       setMessage("Änderungen konnten nicht gespeichert werden.")
-    } else {
-      setMessage("Änderungen gespeichert.")
-      setIsEditing(false)
-      fetchDream()
+      setSaving(false)
+      return
     }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (user) {
+      for (const person of people) {
+        const entityId = await getOrCreateUserEntity(
+          user.id,
+          "person",
+          person.category,
+          person.label
+        )
+
+        await linkEntityToDream(Number(resolvedId), entityId)
+      }
+    }
+
+    setMessage("Änderungen gespeichert.")
+    setIsEditing(false)
+    fetchDream()
     setSaving(false)
   }
 
@@ -149,12 +199,6 @@ export default function DreamDetailPage({
       <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
         <div className="mx-auto max-w-3xl">
           <p className="text-white/60">Traum nicht gefunden.</p>
-          <Link
-            href="/dreams"
-            className="mt-6 inline-flex rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
-          >
-            ← Zurück zum Traumarchiv
-          </Link>
         </div>
       </main>
     )
@@ -163,126 +207,50 @@ export default function DreamDetailPage({
   return (
     <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+
+        <div className="mb-8 flex justify-between">
           <Link
             href="/dreams"
-            className="inline-flex rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+            className="rounded-xl border border-white/10 px-4 py-2 text-sm"
           >
-            ← Zurück zum Traumarchiv
+            ← Zurück
           </Link>
 
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="rounded-2xl bg-white px-5 py-3 text-sm font-medium text-[#070b14] transition hover:scale-[1.02]"
+              className="rounded-xl bg-white px-4 py-2 text-sm text-black"
             >
-              Traum bearbeiten
+              Bearbeiten
             </button>
           )}
         </div>
 
-        <p className="text-sm text-white/40">
-          {new Date(dream.created_at).toLocaleDateString("de-CH", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
-
-        <h1 className="mt-4 text-4xl font-semibold">
-          {isEditing ? "Traum bearbeiten" : "Traumdetails"}
-        </h1>
-
-        {!isEditing ? (
-          <div className="mt-10 space-y-6 rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-            <div>
-              <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">
-                Traumtext
-              </p>
-              <p className="mt-4 whitespace-pre-line leading-8 text-white/80">
-                {dream.raw_input_text}
-              </p>
-            </div>
-
-            {dream.dominant_emotion && (
-              <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">
-                  Dominante Emotion
-                </p>
-                <p className="mt-2 text-white/80">{dream.dominant_emotion}</p>
-              </div>
-            )}
-
-            {dream.dream_clarity && (
-              <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">
-                  Klarheit
-                </p>
-                <p className="mt-2 text-white/80">{dream.dream_clarity}</p>
-              </div>
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-[#0b1220] p-4">
-                <p className="text-xs text-white/40">Bekannte Person</p>
-                <p className="mt-2 text-white/80">
-                  {dream.familiar_person_flag ? "Ja" : "Nein"}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-[#0b1220] p-4">
-                <p className="text-xs text-white/40">Bekannter Ort</p>
-                <p className="mt-2 text-white/80">
-                  {dream.familiar_place_flag ? "Ja" : "Nein"}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-[#0b1220] p-4">
-                <p className="text-xs text-white/40">Albtraum</p>
-                <p className="mt-2 text-white/80">
-                  {dream.nightmare_flag ? "Ja" : "Nein"}
-                </p>
-              </div>
-            </div>
-
-            {message && (
-              <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100">
-                {message}
-              </div>
-            )}
+        {!isEditing && (
+          <div className="space-y-6">
+            <p>{dream.raw_input_text}</p>
           </div>
-        ) : (
-          <form
-            onSubmit={handleSave}
-            className="mt-10 space-y-8 rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur"
-          >
-            <div>
-              <label className="mb-3 block text-sm font-medium text-white/80">
-                Traumtext oder Stichworte
-              </label>
-              <textarea
-                value={rawInputText}
-                onChange={(e) => setRawInputText(e.target.value)}
-                rows={8}
-                className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/35 focus:border-cyan-300/40 focus:outline-none"
-              />
-            </div>
+        )}
+
+        {isEditing && (
+          <form onSubmit={handleSave} className="space-y-8">
+
+            <textarea
+              value={rawInputText}
+              onChange={(e) => setRawInputText(e.target.value)}
+              className="w-full rounded-xl bg-white/10 p-4"
+            />
 
             <div>
-              <p className="mb-3 text-sm font-medium text-white/80">
-                Dominante Emotion
-              </p>
-              <div className="flex flex-wrap gap-3">
+              <p className="mb-2 text-sm">Emotion</p>
+
+              <div className="flex flex-wrap gap-2">
                 {emotions.map((emotion) => (
                   <button
-                    key={emotion}
                     type="button"
+                    key={emotion}
                     onClick={() => setDominantEmotion(emotion)}
-                    className={`rounded-full px-4 py-2 text-sm transition ${
-                      dominantEmotion === emotion
-                        ? "border border-cyan-300/30 bg-cyan-300/20 text-cyan-100"
-                        : "border border-white/10 bg-white/5 text-white/70"
-                    }`}
+                    className="rounded-full border border-white/20 px-3 py-1 text-sm"
                   >
                     {emotion}
                   </button>
@@ -291,90 +259,47 @@ export default function DreamDetailPage({
             </div>
 
             <div>
-              <p className="mb-3 text-sm font-medium text-white/80">
-                Klarheit des Traums
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {clarityOptions.map((clarity) => (
+              <p className="mb-2 text-sm">Personen</p>
+
+              <div className="flex flex-wrap gap-2 mb-4">
+                {PERSON_PRESETS.map((p) => (
                   <button
-                    key={clarity}
+                    key={p.category}
                     type="button"
-                    onClick={() => setDreamClarity(clarity)}
-                    className={`rounded-full px-4 py-2 text-sm transition ${
-                      dreamClarity === clarity
-                        ? "border border-cyan-300/30 bg-cyan-300/20 text-cyan-100"
-                        : "border border-white/10 bg-white/5 text-white/70"
-                    }`}
+                    onClick={() =>
+                      setPeople([...people, { category: p.category, label: p.label }])
+                    }
+                    className="rounded-full border border-white/20 px-3 py-1 text-sm"
                   >
-                    {clarity}
+                    {p.label}
                   </button>
                 ))}
               </div>
+
+              {people.map((p, i) => (
+                <input
+                  key={i}
+                  value={p.label}
+                  onChange={(e) => {
+                    const copy = [...people]
+                    copy[i].label = e.target.value
+                    setPeople(copy)
+                  }}
+                  className="w-full rounded-xl bg-white/10 px-4 py-2 mb-2"
+                />
+              ))}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1220] px-4 py-3">
-                <input
-                  type="checkbox"
-                  checked={familiarPersonFlag}
-                  onChange={(e) => setFamiliarPersonFlag(e.target.checked)}
-                />
-                <span className="text-sm text-white/80">Bekannte Person</span>
-              </label>
+            <button
+              type="submit"
+              className="rounded-xl bg-white px-6 py-3 text-black"
+            >
+              Speichern
+            </button>
 
-              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1220] px-4 py-3">
-                <input
-                  type="checkbox"
-                  checked={familiarPlaceFlag}
-                  onChange={(e) => setFamiliarPlaceFlag(e.target.checked)}
-                />
-                <span className="text-sm text-white/80">Bekannter Ort</span>
-              </label>
-
-              <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1220] px-4 py-3">
-                <input
-                  type="checkbox"
-                  checked={nightmareFlag}
-                  onChange={(e) => setNightmareFlag(e.target.checked)}
-                />
-                <span className="text-sm text-white/80">Albtraum</span>
-              </label>
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-2xl bg-white px-6 py-3 font-medium text-[#070b14] transition hover:scale-[1.02] disabled:opacity-60"
-              >
-                {saving ? "Speichert..." : "Änderungen speichern"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditing(false)
-                  setMessage("")
-                  setRawInputText(dream.raw_input_text || "")
-                  setDominantEmotion(dream.dominant_emotion || "")
-                  setDreamClarity(dream.dream_clarity || "")
-                  setFamiliarPersonFlag(dream.familiar_person_flag || false)
-                  setFamiliarPlaceFlag(dream.familiar_place_flag || false)
-                  setNightmareFlag(dream.nightmare_flag || false)
-                }}
-                className="rounded-2xl border border-white/15 bg-white/5 px-6 py-3 font-medium text-white transition hover:bg-white/10"
-              >
-                Abbrechen
-              </button>
-            </div>
-
-            {message && (
-              <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100">
-                {message}
-              </div>
-            )}
           </form>
         )}
+
       </div>
     </main>
   )
