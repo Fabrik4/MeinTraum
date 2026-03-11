@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@supabase/supabase-js"
+import { supabase } from "@/lib/supabase"
 
 const emotions = [
   "Angst",
@@ -23,48 +23,65 @@ export default function DreamEntryPage() {
   const [familiarPersonFlag, setFamiliarPersonFlag] = useState(false)
   const [familiarPlaceFlag, setFamiliarPlaceFlag] = useState(false)
   const [nightmareFlag, setNightmareFlag] = useState(false)
+  const [dreamedAt, setDreamedAt] = useState(() => {
+    const now = new Date()
+    const tzOffset = now.getTimezoneOffset() * 60000
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16)
+  })
+
   const [message, setMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const resetForm = () => {
+    setRawInputText("")
+    setDominantEmotion("")
+    setDreamClarity("")
+    setFamiliarPersonFlag(false)
+    setFamiliarPlaceFlag(false)
+    setNightmareFlag(false)
+
+    const now = new Date()
+    const tzOffset = now.getTimezoneOffset() * 60000
+    setDreamedAt(new Date(now.getTime() - tzOffset).toISOString().slice(0, 16))
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
     setMessage("")
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
 
-    if (!supabaseUrl || !supabaseKey) {
-      setMessage("Konfigurationsfehler. Bitte später erneut versuchen.")
+    if (userError || !user) {
+      setMessage("Bitte logge dich zuerst ein, bevor du einen Traum speicherst.")
       setIsSubmitting(false)
       return
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
     const { error } = await supabase.from("dream_entries").insert([
       {
+        user_id: user.id,
         raw_input_text: rawInputText,
         dominant_emotion: dominantEmotion || null,
         dream_clarity: dreamClarity || null,
         familiar_person_flag: familiarPersonFlag,
         familiar_place_flag: familiarPlaceFlag,
         nightmare_flag: nightmareFlag,
+        dreamed_at: dreamedAt ? new Date(dreamedAt).toISOString() : new Date().toISOString(),
       },
     ])
 
     if (error) {
       setMessage("Der Traum konnte nicht gespeichert werden.")
-    } else {
-      setMessage("Traum gespeichert.")
-      setRawInputText("")
-      setDominantEmotion("")
-      setDreamClarity("")
-      setFamiliarPersonFlag(false)
-      setFamiliarPlaceFlag(false)
-      setNightmareFlag(false)
+      setIsSubmitting(false)
+      return
     }
 
+    setMessage("Traum gespeichert.")
+    resetForm()
     setIsSubmitting(false)
   }
 
@@ -100,6 +117,21 @@ export default function DreamEntryPage() {
           </div>
 
           <div>
+            <label className="mb-3 block text-sm font-medium text-white/80">
+              Wann war dieser Traum?
+            </label>
+            <input
+              type="datetime-local"
+              value={dreamedAt}
+              onChange={(e) => setDreamedAt(e.target.value)}
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white focus:border-cyan-300/40 focus:outline-none"
+            />
+            <p className="mt-2 text-sm text-white/45">
+              Falls du einen Traum nachträglich erfasst, kannst du hier Datum und Uhrzeit anpassen.
+            </p>
+          </div>
+
+          <div>
             <p className="mb-3 text-sm font-medium text-white/80">
               Dominante Emotion
             </p>
@@ -109,10 +141,10 @@ export default function DreamEntryPage() {
                   key={emotion}
                   type="button"
                   onClick={() => setDominantEmotion(emotion)}
-                  className={`rounded-full px-4 py-2 text-sm transition ${
+                  className={`rounded-full border px-4 py-2 text-sm transition ${
                     dominantEmotion === emotion
-                      ? "bg-cyan-300/20 text-cyan-100 border border-cyan-300/30"
-                      : "bg-white/5 text-white/70 border border-white/10"
+                      ? "border-cyan-300/30 bg-cyan-300/20 text-cyan-100"
+                      : "border-white/10 bg-white/5 text-white/70"
                   }`}
                 >
                   {emotion}
@@ -131,10 +163,10 @@ export default function DreamEntryPage() {
                   key={clarity}
                   type="button"
                   onClick={() => setDreamClarity(clarity)}
-                  className={`rounded-full px-4 py-2 text-sm transition ${
+                  className={`rounded-full border px-4 py-2 text-sm transition ${
                     dreamClarity === clarity
-                      ? "bg-cyan-300/20 text-cyan-100 border border-cyan-300/30"
-                      : "bg-white/5 text-white/70 border border-white/10"
+                      ? "border-cyan-300/30 bg-cyan-300/20 text-cyan-100"
+                      : "border-white/10 bg-white/5 text-white/70"
                   }`}
                 >
                   {clarity}
