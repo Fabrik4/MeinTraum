@@ -201,7 +201,7 @@ export default function PatternsPage() {
   const moodTrendColor = data?.moodTrend === "rising" ? "text-emerald-300" : data?.moodTrend === "falling" ? "text-red-300" : "text-white/50"
 
   if (authLoading || loading) return (
-    <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
+    <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
       <div className="mx-auto max-w-4xl">
         <div className="h-8 w-48 rounded-xl bg-white/5 animate-pulse mb-4" />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -212,7 +212,7 @@ export default function PatternsPage() {
   )
 
   return (
-    <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
+    <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
       <div className="mx-auto max-w-4xl space-y-10">
 
         {/* Header */}

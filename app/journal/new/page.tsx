@@ -96,7 +96,7 @@ export default function JournalNewPage() {
   // ── Post-Save Screen ─────────────────────────────────────
   if (savedId) {
     return (
-      <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
+      <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
         <div className="mx-auto max-w-2xl">
           <div className="mb-12 text-center">
             <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full border border-amber-300/20 bg-amber-300/10 text-3xl">
@@ -129,7 +129,7 @@ export default function JournalNewPage() {
   return (
     <>
       {!authLoading && !user && <AuthBanner />}
-      <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
+      <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
         <div className="mx-auto max-w-2xl">
           <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Neuer Eintrag</p>
           <h1 className="mt-4 text-4xl font-semibold">Wie geht es dir?</h1>

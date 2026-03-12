@@ -100,7 +100,7 @@ export default function DashboardPage() {
   )
 
   return (
-    <main className="min-h-screen bg-[#070b14] px-5 py-12 text-white">
+    <main className="min-h-screen bg-[#070b14] px-5 pt-5 pb-24 md:py-12 text-white">
       <div className="mx-auto max-w-4xl space-y-10">
 
         {/* Begrüssung */}
