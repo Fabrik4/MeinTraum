@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/useAuth"
+import { useStreak } from "@/lib/useStreak"
 
 type Stats = {
   totalDreams: number
@@ -34,6 +35,10 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [displayName, setDisplayName] = useState<string | null>(null)
+  const [hasTodayEntry, setHasTodayEntry] = useState<boolean | null>(null)
+  const [checkinDone, setCheckinDone] = useState(false)
+  const [checkinLoading, setCheckinLoading] = useState<string | null>(null)
+  const { streak, reload: reloadStreak } = useStreak(user?.id ?? null)
 
   useEffect(() => {
     if (!authLoading && user) fetchAll()
@@ -42,12 +47,14 @@ export default function DashboardPage() {
   async function fetchAll() {
     const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString()
     const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString()
+    const todayStart = new Date().toISOString().slice(0, 10) + "T00:00:00.000Z"
 
     const [
       lastDreamRes, lastJournalRes,
       totalDreamsRes, totalJournalsRes,
       weekDreamsRes, weekJournalsRes,
       moodRes, profileRes,
+      todayDreamRes, todayJournalRes,
     ] = await Promise.all([
       supabase.from("dream_entries").select("id, raw_input_text, created_at").order("created_at", { ascending: false }).limit(1),
       supabase.from("journal_entries").select("id, body_text, mood_score, created_at").order("created_at", { ascending: false }).limit(1),
@@ -57,7 +64,11 @@ export default function DashboardPage() {
       supabase.from("journal_entries").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
       supabase.from("journal_entries").select("mood_score").gte("created_at", monthAgo).not("mood_score", "is", null),
       supabase.from("user_profiles").select("display_name").eq("id", user!.id).maybeSingle(),
+      supabase.from("dream_entries").select("id", { count: "exact", head: true }).gte("created_at", todayStart),
+      supabase.from("journal_entries").select("id", { count: "exact", head: true }).gte("created_at", todayStart),
     ])
+
+    setHasTodayEntry((todayDreamRes.count ?? 0) + (todayJournalRes.count ?? 0) > 0)
 
     const avgMood = moodRes.data?.length
       ? Math.round(moodRes.data.reduce((s: number, r: any) => s + r.mood_score, 0) / moodRes.data.length * 10) / 10
@@ -73,6 +84,20 @@ export default function DashboardPage() {
       lastJournal: lastJournalRes.data?.[0] ? { id: lastJournalRes.data[0].id, text: lastJournalRes.data[0].body_text, mood_score: lastJournalRes.data[0].mood_score, created_at: lastJournalRes.data[0].created_at } : null,
     })
     setLoading(false)
+  }
+
+  async function handleCheckin(type: "no_memory" | "no_sleep") {
+    if (!user) return
+    setCheckinLoading(type)
+    await fetch("/api/checkin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, user_id: user.id }),
+    })
+    setCheckinDone(true)
+    setHasTodayEntry(true)
+    reloadStreak()
+    setCheckinLoading(null)
   }
 
   const greeting = () => {
@@ -111,7 +136,44 @@ export default function DashboardPage() {
               {loading ? "Wird geladen…" : `${(stats?.totalDreams ?? 0) + (stats?.totalJournal ?? 0)} Einträge in deinem Archiv`}
             </p>
           </div>
+          {streak > 0 && (
+            <div className="flex items-center gap-2 rounded-2xl border border-orange-300/20 bg-orange-300/8 px-4 py-2.5">
+              <span className="text-lg">🔥</span>
+              <div>
+                <p className="text-sm font-semibold text-orange-200">{streak} {streak === 1 ? "Tag" : "Tage"}</p>
+                <p className="text-xs text-orange-300/50">Bewusste Morgenroutine</p>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Morning Check-in Banner */}
+        {!loading && !hasTodayEntry && !checkinDone && (
+          <div className="rounded-3xl border border-cyan-300/15 bg-cyan-300/5 p-5">
+            <p className="text-sm font-medium text-white/80 mb-4">Wie war deine Nacht?</p>
+            <div className="grid grid-cols-3 gap-2">
+              <Link href="/entry"
+                className="flex flex-col items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-300/8 px-3 py-4 text-center transition hover:bg-cyan-300/15 active:scale-[0.98]">
+                <span className="text-xl">🌙</span>
+                <span className="text-xs font-medium text-cyan-100">Traum erfassen</span>
+              </Link>
+              <button
+                onClick={() => handleCheckin("no_memory")}
+                disabled={checkinLoading !== null}
+                className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-4 text-center transition hover:bg-white/8 active:scale-[0.98] disabled:opacity-50">
+                <span className="text-xl">{checkinLoading === "no_memory" ? "⏳" : "😶"}</span>
+                <span className="text-xs font-medium text-white/60">Nichts erinnert</span>
+              </button>
+              <button
+                onClick={() => handleCheckin("no_sleep")}
+                disabled={checkinLoading !== null}
+                className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-4 text-center transition hover:bg-white/8 active:scale-[0.98] disabled:opacity-50">
+                <span className="text-xl">{checkinLoading === "no_sleep" ? "⏳" : "💤"}</span>
+                <span className="text-xs font-medium text-white/60">Nicht geschlafen</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Quick-Add */}
         <div className="grid gap-3 sm:grid-cols-2">
