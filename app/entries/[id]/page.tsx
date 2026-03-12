@@ -66,9 +66,8 @@ const ENERGY_LABELS: Record<number, string> = {
 }
 const PRESET_TAGS = ["Arbeit","Familie","Beziehung","Gesundheit","Sport","Schlaf","Stress","Entspannung","Soziales","Kreativität"]
 
-// Stimmungsfarben: sanfter
 function moodColor(score: number) {
-  if (score <= 4) return "text-amber-300/80"
+  if (score <= 4) return "text-rose-300/80"
   if (score <= 6) return "text-amber-300/80"
   return "text-emerald-300/80"
 }
@@ -79,7 +78,6 @@ function moodLabel(score: number) {
   }
   return labels[score] ?? ""
 }
-
 function clarityToIndex(v: string | null) { return v === "Sehr klar" ? 2 : v === "Verschwommen" ? 0 : 1 }
 function toneToIndex(tone: string | null, flag: boolean) {
   return tone === "nightmare" || (!tone && flag) ? 0 : tone === "pleasant" ? 2 : 1
@@ -101,7 +99,6 @@ async function getOrCreateEntity(userId: string, type: string, cat: string, labe
     .select("id").single()
   return data?.id ?? null
 }
-
 async function linkEntity(entryId: number, entityId: number, entryType: EntryType) {
   const table = entryType === "dream" ? "dream_entry_entities" : "journal_entry_entities"
   const idCol = entryType === "dream" ? "dream_entry_id" : "journal_entry_id"
@@ -109,7 +106,6 @@ async function linkEntity(entryId: number, entityId: number, entryType: EntryTyp
   if (ex) return
   await supabase.from(table).insert({ [idCol]: entryId, user_entity_id: entityId, source: "manual", confidence: 1 })
 }
-
 async function unlinkEntity(linkId: number, entryType: EntryType) {
   const table = entryType === "dream" ? "dream_entry_entities" : "journal_entry_entities"
   await supabase.from(table).delete().eq("id", linkId)
@@ -308,10 +304,8 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
 
   const linkedPersons = linkedEntities.filter((e) => e.entity_type === "person")
   const linkedPlaces  = linkedEntities.filter((e) => e.entity_type === "place")
-
   const toggleEmotion = (em: string) =>
     setSelectedEmotions((prev) => prev.includes(em) ? prev.filter((x) => x !== em) : [...prev, em])
-
   const toggleTag = (tag: string) =>
     setTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])
 
@@ -360,8 +354,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   async function handleSave(e: React.FormEvent) {
     e.preventDefault(); setSaving(true); setMessage("")
     const { data: { user } } = await supabase.auth.getUser()
-
-    // Umbenannte Entities updaten
     if (user) {
       for (const entity of linkedEntities) {
         if (entity.display_label !== entity.entity_label) {
@@ -371,7 +363,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
         }
       }
     }
-
     if (entryType === "dream") {
       const tone = TONE_OPTIONS[dreamTone].value
       await supabase.from("dream_entries").update({
@@ -395,7 +386,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
         familiar_place_flag: linkedPlaces.length > 0,
       }).eq("id", resolvedId)
     }
-
     setMessage("Gespeichert. ✓"); setIsEditing(false)
     fetchAll(entryType); setSaving(false)
   }
@@ -436,7 +426,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
     setCurrentAnalysis(null); setSavingAnalysis(false); fetchAll(entryType)
   }
 
-  // ── Chat Kontext ──────────────────────────────────────────
+  // ── Chat Kontext ── FIX: dreamId/journalId hinzugefügt ──────
   const chatContext = entryType === "dream" ? {
     type: "dream" as const,
     text: dreamEntry?.raw_input_text ?? "",
@@ -445,6 +435,8 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
     clarity: dreamEntry?.dream_clarity,
     persons: linkedPersons.map((e) => e.display_label),
     places: linkedPlaces.map((e) => e.display_label),
+    dreamId: dreamEntry?.id,           // ← NEU
+    journalId: undefined,
   } : {
     type: "journal" as const,
     text: journalEntry?.body_text ?? "",
@@ -452,6 +444,8 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
     tags: journalEntry?.tags,
     persons: linkedPersons.map((e) => e.display_label),
     places: linkedPlaces.map((e) => e.display_label),
+    dreamId: undefined,
+    journalId: journalEntry?.id,       // ← NEU
   }
 
   const accent = entryType === "journal" ? "amber" : "cyan"
@@ -517,7 +511,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
             <p className="leading-8 text-white/85 whitespace-pre-wrap text-lg">{mainText}</p>
 
             <div className="flex flex-wrap gap-2">
-              {/* Dream-spezifische Tags */}
               {isDream && dreamEntry?.dream_tone && dreamEntry.dream_tone !== "neutral" && (
                 <span className={`rounded-full border px-3 py-1 text-sm ${dreamEntry.dream_tone === "nightmare" ? "border-red-300/15 bg-red-300/8 text-red-200" : "border-emerald-300/15 bg-emerald-300/8 text-emerald-200"}`}>
                   {dreamEntry.dream_tone === "nightmare" ? "Albtraum" : "Schöner Traum"}
@@ -526,8 +519,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               {isDream && dreamEntry?.dream_clarity && (
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/55">✨ {dreamEntry.dream_clarity}</span>
               )}
-
-              {/* Journal-spezifische Tags */}
               {!isDream && journalEntry?.mood_score && (
                 <span className={`rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium ${moodColor(journalEntry.mood_score)}`}>
                   ☀️ {journalEntry.mood_score}/10 – {moodLabel(journalEntry.mood_score)}
@@ -546,8 +537,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               {!isDream && journalEntry?.tags?.map((tag) => (
                 <span key={tag} className="rounded-full border border-amber-300/15 bg-amber-300/8 px-3 py-1 text-sm text-amber-200">{tag}</span>
               ))}
-
-              {/* Geteilte Tags */}
               {displayEmotions.map((em) => (
                 <span key={em} className={`rounded-full border px-3 py-1 text-sm ${accent === "amber" ? "border-amber-300/15 bg-amber-300/8 text-amber-200" : "border-cyan-300/15 bg-cyan-300/8 text-cyan-200"}`}>
                   💭 {em}
@@ -623,13 +612,9 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
         {/* ── Bearbeiten ── */}
         {isEditing && (
           <form onSubmit={handleSave} className="space-y-10">
-
-            {/* Haupttext + Expand */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-medium text-white/80">
-                  {isDream ? "Traumtext" : "Eintrag"}
-                </label>
+                <label className="text-sm font-medium text-white/80">{isDream ? "Traumtext" : "Eintrag"}</label>
                 <button type="button" onClick={expandText} disabled={expanding}
                   className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs transition hover:opacity-80 disabled:opacity-40 ${accent === "amber" ? "border-amber-300/20 bg-amber-300/5 text-amber-200" : "border-cyan-300/20 bg-cyan-300/5 text-cyan-200"}`}>
                   {expanding ? <><span className="animate-spin">✦</span> Generiere…</> : <>✨ Aus Stichworten</>}
@@ -652,11 +637,8 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               )}
             </div>
 
-            {/* Datum */}
             <div>
-              <label className="mb-3 block text-sm font-medium text-white/80">
-                {isDream ? "Wann war dieser Traum?" : "Datum"}
-              </label>
+              <label className="mb-3 block text-sm font-medium text-white/80">{isDream ? "Wann war dieser Traum?" : "Datum"}</label>
               {isDream
                 ? <input type="datetime-local" value={dreamedAt} onChange={(e) => setDreamedAt(e.target.value)}
                     className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white focus:border-cyan-300/30 focus:outline-none transition" />
@@ -665,7 +647,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               }
             </div>
 
-            {/* Emotionen */}
             <div>
               <p className="mb-3 text-sm font-medium text-white/80">Emotionen <span className="font-normal text-white/35">(mehrere möglich)</span></p>
               <div className="flex flex-wrap gap-2">
@@ -683,7 +664,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* Dream-spezifisch */}
             {isDream && (
               <>
                 <div>
@@ -711,10 +691,8 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               </>
             )}
 
-            {/* Journal-spezifisch */}
             {!isDream && (
               <>
-                {/* Stimmung */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-sm font-medium text-white/80">Stimmung</p>
@@ -729,8 +707,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                     ))}
                   </div>
                 </div>
-
-                {/* Energie */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-sm font-medium text-white/80">Energie</p>
@@ -745,21 +721,15 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                     ))}
                   </div>
                 </div>
-
-                {/* Schlafstunden */}
                 <div>
                   <label className="mb-3 block text-sm font-medium text-white/80">Schlafstunden</label>
                   <div className="flex items-center gap-3">
-                    <input type="number" min={0} max={24} step={0.5}
-                      value={sleepHours}
-                      onChange={(e) => setSleepHours(e.target.value)}
+                    <input type="number" min={0} max={24} step={0.5} value={sleepHours} onChange={(e) => setSleepHours(e.target.value)}
                       placeholder="z.B. 7.5"
                       className="w-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/25 focus:border-amber-300/30 focus:outline-none transition" />
                     <span className="text-sm text-white/35">Stunden</span>
                   </div>
                 </div>
-
-                {/* Tags */}
                 <div>
                   <p className="mb-3 text-sm font-medium text-white/80">Themen</p>
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -787,7 +757,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               </>
             )}
 
-            {/* Personen */}
             <div>
               <p className="mb-1 text-sm font-medium text-white/80">Personen</p>
               <p className="mb-4 text-xs text-white/30">Tag anklicken zum Umbenennen (z.B. "Kind" → "Sofia")</p>
@@ -817,7 +786,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* Orte */}
             <div>
               <p className="mb-1 text-sm font-medium text-white/80">Orte</p>
               <p className="mb-4 text-xs text-white/30">Tag anklicken zum Umbenennen</p>
@@ -847,7 +815,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* Speichern */}
             <div className="flex gap-4">
               <button type="submit" disabled={saving}
                 className="flex-1 rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60">
@@ -859,7 +826,6 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               </button>
             </div>
 
-            {/* Löschen */}
             <div className="border-t border-white/5 pt-8">
               {!showDeleteConfirm
                 ? <button type="button" onClick={() => setShowDeleteConfirm(true)} className="text-sm text-red-300/40 hover:text-red-300/70 transition">
