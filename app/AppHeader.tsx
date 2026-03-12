@@ -105,8 +105,8 @@ export default function AppHeader() {
 
   return (
     <>
-      {/* ── Top Bar ──────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-[#070b14]/90 backdrop-blur-xl">
+      {/* ── Top Bar – Desktop only ───────────────────────────── */}
+      <header className="hidden md:block sticky top-0 z-40 border-b border-white/5 bg-[#070b14]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3.5">
 
           {/* Logo */}
