@@ -1,0 +1,51 @@
+{
+  "name": "MeinTraum",
+  "short_name": "MeinTraum",
+  "description": "Träume festhalten, Muster erkennen, dich selbst besser verstehen.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070b14",
+  "theme_color": "#070b14",
+  "lang": "de",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "categories": ["lifestyle", "health", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Traum erfassen",
+      "short_name": "Traum",
+      "description": "Neuen Traum sofort festhalten",
+      "url": "/entry",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Journal-Eintrag",
+      "short_name": "Journal",
+      "description": "Stimmung und Gedanken festhalten",
+      "url": "/journal/new",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
