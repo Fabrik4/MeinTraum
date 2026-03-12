@@ -212,7 +212,7 @@ function DreamCard({ dream, onPin, pinning }: { dream: DreamEntry; onPin: () => 
       <div className={`flex-1 rounded-3xl border bg-white/5 p-6 backdrop-blur transition ${dream.is_key_event ? "border-amber-300/25 bg-amber-300/3" : "border-white/10 hover:border-white/20"}`}>
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-cyan-300/70 uppercase tracking-wider">🌙 Traum</span>
+            <span className="text-base">🌙</span>
             <span className="text-sm text-white/35">{formatDate(dream.dreamed_at || dream.created_at)}</span>
             {dream.dream_clarity && <span className="text-xs text-white/30">✨ {dream.dream_clarity}</span>}
             {dream.is_key_event && <span className="text-xs text-amber-300/70">📌 Keyevent</span>}
@@ -229,10 +229,6 @@ function DreamCard({ dream, onPin, pinning }: { dream: DreamEntry; onPin: () => 
             <Link href={`/entries/${dream.id}?type=dream`}
               className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10 hover:text-white">
               Ansehen
-            </Link>
-            <Link href={`/entries/${dream.id}?type=dream&edit=true`}
-              className="rounded-xl bg-white px-3 py-1.5 text-xs font-medium text-[#070b14] transition hover:scale-[1.02]">
-              Bearbeiten
             </Link>
           </div>
         </div>
@@ -266,7 +262,7 @@ function JournalCard({ journal, onPin, pinning }: { journal: JournalEntry; onPin
       <div className={`flex-1 rounded-3xl border bg-white/5 p-6 backdrop-blur transition ${journal.is_key_event ? "border-amber-300/25 bg-amber-300/3" : "border-white/10 hover:border-white/20"}`}>
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-amber-300/70 uppercase tracking-wider">📓 Journal</span>
+            <span className="text-base">📓</span>
             <span className="text-sm text-white/35">{formatDate(journal.entry_date || journal.created_at)}</span>
             {moodInfo && <span className={`text-xs font-medium ${moodInfo.color}`}>{journal.mood_score}/10 {moodInfo.label}</span>}
             {journal.is_key_event && <span className="text-xs text-amber-300/70">📌 Keyevent</span>}
@@ -282,10 +278,6 @@ function JournalCard({ journal, onPin, pinning }: { journal: JournalEntry; onPin
             <Link href={`/entries/${journal.id}?type=journal`}
               className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10 hover:text-white">
               Ansehen
-            </Link>
-            <Link href={`/entries/${journal.id}?type=journal&edit=true`}
-              className="rounded-xl bg-white px-3 py-1.5 text-xs font-medium text-[#070b14] transition hover:scale-[1.02]">
-              Bearbeiten
             </Link>
           </div>
         </div>
