@@ -150,10 +150,10 @@ export default function DreamChat({ context, onClose }: {
           <div className={`h-2 w-2 rounded-full animate-pulse ${accentColor === "cyan" ? "bg-cyan-300" : "bg-amber-300"}`} />
           <div>
             <p className="text-sm font-medium text-white">
-              {context.type === "dream" ? "Über diesen Traum sprechen" : "Über diesen Eintrag sprechen"}
+              Traumbegleiter AI
             </p>
             <p className="text-xs text-white/28">
-              {sessionId ? "Gespräch wird gespeichert" : "KI hört zu · Enter zum Senden"}
+              {sessionId ? "Gespräch wird gespeichert" : "Dein persönlicher Gesprächsbegleiter"}
             </p>
           </div>
         </div>

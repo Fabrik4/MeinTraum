@@ -83,8 +83,8 @@ export default function ChatPage() {
         <div className="mx-auto max-w-2xl flex items-center gap-3">
           <div className="h-2 w-2 rounded-full bg-violet-300 animate-pulse" />
           <div>
-            <p className="text-sm font-medium text-white">KI-Gespräch</p>
-            <p className="text-xs text-white/30">Träume · Stimmungen · Gedanken</p>
+            <p className="text-sm font-medium text-white">Traumbegleiter AI</p>
+            <p className="text-xs text-white/30">Dein persönlicher Gesprächsbegleiter</p>
           </div>
           {messages.length > 1 && (
             <button onClick={() => setMessages([{
