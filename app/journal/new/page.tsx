@@ -90,7 +90,7 @@ export default function JournalNewPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <button onClick={() => router.push(`/journal/${savedId}?edit=true`)}
+            <button onClick={() => router.push(`/entries/${savedId}?type=journal&edit=true`)}
               className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10 hover:border-white/20">
               <span className="text-2xl">✏️</span>
               <span className="font-medium text-white">Details ergänzen</span>

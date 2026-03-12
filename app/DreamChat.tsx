@@ -33,6 +33,8 @@ function buildContextString(ctx: ChatContext): string {
     parts.push(`Der User hat folgenden Journal-Eintrag geschrieben: "${ctx.text}"`)
     if (ctx.moodScore) parts.push(`Stimmung: ${ctx.moodScore}/10`)
     if (ctx.tags?.length) parts.push(`Themen: ${ctx.tags.join(", ")}`)
+    if (ctx.persons?.length) parts.push(`Erwähnte Personen: ${ctx.persons.join(", ")}`)
+    if (ctx.places?.length) parts.push(`Erwähnte Orte: ${ctx.places.join(", ")}`)
   }
 
   return parts.join("\n")

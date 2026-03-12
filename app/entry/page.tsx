@@ -80,7 +80,7 @@ export default function DreamEntryPage() {
           {/* Optionen */}
           <div className="grid gap-4 sm:grid-cols-2">
             <button
-              onClick={() => router.push(`/dreams/${savedDreamId}?edit=true`)}
+              onClick={() => router.push(`/entries/${savedDreamId}?type=dream&edit=true`)}
               className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10 hover:border-white/20"
             >
               <span className="text-2xl">✏️</span>
@@ -91,7 +91,7 @@ export default function DreamEntryPage() {
             </button>
 
             <button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/timeline")}
               className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10 hover:border-white/20"
             >
               <span className="text-2xl">✓</span>
