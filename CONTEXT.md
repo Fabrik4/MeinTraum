@@ -1,7 +1,7 @@
-# MeinTraum – Projekt-Kontext & Roadmap
-_Zuletzt aktualisiert: März 2026_
+# MeinTraum – Entwicklungs-Session Zusammenfassung
+## Stand: 12. März 2026 (Session 4)
 
-## Projekt
+## Projekt-Kontext
 - **App:** Traumtagebuch + Journal mit KI-Reflexion, Mustererkennung, Schlafoptimierung
 - **Live:** https://www.meintraum.app
 - **Stack:** Next.js (App Router) + TypeScript + Tailwind CSS + Supabase + Vercel
@@ -9,126 +9,203 @@ _Zuletzt aktualisiert: März 2026_
 - **KI:** Anthropic Claude (claude-sonnet-4-20250514) via API
 - **Nutzer:** Anfänger, arbeitet mit VS Code + GitHub + Vercel, copy-paste Workflow
 
-## Projektstruktur
+---
+
+## Aktuelle App-Struktur (vollständig)
+
 ```
 app/
-  page.tsx                    → Landingpage
-  layout.tsx                  → Root Layout mit AppHeader
-  AppHeader.tsx               → Sticky Header mit Auth-State
-  AuthBanner.tsx              → Gast-Banner
-  dashboard/page.tsx          → Dashboard
-  entry/page.tsx              → Traum erfassen (Schnellerfassung)
-  dreams/page.tsx             → Traumarchiv Timeline
-  dreams/[id]/page.tsx        → Detail + Bearbeiten + KI-Analyse
-  journal/page.tsx            → Journal Timeline (NEU)
-  journal/new/page.tsx        → Neuer Journal-/Stimmungseintrag (NEU)
-  journal/[id]/page.tsx       → Journal Detail + Bearbeiten (NEU)
-  timeline/page.tsx           → Kombinierte Timeline Träume + Journal (geplant)
-  login/page.tsx              → Magic Link Login
-  auth/callback/route.ts      → Auth Callback
+  page.tsx                        → Landingpage
+  layout.tsx                      → Root Layout mit AppHeader
+  AppHeader.tsx                   → Mobile Bottom Bar + Desktop Top Nav ✅
+  DreamChat.tsx                   → Traumbegleiter AI Chat-Komponente ✅
+  dashboard/page.tsx              → Dashboard (Stats + Quick-Add + letzter Eintrag) ✅
+  entry/page.tsx                  → Traum erfassen → redirect zu /entries/[id]?type=dream ✅
+  entries/[id]/page.tsx           → Universal-Detailseite (Traum + Journal) ✅
+  journal/new/page.tsx            → Neuer Journal-Eintrag ✅
+  timeline/page.tsx               → Kombinierte Timeline ✅
+  profile/page.tsx                → Profil + KI-Kontext + Keyevents + KI-Gedächtnis ✅
+  chat/page.tsx                   → Traumbegleiter AI freier Chat ✅
+  login/page.tsx                  → Magic Link Login
+  auth/callback/route.ts          → Auth Callback
+  datenschutz/page.tsx            → Datenschutz
+  impressum/page.tsx              → Impressum
+  dreams/[id]/page.tsx            → Redirect → /entries/[id]?type=dream ✅
+  dreams/page.tsx                 → Redirect → /timeline ✅
+  journal/[id]/page.tsx           → Redirect → /entries/[id]?type=journal ✅
   api/
-    analyze-dream/route.ts    → KI Traumanalyse (4 Modi)
-    expand-dream/route.ts     → Stichwörter → Traumtext
-    analyze-journal/route.ts  → KI Journal-Reflexion (geplant)
-    chat/route.ts             → KI-Chat (geplant)
+    analyze-dream/route.ts        → KI Traumanalyse (4 Modi)
+    analyze-journal/route.ts      → KI Journal-Analyse (4 Modi) ✅
+    expand-dream/route.ts         → Stichwörter → Traumtext
+    expand-journal/route.ts       → Stichwörter → Journaltext ✅
+    chat/route.ts                 → Traumbegleiter AI Chat (Zwei-Stufen-Kontext) ✅
+    generate-summary/route.ts     → KI-Gedächtnis generieren ✅
 lib/
-  supabase.ts                 → Supabase Client
-  useAuth.ts                  → Auth Hook
+  contextBuilder.ts               → Zwei-Stufen-Kontext Helper ✅ NEU
+  supabase.ts                     → Supabase Client
+  useAuth.ts                      → Auth Hook
 ```
 
-## Supabase Datenbank
+---
+
+## Supabase Datenbank (vollständig)
+
 ```sql
+-- Bestehend
 dream_entries:        id, user_id, raw_input_text, dominant_emotion, dream_clarity,
                       dream_tone, familiar_person_flag, familiar_place_flag,
-                      nightmare_flag, created_at, dreamed_at
+                      nightmare_flag, is_key_event (bool), created_at, dreamed_at
 
 journal_entries:      id, user_id, body_text, mood_score (1-10), mood_label,
                       energy_level (1-5), sleep_hours, tags (text[]),
-                      created_at, entry_date
+                      dominant_emotion, familiar_person_flag, familiar_place_flag,
+                      is_key_event (bool), entry_date, created_at
 
-user_entities:        id, user_id, entity_type, entity_category, entity_label,
-                      is_confirmed, created_at, updated_at
+journal_entry_entities, journal_analysis, dream_entry_entities, dream_analysis
+user_entities, entity_presets, waitlist
 
-dream_entry_entities: id, dream_entry_id, user_entity_id, source, confidence, created_at
+-- NEU (context_system_migration.sql)
+user_profiles:        id, display_name, age, interests, ki_context,
+                      created_at, updated_at
 
-entity_presets:       id, entity_type, entity_category, entity_label, sort_order, created_at
+key_events:           id, user_id, title, description, event_date, emoji,
+                      linked_dream_id, linked_journal_id, created_at
 
-dream_analysis:       id, dream_entry_id, mode, summary, themes (text[]),
-                      emotions (text[]), caution_note, created_at
+user_summaries:       id, user_id, summary_text, recurring_persons[], recurring_places[],
+                      recurring_emotions[], mood_avg_7d, mood_avg_30d, mood_avg_90d,
+                      total_dreams, total_journal, covers_from, covers_to, generated_at
 
-user_profile:         id, user_id, display_name, birth_year, context_notes,
-                      created_at (geplant)
-
-waitlist:             id, email, created_at
+chat_sessions:        id, user_id, session_type (free/dream/journal),
+                      linked_dream_id, linked_journal_id, messages (jsonb),
+                      compressed_summary, message_count, last_message_at, created_at
 ```
+
+## SQL-Migrationen (alle ausgeführt ✅)
+- `dream_analysis_migration.sql`
+- `journal_entries_migration.sql`
+- `journal_extension_migration.sql`
+- `user_profiles_migration.sql`
+- `context_system_migration.sql` ← NEU
+
+---
 
 ## Design-System
 - Background: `#070b14`
 - Akzent Träume: `cyan-300`
-- Akzent Journal: `rose-300`
-- Personen-Tags: `violet-300`
-- Orts-Tags: `amber-300`
-- Albtraum: `red-300`
-- Schöner Traum: `emerald-300`
+- Akzent Journal: `amber-300` ← war rose, jetzt amber/gold
+- Chat/Violet: `violet-300`
+- Personen-Tags: `violet-300/15`
+- Orts-Tags: `amber-300/15`
+- Albtraum: `red-300` (sanft)
+- Schöner Traum: `emerald-300` (sanft)
+- Stimmung: 1-4 `rose-300/80`, 5-6 `amber-300/80`, 7-10 `emerald-300/80`
 - Rundungen: `rounded-2xl` / `rounded-3xl`
 - Glassmorphism: `bg-white/5 backdrop-blur border border-white/10`
 
-## KI-Prompting Prinzipien
-- Immer vorsichtige Sprache: "könnte", "wird oft assoziiert mit", "mögliche Deutung"
-- Keine medizinischen/therapeutischen Diagnosen
-- Keine absoluten Aussagen
-- KI als Reflexionsangebot, nicht als Wahrheit
+---
 
-## ROADMAP
+## Zwei-Stufen-Kontext System (NEU)
 
-### ✅ FERTIG
-- Schnellerfassung Traum + Post-Save Flow
-- Traumarchiv Timeline mit Entities
-- Detail-Seite: Bearbeiten, Entity-Picker (inline editierbar), Löschen
-- Stichwörter → Traumtext via KI
-- KI-Analyse in 4 Modi (Psychologisch, Poetisch, Humorvoll, Wissenschaftlich)
-- Datum/Uhrzeit bearbeitbar
-- AppHeader, AuthBanner, useAuth
-- Supabase RLS, dream_analysis Tabelle
+```
+STUFE 1 – Dauerkontex (~850 Token, immer mitgeschickt)
+  • Profil: Name, Alter, Interessen, KI-Kontext
+  • user_summaries: KI-generierte Zusammenfassung aller Einträge (manuell aktualisierbar)
+  • Stimmungstrends: Ø 7d / 30d / 90d
+  • Wiederkehrende Personen, Orte, Emotionen
+  • Keyereignisse (max. 10, nach Datum)
+  • Gesamtanzahl Träume + Journaleinträge
 
-### 🔴 PHASE 1 – Kern stärken (JETZT)
-- [ ] **Journal / Stimmungseintrag** ← AKTUELL
-  - Felder: Freitext, Stimmungs-Score (1-10), Energie (1-5), Schlafstunden, Tags
-  - Timeline mit Filter: Alles / Nur Träume / Nur Journal
-  - Farbe: rose-300
-  - KI-Reflexion optional
+STUFE 2 – Dynamisch (~850 Token, je nach Kontext)
+  • Aktueller Eintrag (Text + Metadaten)
+  • Letzte 5 Einträge gemischt (Kurzversion)
+  • Chatverlauf (aus chat_sessions)
 
-- [ ] **User-Profil / Kontext**
-  - Optionale Fragen: Name, Alter, Lebenssituation, aktueller Stress
-  - Wird KI als Hintergrundkontext mitgegeben
+Kosten: ~$0.01 pro Chat-Nachricht, ~$0.025 pro KI-Gedächtnis-Generierung
+Break-even: ~150 zahlende User @ 9 CHF/Mo
+```
 
-### 🟡 PHASE 2 – KI vertiefen
-- [ ] **KI-Chat**
-  - Chat-Interface auf Detail-Seite (Traum oder Journal)
-  - KI als Reflexions-Partner, kein Life-Coach
-  - Hilft unbewusste Mechanismen zu entdecken
+## Traumbegleiter AI (Chat)
+- Name überall: **"Traumbegleiter AI"** (war: "KI-Gespräch")
+- Freier Chat: `/chat` → `chat/page.tsx`
+- Entry-Chat: `DreamChat.tsx` Komponente auf Detailseite
+- Chatverläufe persistent in `chat_sessions` gespeichert
+- Session wird beim erneuten Öffnen desselben Eintrags wiederhergestellt
 
-- [ ] **Muster-Analyse**
-  - Mehrere Träume + Journal-Einträge übergreifend
-  - Kontext-Verknüpfung: "Kind startet Schule" → Träume der Folgewochen
-  - Persönliches Traum- & Stimmungsprofil
+---
 
-### 🟢 PHASE 3 – Wachstum & Retention
-- [ ] **Streak & Reminder** – stärkster Retention-Mechanismus
-- [ ] **Wochenrückblick** – automatisch jeden Sonntag
-- [ ] **Social Share-Cards**
-  - Story-Cards für Instagram/WhatsApp
-  - Streak-Karten, Muster-Infografiken
-  - Virales Marketing das sich selbst finanziert
-- [ ] **Gast-Modus** – localStorage → bei Anmeldung in Account übertragen
-- [ ] **Personen-Vorschläge** aus bisheriger History
-- [ ] **Bildgenerierung** – Traum als Bild (Flux)
+## Outputs (alle unter /mnt/user-data/outputs/)
 
-## Wichtige technische Hinweise
+| Datei | Ziel |
+|---|---|
+| `AppHeader.tsx` | `app/AppHeader.tsx` |
+| `DreamChat.tsx` | `app/DreamChat.tsx` |
+| `entries_detail_page.tsx` | `app/entries/[id]/page.tsx` |
+| `entry_page.tsx` | `app/entry/page.tsx` |
+| `journal_new_page.tsx` | `app/journal/new/page.tsx` |
+| `timeline_page.tsx` | `app/timeline/page.tsx` |
+| `chat_page.tsx` | `app/chat/page.tsx` |
+| `dashboard_page.tsx` | `app/dashboard/page.tsx` |
+| `profile_page.tsx` | `app/profile/page.tsx` |
+| `chat-route.ts` | `app/api/chat/route.ts` |
+| `analyze-journal-route.ts` | `app/api/analyze-journal/route.ts` |
+| `expand-journal-route.ts` | `app/api/expand-journal/route.ts` |
+| `generate-summary-route.ts` | `app/api/generate-summary/route.ts` |
+| `contextBuilder.ts` | `lib/contextBuilder.ts` |
+| `dreams_id_redirect.tsx` | `app/dreams/[id]/page.tsx` |
+| `dreams_redirect.tsx` | `app/dreams/page.tsx` |
+| `journal_id_redirect.tsx` | `app/journal/[id]/page.tsx` |
+| `context_system_migration.sql` | Supabase SQL Editor |
+| `user_profiles_migration.sql` | Supabase SQL Editor |
+| `journal_entries_migration.sql` | Supabase SQL Editor |
+| `journal_extension_migration.sql` | Supabase SQL Editor |
+
+---
+
+## Wichtige Env-Variablen (lokal + Vercel!)
+```
+NEXT_PUBLIC_SUPABASE_URL        → Supabase Projekt URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY   → Supabase anon Key
+SUPABASE_SERVICE_ROLE_KEY       → Supabase service_role Key ← NUR server-seitig!
+ANTHROPIC_API_KEY               → Anthropic API Key
+```
+⚠️ Nach Vercel Env-Var Änderungen → manuell Redeploy auslösen!
+
+---
+
+## Bekannte Issues / Offene Punkte
+- `SUPABASE_SERVICE_ROLE_KEY` fehlte in Vercel → behoben (user hat es eingetragen)
+- Vercel Analytics/Speed Insights werden von Adblockern blockiert → harmlos, ignorieren
+- `contextBuilder.ts` muss in `lib/` liegen (nicht `app/`)
+
+---
+
+## Nächste Schritte (Priorität)
+
+### 🟡 Kurzfristig
+1. **Testen** ob Chat nach Vercel-Fix funktioniert
+2. **Timeline Pin-Icon** – Keyevent direkt aus Timeline pinnen (📌 neben Eintrag)
+3. **entries_detail_page** updaten: DreamChat Props anpassen (dreamId/journalId mitgeben)
+
+### 🟠 Mittelfristig
+4. **Muster-Analyse** über mehrere Einträge (USP) – eigene Seite oder Dashboard-Widget
+5. **Streak & Reminder** – Push-Notifications oder Email
+6. **Wochenrückblick** – automatisch Sonntag generiert
+7. **Monetarisierung** – Free Trial (14 Tage) → Plus 9 CHF / Pro 19 CHF
+
+### 🔵 Langfristig
+8. **Social Share-Cards** (virales Marketing)
+9. **Gast-Modus** (localStorage → bei Anmeldung übertragen)
+10. **Bildgenerierung** (Flux) für Träume
+11. **Embeddings/pgvector** für semantische Suche (wenn >5k User)
+
+---
+
+## Wichtige Hinweise
 - `dominant_emotion` kommagetrennt: "Angst, Freude"
-- `dream_tone` ersetzt `nightmare_flag` langfristig
+- `dream_tone` ersetzt `nightmare_flag` langfristig, beide parallel
 - `raw_input_text` bleibt immer unverändert
-- Nach `.env.local` Änderungen → Dev-Server neu starten
-- Nach Vercel Env-Var Änderungen → manuell Redeploy
 - Magic Link lokal: Supabase → Auth → URL Config → `http://localhost:3000/auth/callback`
-- API Keys niemals in Git pushen
+- Nach `.env.local` Änderungen → Dev-Server neu starten
+- KI-Aussagen immer mit "könnte", "wird oft assoziiert mit" formulieren
+- Keine medizinischen/therapeutischen Aussagen
+- `@anthropic-ai/sdk` ist in package.json ✅
