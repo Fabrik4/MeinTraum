@@ -3,7 +3,7 @@
 import { useRef, useEffect } from "react"
 import Link from "next/link"
 import {
-  Moon, Sparkles, Brain, Search, Mic, Bell,
+  Moon, Sparkles, Brain, Se arch, Mic, Bell,
   TrendingUp, Shield, Star, ArrowRight
 } from "lucide-react"
 
