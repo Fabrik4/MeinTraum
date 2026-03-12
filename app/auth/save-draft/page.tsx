@@ -19,19 +19,30 @@ export default function SaveDraftPage() {
   }, [user, loading])
 
   async function handleDraft() {
+    // Onboarding prüfen
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("onboarding_done")
+      .eq("id", user!.id)
+      .single()
+
+    const onboardingDone = profile?.onboarding_done ?? false
+
     const raw = localStorage.getItem(STORAGE_KEY)
 
+    // Kein Draft → Onboarding oder Dashboard
     if (!raw) {
       setStatus("no-draft")
-      router.replace("/dashboard")
+      router.replace(onboardingDone ? "/dashboard" : "/onboarding")
       return
     }
 
+    // Draft vorhanden → erst speichern, dann Onboarding oder Detailseite
     setStatus("saving")
     let draft: Record<string, any>
     try { draft = JSON.parse(raw) } catch {
       localStorage.removeItem(STORAGE_KEY)
-      router.replace("/dashboard")
+      router.replace(onboardingDone ? "/dashboard" : "/onboarding")
       return
     }
 
@@ -51,9 +62,14 @@ export default function SaveDraftPage() {
     setStatus("done")
 
     if (!error && data) {
-      router.replace(`/entries/${data.id}?type=dream`)
+      // Neuer User → Onboarding mit Hinweis dass Traum gespeichert
+      if (!onboardingDone) {
+        router.replace(`/onboarding?dream=${data.id}`)
+      } else {
+        router.replace(`/entries/${data.id}?type=dream`)
+      }
     } else {
-      router.replace("/dashboard")
+      router.replace(onboardingDone ? "/dashboard" : "/onboarding")
     }
   }
 

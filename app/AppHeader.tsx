@@ -103,7 +103,7 @@ export default function AppHeader() {
   }
 
   // Auf Landingpage keinen Header zeigen
-  if (pathname === "/" || pathname === "/login" || pathname === "/auth/callback") return null
+  if (pathname === "/" || pathname === "/login" || pathname === "/auth/callback" || pathname === "/onboarding") return null
 
   return (
     <>

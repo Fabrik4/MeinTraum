@@ -45,6 +45,8 @@ export default function JournalNewPage() {
   const [entryDate, setEntryDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [savedId, setSavedId] = useState<number | null>(null)
+  const [expanding, setExpanding] = useState(false)
+  const [expandedPreview, setExpandedPreview] = useState<string | null>(null)
 
   const toggleTag = (tag: string) =>
     setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])
@@ -74,6 +76,21 @@ export default function JournalNewPage() {
     setIsSubmitting(false)
     if (error || !data) return
     setSavedId(data.id)
+  }
+
+  async function expandText() {
+    if (!bodyText.trim()) return
+    setExpanding(true); setExpandedPreview(null)
+    try {
+      const res = await fetch("/api/expand-journal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawText: bodyText, mood: MOOD_LABELS[moodScore].label, tags: selectedTags }),
+      })
+      const data = await res.json()
+      if (data.expanded) setExpandedPreview(data.expanded)
+    } catch { /* silent */ }
+    setExpanding(false)
   }
 
   // ── Post-Save Screen ─────────────────────────────────────
@@ -128,9 +145,23 @@ export default function JournalNewPage() {
                 Was beschäftigt dich gerade?
               </label>
               <textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)}
-                placeholder="Gedanken, Ereignisse, Gefühle…"
+                placeholder="Stichworte reichen – z.B. «langer Tag, Gespräch mit Jonas, müde aber zufrieden»"
                 required rows={5}
                 className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/30 focus:border-amber-300/40 focus:outline-none transition resize-none" />
+
+              {/* Expanded preview */}
+              {expandedPreview && (
+                <div className="mt-4 rounded-2xl border border-amber-300/15 bg-amber-300/5 p-5">
+                  <p className="text-xs uppercase tracking-[0.15em] text-amber-300/60 mb-3">KI-Vorschlag</p>
+                  <p className="text-sm leading-7 text-white/75 mb-4">{expandedPreview}</p>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => { setBodyText(expandedPreview); setExpandedPreview(null) }}
+                      className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14]">Übernehmen</button>
+                    <button type="button" onClick={() => setExpandedPreview(null)}
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/55">Verwerfen</button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Datum */}
@@ -232,18 +263,34 @@ export default function JournalNewPage() {
               </div>
             </div>
 
-            {/* Submit */}
-            <button type="submit" disabled={isSubmitting || !user}
-              className="w-full rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60">
-              {isSubmitting ? "Speichert..." : "Eintrag speichern"}
-            </button>
-
-            {!user && !authLoading && (
-              <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
-                Melde dich an um deinen Eintrag zu speichern.{" "}
-                <a href="/login" className="underline underline-offset-2">Jetzt anmelden →</a>
+            {/* Submit – zwei Buttons nebeneinander */}
+            <div className="space-y-3 pt-2">
+              <div className="flex gap-3">
+                <button type="button"
+                  onClick={expandText}
+                  disabled={expanding || !bodyText.trim()}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-amber-300/20 bg-amber-300/8 px-4 py-4 text-sm font-medium text-amber-100 transition hover:bg-amber-300/15 disabled:opacity-35">
+                  {expanding
+                    ? <><span className="animate-spin">✦</span> Generiere…</>
+                    : <>✨ KI zusammenfassen</>
+                  }
+                </button>
+                <button type="submit" disabled={isSubmitting || !user}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60">
+                  {isSubmitting
+                    ? <><span className="animate-spin inline-block">✦</span> Speichert…</>
+                    : "Speichern →"
+                  }
+                </button>
               </div>
-            )}
+
+              {!user && !authLoading && (
+                <div className="rounded-2xl border border-amber-300/20 bg-amber-300/8 px-4 py-3 text-sm text-amber-100 text-center">
+                  Melde dich an um deinen Eintrag zu speichern.{" "}
+                  <a href="/login" className="underline underline-offset-2">Jetzt anmelden →</a>
+                </div>
+              )}
+            </div>
 
           </form>
         </div>

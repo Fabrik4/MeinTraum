@@ -285,17 +285,15 @@ export default function DreamEntryPage() {
 
           {/* Traumtext */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-medium text-white/70">Was hast du geträumt?</label>
-              <button type="button" onClick={expandText} disabled={expanding || !rawInputText.trim()}
-                className="flex items-center gap-1.5 rounded-xl border border-cyan-300/20 bg-cyan-300/5 px-3 py-1.5 text-xs text-cyan-200 transition hover:opacity-80 disabled:opacity-30">
-                {expanding ? <><span className="animate-spin">✦</span> Generiere…</> : <>✨ Aus Stichworten</>}
-              </button>
-            </div>
+            <label className="block mb-3 text-sm font-medium text-white/70">
+              Was hast du geträumt?
+            </label>
             <textarea value={rawInputText} onChange={(e) => setRawInputText(e.target.value)}
-              placeholder="Beschreibe deinen Traum so detailliert oder grob wie du möchtest…"
+              placeholder="Stichworte reichen – z.B. «Brücke, alte Chefin, konnte nicht weglaufen»"
               rows={6} required
               className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/20 focus:border-cyan-300/30 focus:outline-none transition resize-none" />
+
+            {/* Expanded preview – erscheint direkt unter Textarea */}
             {expandedPreview && (
               <div className="mt-4 rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-5">
                 <p className="text-xs uppercase tracking-[0.15em] text-cyan-300/60 mb-3">KI-Vorschlag</p>
@@ -384,24 +382,41 @@ export default function DreamEntryPage() {
             </div>
           )}
 
-          {/* Submit */}
-          <button type="submit" disabled={isSubmitting || analyzingGuest || !rawInputText.trim()}
-            className="w-full rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50">
-            {isSubmitting || analyzingGuest
-              ? <span className="flex items-center justify-center gap-2"><span className="animate-spin">✦</span> {user ? "Speichert…" : "Analysiere…"}</span>
-              : user ? "Traum speichern" : "🧠 Traum jetzt analysieren"
-            }
-          </button>
+          {/* Submit – zwei Buttons nebeneinander */}
+          <div className="space-y-3 pt-2">
+            <div className="flex gap-3">
+              {/* KI zusammenfassen – nur wenn Text vorhanden */}
+              <button type="button"
+                onClick={user ? expandText : expandText}
+                disabled={expanding || analyzingGuest || !rawInputText.trim()}
+                className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-300/8 px-4 py-4 text-sm font-medium text-cyan-100 transition hover:bg-cyan-300/15 disabled:opacity-35">
+                {expanding
+                  ? <><span className="animate-spin">✦</span> Generiere…</>
+                  : <>✨ KI zusammenfassen</>
+                }
+              </button>
 
-          {/* Für Gäste: Hinweis auf Demo */}
-          {!user && !authLoading && (
-            <p className="text-center text-xs text-white/25">
-              Schon neugierig auf die volle App?{" "}
-              <Link href="/demo" className="text-white/45 hover:text-white/65 underline underline-offset-2 transition">Demo ansehen</Link>
-              {" "}·{" "}
-              <Link href="/login" className="text-white/45 hover:text-white/65 underline underline-offset-2 transition">Anmelden</Link>
-            </p>
-          )}
+              {/* Speichern / Analysieren */}
+              <button type="submit"
+                disabled={isSubmitting || analyzingGuest || !rawInputText.trim()}
+                className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50">
+                {isSubmitting || analyzingGuest
+                  ? <><span className="animate-spin inline-block">✦</span> {user ? "Speichert…" : "Analysiere…"}</>
+                  : user ? "Speichern →" : "🧠 Analysieren →"
+                }
+              </button>
+            </div>
+
+            {/* Für Gäste: Hinweis */}
+            {!user && !authLoading && (
+              <p className="text-center text-xs text-white/20">
+                Schon neugierig auf die volle App?{" "}
+                <Link href="/demo" className="text-white/38 hover:text-white/60 underline underline-offset-2 transition">Demo</Link>
+                {" "}·{" "}
+                <Link href="/login" className="text-white/38 hover:text-white/60 underline underline-offset-2 transition">Anmelden</Link>
+              </p>
+            )}
+          </div>
 
         </form>
       </div>
