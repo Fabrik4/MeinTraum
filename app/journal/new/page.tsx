@@ -255,15 +255,32 @@ export default function JournalNewPage() {
 
             {/* Schlafstunden */}
             <div>
-              <label className="mb-3 block text-sm font-medium text-white/80">
-                Schlafstunden <span className="font-normal text-white/35">(optional)</span>
-              </label>
-              <div className="flex items-center gap-3">
-                <input type="number" min={0} max={24} step={0.5} value={sleepHours}
-                  onChange={(e) => setSleepHours(e.target.value)}
-                  placeholder="z.B. 7.5"
-                  className="w-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:border-amber-300/40 focus:outline-none transition" />
-                <span className="text-sm text-white/40">Stunden</span>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-medium text-white/80">
+                  Schlafstunden <span className="font-normal text-white/35">(optional)</span>
+                </label>
+                {sleepHours && (
+                  <span className="text-sm font-semibold text-amber-200">{sleepHours}h</span>
+                )}
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+                {[4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((h) => {
+                  const val = String(h)
+                  const active = sleepHours === val
+                  return (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => setSleepHours(active ? "" : val)}
+                      className={`shrink-0 rounded-2xl border px-3.5 py-2.5 text-sm font-medium transition-all ${
+                        active
+                          ? "border-amber-300/40 bg-amber-300/20 text-amber-100 scale-[1.06]"
+                          : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white"
+                      }`}>
+                      {h % 1 === 0 ? `${h}h` : `${h}h`}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
