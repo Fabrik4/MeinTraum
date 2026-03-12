@@ -76,7 +76,7 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="flex flex-col bg-[#070b14] text-white h-[calc(100dvh-72px)] md:h-[calc(100vh-60px)]">
+    <main className="flex flex-col bg-[#070b14] text-white h-[calc(100dvh-132px)] md:h-[calc(100vh-60px)]">
 
       {/* Header */}
       <div className="shrink-0 border-b border-white/5 px-5 py-4">

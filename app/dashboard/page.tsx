@@ -87,7 +87,7 @@ export default function DashboardPage() {
   if (authLoading) return <main className="min-h-screen bg-[#070b14]" />
 
   if (!user) return (
-    <main className="min-h-screen bg-[#070b14] px-5 py-20 text-white flex items-center justify-center">
+    <main className="min-h-screen bg-[#070b14] px-5 pt-16 pb-24 md:py-20 text-white flex items-center justify-center">
       <div className="text-center space-y-6 max-w-sm">
         <div className="text-5xl">🌙</div>
         <p className="text-2xl font-semibold">Willkommen bei MeinTraum</p>
@@ -100,7 +100,7 @@ export default function DashboardPage() {
   )
 
   return (
-    <main className="min-h-screen bg-[#070b14] px-5 pt-5 pb-24 md:py-12 text-white">
+    <main className="min-h-screen bg-[#070b14] px-5 pt-16 pb-24 md:py-12 text-white">
       <div className="mx-auto max-w-4xl space-y-10">
 
         {/* Begrüssung */}

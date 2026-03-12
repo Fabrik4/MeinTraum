@@ -454,18 +454,18 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   const displayEmotions = (isDream ? dreamEntry?.dominant_emotion : journalEntry?.dominant_emotion)?.split(", ").filter(Boolean) ?? []
 
   if (loading) return (
-    <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
+    <main className="min-h-screen bg-[#070b14] px-6 pt-16 pb-24 md:py-16 text-white">
       <div className="mx-auto max-w-3xl"><p className="text-white/50">Wird geladen…</p></div>
     </main>
   )
   if (!dreamEntry && !journalEntry) return (
-    <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
+    <main className="min-h-screen bg-[#070b14] px-6 pt-16 pb-24 md:py-16 text-white">
       <div className="mx-auto max-w-3xl"><p className="text-white/50">Eintrag nicht gefunden.</p></div>
     </main>
   )
 
   return (
-    <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
+    <main className="min-h-screen bg-[#070b14] px-6 pt-16 pb-24 md:py-16 text-white">
       <div className="mx-auto max-w-3xl space-y-8">
 
         {/* Header */}
