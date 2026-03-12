@@ -68,7 +68,7 @@ const PRESET_TAGS = ["Arbeit","Familie","Beziehung","Gesundheit","Sport","Schlaf
 
 // Stimmungsfarben: sanfter
 function moodColor(score: number) {
-  if (score <= 4) return "text-rose-300/80"
+  if (score <= 4) return "text-amber-300/80"
   if (score <= 6) return "text-amber-300/80"
   return "text-emerald-300/80"
 }
@@ -152,17 +152,17 @@ function AnalysisCard({ analysis, mode, onSave, saving, accent }: {
   analysis: any; mode: string; onSave: () => void; saving: boolean; accent: string
 }) {
   return (
-    <div className={`rounded-3xl border p-8 space-y-6 ${accent === "rose" ? "border-rose-300/15 bg-rose-300/3" : "border-cyan-300/15 bg-cyan-300/3"}`}>
+    <div className={`rounded-3xl border p-8 space-y-6 ${accent === "amber" ? "border-amber-300/15 bg-amber-300/3" : "border-cyan-300/15 bg-cyan-300/3"}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{modeEmoji(mode)}</span>
           <div>
-            <p className={`text-xs uppercase tracking-[0.15em] ${accent === "rose" ? "text-rose-300/60" : "text-cyan-300/60"}`}>KI-Analyse</p>
+            <p className={`text-xs uppercase tracking-[0.15em] ${accent === "amber" ? "text-amber-300/60" : "text-cyan-300/60"}`}>KI-Analyse</p>
             <p className="font-medium text-white">{modeLabel2(mode)}</p>
           </div>
         </div>
         <button onClick={onSave} disabled={saving}
-          className={`rounded-xl border px-4 py-2 text-sm transition hover:opacity-80 disabled:opacity-40 ${accent === "rose" ? "border-rose-300/20 bg-rose-300/10 text-rose-100" : "border-cyan-300/20 bg-cyan-300/10 text-cyan-100"}`}>
+          className={`rounded-xl border px-4 py-2 text-sm transition hover:opacity-80 disabled:opacity-40 ${accent === "amber" ? "border-amber-300/20 bg-amber-300/10 text-amber-100" : "border-cyan-300/20 bg-cyan-300/10 text-cyan-100"}`}>
           {saving ? "Speichert…" : "Speichern"}
         </button>
       </div>
@@ -454,7 +454,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
     places: linkedPlaces.map((e) => e.display_label),
   }
 
-  const accent = entryType === "journal" ? "rose" : "cyan"
+  const accent = entryType === "journal" ? "amber" : "cyan"
   const isDream = entryType === "dream"
   const mainText = isDream ? (dreamEntry?.raw_input_text ?? "") : (journalEntry?.body_text ?? "")
   const displayEmotions = (isDream ? dreamEntry?.dominant_emotion : journalEntry?.dominant_emotion)?.split(", ").filter(Boolean) ?? []
@@ -487,7 +487,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               </button>
               <button onClick={() => { setShowAnalysisPanel(!showAnalysisPanel); setShowChat(false) }}
                 className={`rounded-xl border px-4 py-2 text-sm transition ${showAnalysisPanel
-                  ? accent === "rose" ? "border-rose-300/30 bg-rose-300/10 text-rose-100" : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
+                  ? accent === "amber" ? "border-amber-300/30 bg-amber-300/10 text-amber-100" : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
                   : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"}`}>
                 🧠 Analyse
               </button>
@@ -503,7 +503,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
         {!isEditing && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: accent === "rose" ? "rgb(251 113 133 / 0.7)" : "rgb(165 243 252 / 0.7)" }}>
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: accent === "amber" ? "rgb(252 211 77 / 0.7)" : "rgb(165 243 252 / 0.7)" }}>
                 {isDream ? "🌙 Traum" : "📓 Journal"}
               </span>
               <span className="text-sm text-white/35">
@@ -534,7 +534,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 </span>
               )}
               {!isDream && journalEntry?.energy_level && (
-                <span className="rounded-full border border-rose-300/15 bg-rose-300/8 px-3 py-1 text-sm text-rose-200">
+                <span className="rounded-full border border-amber-300/15 bg-amber-300/8 px-3 py-1 text-sm text-amber-200">
                   ⚡ {ENERGY_LABELS[journalEntry.energy_level]}
                 </span>
               )}
@@ -544,12 +544,12 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 </span>
               )}
               {!isDream && journalEntry?.tags?.map((tag) => (
-                <span key={tag} className="rounded-full border border-rose-300/15 bg-rose-300/8 px-3 py-1 text-sm text-rose-200">{tag}</span>
+                <span key={tag} className="rounded-full border border-amber-300/15 bg-amber-300/8 px-3 py-1 text-sm text-amber-200">{tag}</span>
               ))}
 
               {/* Geteilte Tags */}
               {displayEmotions.map((em) => (
-                <span key={em} className={`rounded-full border px-3 py-1 text-sm ${accent === "rose" ? "border-rose-300/15 bg-rose-300/8 text-rose-200" : "border-cyan-300/15 bg-cyan-300/8 text-cyan-200"}`}>
+                <span key={em} className={`rounded-full border px-3 py-1 text-sm ${accent === "amber" ? "border-amber-300/15 bg-amber-300/8 text-amber-200" : "border-cyan-300/15 bg-cyan-300/8 text-cyan-200"}`}>
                   💭 {em}
                 </span>
               ))}
@@ -572,14 +572,14 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
         {!isEditing && showAnalysisPanel && (
           <div className="space-y-6">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-              <p className={`text-sm uppercase tracking-[0.2em] mb-6 ${accent === "rose" ? "text-rose-300/70" : "text-cyan-300/70"}`}>
+              <p className={`text-sm uppercase tracking-[0.2em] mb-6 ${accent === "amber" ? "text-amber-300/70" : "text-cyan-300/70"}`}>
                 Analyse-Modus wählen
               </p>
               <div className="grid gap-3 sm:grid-cols-2 mb-8">
                 {ANALYSIS_MODES.map((mode) => (
                   <button key={mode.value} type="button" onClick={() => setSelectedMode(mode.value)}
                     className={`rounded-2xl border p-4 text-left transition-all ${selectedMode === mode.value
-                      ? accent === "rose" ? "border-rose-300/25 bg-rose-300/8" : "border-cyan-300/25 bg-cyan-300/8"
+                      ? accent === "amber" ? "border-amber-300/25 bg-amber-300/8" : "border-cyan-300/25 bg-cyan-300/8"
                       : "border-white/8 bg-white/3 hover:border-white/15"}`}>
                     <div className="flex items-center gap-3 mb-1">
                       <span className="text-xl">{mode.emoji}</span>
@@ -631,16 +631,16 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   {isDream ? "Traumtext" : "Eintrag"}
                 </label>
                 <button type="button" onClick={expandText} disabled={expanding}
-                  className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs transition hover:opacity-80 disabled:opacity-40 ${accent === "rose" ? "border-rose-300/20 bg-rose-300/5 text-rose-200" : "border-cyan-300/20 bg-cyan-300/5 text-cyan-200"}`}>
+                  className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs transition hover:opacity-80 disabled:opacity-40 ${accent === "amber" ? "border-amber-300/20 bg-amber-300/5 text-amber-200" : "border-cyan-300/20 bg-cyan-300/5 text-cyan-200"}`}>
                   {expanding ? <><span className="animate-spin">✦</span> Generiere…</> : <>✨ Aus Stichworten</>}
                 </button>
               </div>
               <textarea value={isDream ? rawText : bodyText}
                 onChange={(e) => isDream ? setRawText(e.target.value) : setBodyText(e.target.value)}
-                rows={6} className={`w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white focus:outline-none transition resize-none ${accent === "rose" ? "focus:border-rose-300/30" : "focus:border-cyan-300/30"}`} />
+                rows={6} className={`w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white focus:outline-none transition resize-none ${accent === "amber" ? "focus:border-amber-300/30" : "focus:border-cyan-300/30"}`} />
               {expandedPreview && (
-                <div className={`mt-4 rounded-2xl border p-5 ${accent === "rose" ? "border-rose-300/15 bg-rose-300/5" : "border-cyan-300/15 bg-cyan-300/5"}`}>
-                  <p className={`text-xs uppercase tracking-[0.15em] mb-3 ${accent === "rose" ? "text-rose-300/60" : "text-cyan-300/60"}`}>KI-Vorschlag</p>
+                <div className={`mt-4 rounded-2xl border p-5 ${accent === "amber" ? "border-amber-300/15 bg-amber-300/5" : "border-cyan-300/15 bg-cyan-300/5"}`}>
+                  <p className={`text-xs uppercase tracking-[0.15em] mb-3 ${accent === "amber" ? "text-amber-300/60" : "text-cyan-300/60"}`}>KI-Vorschlag</p>
                   <p className="leading-7 text-white/80 text-sm mb-4">{expandedPreview}</p>
                   <div className="flex gap-3">
                     <button type="button" onClick={() => { isDream ? setRawText(expandedPreview) : setBodyText(expandedPreview); setExpandedPreview(null) }}
@@ -661,7 +661,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 ? <input type="datetime-local" value={dreamedAt} onChange={(e) => setDreamedAt(e.target.value)}
                     className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white focus:border-cyan-300/30 focus:outline-none transition" />
                 : <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)}
-                    className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white focus:border-rose-300/30 focus:outline-none transition" />
+                    className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white focus:border-amber-300/30 focus:outline-none transition" />
               }
             </div>
 
@@ -674,7 +674,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   return (
                     <button key={em} type="button" onClick={() => toggleEmotion(em)}
                       className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${active
-                        ? accent === "rose" ? "border-rose-300/35 bg-rose-300/15 text-rose-100 scale-[1.04]" : "border-cyan-300/35 bg-cyan-300/15 text-cyan-100 scale-[1.04]"
+                        ? accent === "amber" ? "border-amber-300/35 bg-amber-300/15 text-amber-100 scale-[1.04]" : "border-cyan-300/35 bg-cyan-300/15 text-cyan-100 scale-[1.04]"
                         : "border-white/10 bg-white/5 text-white/55 hover:border-white/20 hover:bg-white/8 hover:text-white"}`}>
                       {em}
                     </button>
@@ -721,11 +721,11 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                     <span className={`text-sm font-medium ${moodColor(moodScore)}`}>{moodScore} – {moodLabel(moodScore)}</span>
                   </div>
                   <input type="range" min={1} max={10} step={1} value={moodScore}
-                    onChange={(e) => setMoodScore(Number(e.target.value))} className="w-full accent-rose-300 cursor-pointer" />
+                    onChange={(e) => setMoodScore(Number(e.target.value))} className="w-full accent-amber-300 cursor-pointer" />
                   <div className="flex justify-between mt-1">
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                       <span key={n} onClick={() => setMoodScore(n)}
-                        className={`text-xs cursor-pointer transition ${moodScore === n ? "text-rose-300 font-medium" : "text-white/20"}`}>{n}</span>
+                        className={`text-xs cursor-pointer transition ${moodScore === n ? "text-amber-300 font-medium" : "text-white/20"}`}>{n}</span>
                     ))}
                   </div>
                 </div>
@@ -739,7 +739,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="flex gap-2">
                     {[1,2,3,4,5].map((n) => (
                       <button key={n} type="button" onClick={() => setEnergyLevel(n)}
-                        className={`flex-1 rounded-2xl border py-3 text-sm transition-all ${energyLevel >= n ? "border-rose-300/25 bg-rose-300/12 text-rose-200" : "border-white/8 bg-white/3 text-white/25 hover:bg-white/8"}`}>
+                        className={`flex-1 rounded-2xl border py-3 text-sm transition-all ${energyLevel >= n ? "border-amber-300/25 bg-amber-300/12 text-amber-200" : "border-white/8 bg-white/3 text-white/25 hover:bg-white/8"}`}>
                         {"⚡".repeat(n)}
                       </button>
                     ))}
@@ -754,7 +754,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                       value={sleepHours}
                       onChange={(e) => setSleepHours(e.target.value)}
                       placeholder="z.B. 7.5"
-                      className="w-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/25 focus:border-rose-300/30 focus:outline-none transition" />
+                      className="w-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/25 focus:border-amber-300/30 focus:outline-none transition" />
                     <span className="text-sm text-white/35">Stunden</span>
                   </div>
                 </div>
@@ -767,7 +767,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                       const active = tags.includes(tag)
                       return (
                         <button key={tag} type="button" onClick={() => toggleTag(tag)}
-                          className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${active ? "border-rose-300/35 bg-rose-300/15 text-rose-100 scale-[1.04]" : "border-white/10 bg-white/5 text-white/55 hover:border-white/20 hover:bg-white/8 hover:text-white"}`}>
+                          className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${active ? "border-amber-300/35 bg-amber-300/15 text-amber-100 scale-[1.04]" : "border-white/10 bg-white/5 text-white/55 hover:border-white/20 hover:bg-white/8 hover:text-white"}`}>
                           {tag}
                         </button>
                       )
@@ -777,7 +777,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                     <input value={customTag} onChange={(e) => setCustomTag(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); toggleTag(customTag); setCustomTag("") } }}
                       placeholder="Eigenes Thema…"
-                      className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/25 focus:border-rose-300/30 focus:outline-none transition" />
+                      className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/25 focus:border-amber-300/30 focus:outline-none transition" />
                     <button type="button" onClick={() => { toggleTag(customTag); setCustomTag("") }}
                       className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/55 hover:bg-white/10 hover:text-white transition">
                       + Hinzufügen
@@ -881,12 +881,12 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               }
             </div>
 
-            {message && <div className={`rounded-2xl border px-4 py-3 text-sm ${accent === "rose" ? "border-rose-300/20 bg-rose-300/8 text-rose-100" : "border-cyan-300/20 bg-cyan-300/8 text-cyan-100"}`}>{message}</div>}
+            {message && <div className={`rounded-2xl border px-4 py-3 text-sm ${accent === "amber" ? "border-amber-300/20 bg-amber-300/8 text-amber-100" : "border-cyan-300/20 bg-cyan-300/8 text-cyan-100"}`}>{message}</div>}
           </form>
         )}
 
         {message && !isEditing && (
-          <div className={`rounded-2xl border px-4 py-3 text-sm ${accent === "rose" ? "border-rose-300/20 bg-rose-300/8 text-rose-100" : "border-cyan-300/20 bg-cyan-300/8 text-cyan-100"}`}>{message}</div>
+          <div className={`rounded-2xl border px-4 py-3 text-sm ${accent === "amber" ? "border-amber-300/20 bg-amber-300/8 text-amber-100" : "border-cyan-300/20 bg-cyan-300/8 text-cyan-100"}`}>{message}</div>
         )}
 
       </div>

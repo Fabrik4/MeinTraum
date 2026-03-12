@@ -82,7 +82,7 @@ export default function JournalNewPage() {
       <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
         <div className="mx-auto max-w-2xl">
           <div className="mb-12 text-center">
-            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full border border-rose-300/20 bg-rose-300/10 text-3xl">
+            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full border border-amber-300/20 bg-amber-300/10 text-3xl">
               📓
             </div>
             <h1 className="text-3xl font-semibold">Eintrag gespeichert.</h1>
@@ -114,7 +114,7 @@ export default function JournalNewPage() {
       {!authLoading && !user && <AuthBanner />}
       <main className="min-h-screen bg-[#070b14] px-6 py-16 text-white">
         <div className="mx-auto max-w-2xl">
-          <p className="text-sm uppercase tracking-[0.2em] text-rose-300/80">Neuer Eintrag</p>
+          <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Neuer Eintrag</p>
           <h1 className="mt-4 text-4xl font-semibold">Wie geht es dir?</h1>
           <p className="mt-3 text-sm leading-7 text-white/50">
             Halte fest wie du dich fühlst – kurz oder ausführlich.
@@ -130,14 +130,14 @@ export default function JournalNewPage() {
               <textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)}
                 placeholder="Gedanken, Ereignisse, Gefühle…"
                 required rows={5}
-                className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/30 focus:border-rose-300/40 focus:outline-none transition resize-none" />
+                className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/30 focus:border-amber-300/40 focus:outline-none transition resize-none" />
             </div>
 
             {/* Datum */}
             <div>
               <label className="mb-3 block text-sm font-medium text-white/80">Datum</label>
               <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)}
-                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white focus:border-rose-300/40 focus:outline-none transition" />
+                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white focus:border-amber-300/40 focus:outline-none transition" />
             </div>
 
             {/* Stimmungs-Score */}
@@ -154,11 +154,11 @@ export default function JournalNewPage() {
               </div>
               <input type="range" min={1} max={10} step={1} value={moodScore}
                 onChange={(e) => setMoodScore(Number(e.target.value))}
-                className="w-full accent-rose-300 cursor-pointer" />
+                className="w-full accent-amber-300 cursor-pointer" />
               <div className="flex justify-between mt-1">
                 {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                   <span key={n}
-                    className={`text-xs cursor-pointer transition ${moodScore === n ? "text-rose-300 font-medium" : "text-white/20"}`}
+                    className={`text-xs cursor-pointer transition ${moodScore === n ? "text-amber-300 font-medium" : "text-white/20"}`}
                     onClick={() => setMoodScore(n)}>
                     {n}
                   </span>
@@ -177,7 +177,7 @@ export default function JournalNewPage() {
                   <button key={n} type="button" onClick={() => setEnergyLevel(n)}
                     className={`flex-1 rounded-2xl border py-3 text-sm transition-all ${
                       energyLevel >= n
-                        ? "border-rose-300/30 bg-rose-300/20 text-rose-100"
+                        ? "border-amber-300/30 bg-amber-300/20 text-amber-100"
                         : "border-white/10 bg-white/5 text-white/30 hover:bg-white/10"
                     }`}>
                     {"⚡".repeat(n)}
@@ -195,7 +195,7 @@ export default function JournalNewPage() {
                 <input type="number" min={0} max={24} step={0.5} value={sleepHours}
                   onChange={(e) => setSleepHours(e.target.value)}
                   placeholder="z.B. 7.5"
-                  className="w-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:border-rose-300/40 focus:outline-none transition" />
+                  className="w-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/30 focus:border-amber-300/40 focus:outline-none transition" />
                 <span className="text-sm text-white/40">Stunden</span>
               </div>
             </div>
@@ -212,7 +212,7 @@ export default function JournalNewPage() {
                     <button key={tag} type="button" onClick={() => toggleTag(tag)}
                       className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${
                         active
-                          ? "border-rose-300/40 bg-rose-300/20 text-rose-100 scale-[1.04]"
+                          ? "border-amber-300/40 bg-amber-300/20 text-amber-100 scale-[1.04]"
                           : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:bg-white/10 hover:text-white"
                       }`}>
                       {tag}
@@ -224,7 +224,7 @@ export default function JournalNewPage() {
                 <input value={customTag} onChange={(e) => setCustomTag(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomTag() } }}
                   placeholder="Eigenes Thema…"
-                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:border-rose-300/40 focus:outline-none transition" />
+                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:border-amber-300/40 focus:outline-none transition" />
                 <button type="button" onClick={addCustomTag}
                   className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white transition">
                   + Hinzufügen

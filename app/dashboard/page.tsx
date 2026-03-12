@@ -14,7 +14,7 @@ type Stats = {
   lastJournal: { id: number; text: string; mood_score: number | null; created_at: string } | null
 }
 
-const MOOD_COLOR = (s: number) => s <= 4 ? "text-rose-300/80" : s <= 6 ? "text-amber-300/80" : "text-emerald-300/80"
+const MOOD_COLOR = (s: number) => s <= 4 ? "text-amber-300/80" : s <= 6 ? "text-amber-300/80" : "text-emerald-300/80"
 
 function truncate(t: string, n = 90) { return t.length <= n ? t : t.slice(0, n).trim() + "…" }
 
@@ -127,8 +127,8 @@ export default function DashboardPage() {
             <span className="ml-auto text-lg text-white/20 transition group-hover:text-white/50 group-hover:translate-x-0.5">→</span>
           </Link>
           <Link href="/journal/new"
-            className="group flex items-center gap-4 rounded-3xl border border-rose-300/15 bg-rose-300/5 px-6 py-5 transition hover:border-rose-300/25 hover:bg-rose-300/8 active:scale-[0.99]">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-300/12 text-xl transition group-hover:bg-rose-300/20">
+            className="group flex items-center gap-4 rounded-3xl border border-amber-300/15 bg-amber-300/5 px-6 py-5 transition hover:border-amber-300/25 hover:bg-amber-300/8 active:scale-[0.99]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-300/12 text-xl transition group-hover:bg-amber-300/20">
               📓
             </div>
             <div>
@@ -178,9 +178,9 @@ export default function DashboardPage() {
               )}
               {stats?.lastJournal && (
                 <Link href={`/entries/${stats.lastJournal.id}?type=journal`}
-                  className="group rounded-3xl border border-white/8 bg-white/3 p-5 transition hover:border-rose-300/20 hover:bg-rose-300/5">
+                  className="group rounded-3xl border border-white/8 bg-white/3 p-5 transition hover:border-amber-300/20 hover:bg-amber-300/5">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-rose-300/55">📓 Journal</span>
+                    <span className="text-xs font-medium uppercase tracking-wider text-amber-300/55">📓 Journal</span>
                     {stats.lastJournal.mood_score && (
                       <span className={`text-xs font-medium ${MOOD_COLOR(stats.lastJournal.mood_score)}`}>
                         {stats.lastJournal.mood_score}/10
@@ -191,7 +191,7 @@ export default function DashboardPage() {
                   <p className="text-sm leading-6 text-white/65 group-hover:text-white/80 transition">
                     {truncate(stats.lastJournal.text)}
                   </p>
-                  <p className="mt-3 text-xs text-rose-300/35 group-hover:text-rose-300/65 transition">Ansehen →</p>
+                  <p className="mt-3 text-xs text-amber-300/35 group-hover:text-amber-300/65 transition">Ansehen →</p>
                 </Link>
               )}
             </div>
@@ -224,11 +224,11 @@ function StatCard({ label, value, suffix, accent, customColor }: {
   label: string; value: number | string; suffix?: string; accent: string; customColor?: string
 }) {
   const borders: Record<string, string> = {
-    cyan: "border-cyan-300/12 bg-cyan-300/4", rose: "border-rose-300/12 bg-rose-300/4",
+    cyan: "border-cyan-300/12 bg-cyan-300/4", rose: "border-amber-300/12 bg-amber-300/4",
     violet: "border-violet-300/12 bg-violet-300/4", amber: "border-amber-300/12 bg-amber-300/4",
   }
   const valueColors: Record<string, string> = {
-    cyan: "text-cyan-200", rose: "text-rose-200", violet: "text-violet-200", amber: "text-amber-200",
+    cyan: "text-cyan-200", rose: "text-amber-200", violet: "text-violet-200", amber: "text-amber-200",
   }
   return (
     <div className={`rounded-3xl border p-5 ${borders[accent]}`}>
