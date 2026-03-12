@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/useAuth"
 import { supabase } from "@/lib/supabase"
 import { useState } from "react"
+import FeedbackModal from "./FeedbackModal"
 
 // ── Icons ─────────────────────────────────────────────────────
 function HomeIcon({ size = 20, color = "currentColor" }) {
@@ -94,6 +95,7 @@ export default function AppHeader() {
   const pathname = usePathname()
   const { user, loading } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -188,6 +190,11 @@ export default function AppHeader() {
                           ✦ Muster-Analyse
                         </Link>
                         <div className="border-t border-white/5 my-1" />
+                        <button onClick={() => { setMenuOpen(false); setFeedbackOpen(true) }}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
+                          💬 Feedback senden
+                        </button>
+                        <div className="border-t border-white/5 my-1" />
                         <a href="/" target="_blank"
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
                           <GlobeIcon size={15} /> Zur Landingpage
@@ -266,6 +273,10 @@ export default function AppHeader() {
 
       {/* Spacer – verhindert dass Content hinter Bottom Bar verschwindet */}
       <div className="md:hidden h-[72px]" />
+
+      {feedbackOpen && (
+        <FeedbackModal onClose={() => setFeedbackOpen(false)} userEmail={user?.email} />
+      )}
     </>
   )
 }

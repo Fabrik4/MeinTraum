@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import AppHeader from "./AppHeader"
+import FeedbackButton from "./FeedbackButton"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body className="bg-[#070b14] text-white">
         <AppHeader />
         {children}
+        <FeedbackButton />
         <Analytics />
         <SpeedInsights />
       </body>

@@ -3,7 +3,7 @@
 import { useRef, useEffect } from "react"
 import Link from "next/link"
 import {
-  Moon, Sparkles, Brain, Se arch, Mic, Bell,
+  Moon, Sparkles, Brain, Search, Mic, Bell,
   TrendingUp, Shield, Star, ArrowRight
 } from "lucide-react"
 
@@ -123,11 +123,14 @@ export default function Home() {
             </p>
           </div>
 
-          <div ref={sub} className="mt-6 max-w-lg">
-            <p className="text-base leading-8 text-white/45">
-              Nicht Wahrsagerei – eher ein Spiegel fürs Unterbewusstsein.
-              Halte Träume fest, erkenne wiederkehrende Themen und verbinde
-              sie mit deinem Alltag. KI-gestützt, ohne Esoterik.
+          <div ref={sub} className="mt-5 max-w-lg space-y-4">
+            <p className="text-lg font-medium text-white/55 leading-snug">
+              Nicht ein Traum.<br />
+              <span className="text-white/80">Alle deine Träume zusammen.</span>
+            </p>
+            <p className="text-sm leading-7 text-white/35">
+              KI erkennt wiederkehrende Personen, Orte und Emotionen über Wochen –
+              und zeigt dir Muster die du alleine nicht siehst.
             </p>
           </div>
 
