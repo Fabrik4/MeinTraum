@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/useAuth"
@@ -260,28 +260,10 @@ export default function JournalNewPage() {
                   Schlafstunden <span className="font-normal text-white/35">(optional)</span>
                 </label>
                 {sleepHours && (
-                  <span className="text-sm font-semibold text-amber-200">{sleepHours}h</span>
+                  <span className="text-sm font-semibold text-amber-200">{sleepHours} h</span>
                 )}
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
-                {[4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((h) => {
-                  const val = String(h)
-                  const active = sleepHours === val
-                  return (
-                    <button
-                      key={h}
-                      type="button"
-                      onClick={() => setSleepHours(active ? "" : val)}
-                      className={`shrink-0 rounded-2xl border px-3.5 py-2.5 text-sm font-medium transition-all ${
-                        active
-                          ? "border-amber-300/40 bg-amber-300/20 text-amber-100 scale-[1.06]"
-                          : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white"
-                      }`}>
-                      {h % 1 === 0 ? `${h}h` : `${h}h`}
-                    </button>
-                  )
-                })}
-              </div>
+              <SleepWheelPicker value={sleepHours} onChange={setSleepHours} />
             </div>
 
             {/* Tags */}
@@ -349,5 +331,57 @@ export default function JournalNewPage() {
         </div>
       </main>
     </>
+  )
+}
+
+// ── Sleep Wheel Picker ────────────────────────────────────────
+const SLEEP_VALUES = ["", "4", "4.5", "5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10"]
+const ITEM_H = 44
+
+function SleepWheelPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [activeIdx, setActiveIdx] = useState(() => Math.max(0, SLEEP_VALUES.indexOf(value)))
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = activeIdx * ITEM_H
+    }
+  }, [])
+
+  function handleScroll() {
+    if (!scrollRef.current) return
+    const idx = Math.min(Math.round(scrollRef.current.scrollTop / ITEM_H), SLEEP_VALUES.length - 1)
+    setActiveIdx(idx)
+    onChange(SLEEP_VALUES[idx])
+  }
+
+  return (
+    <div className="relative h-[132px] overflow-hidden rounded-2xl border border-white/8 bg-white/3">
+      {/* Gradient oben */}
+      <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-[#070b14] to-transparent z-10 pointer-events-none" />
+      {/* Gradient unten */}
+      <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#070b14] to-transparent z-10 pointer-events-none" />
+      {/* Mittleres Highlight */}
+      <div className="absolute inset-x-6 top-1/2 -translate-y-1/2 h-[44px] rounded-xl border border-amber-300/20 bg-amber-300/6 pointer-events-none z-0" />
+
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="h-full overflow-y-scroll"
+        style={{ scrollSnapType: "y mandatory", scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        <div style={{ height: ITEM_H }} />
+        {SLEEP_VALUES.map((v, i) => (
+          <div key={i} style={{ height: ITEM_H, scrollSnapAlign: "center" }} className="flex items-center justify-center">
+            <span className={`font-medium transition-all duration-150 select-none ${
+              activeIdx === i ? "text-amber-200 text-xl" : "text-white/30 text-sm"
+            }`}>
+              {v === "" ? "–" : `${v} h`}
+            </span>
+          </div>
+        ))}
+        <div style={{ height: ITEM_H }} />
+      </div>
+    </div>
   )
 }
