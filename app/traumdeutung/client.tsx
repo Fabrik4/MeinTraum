@@ -40,7 +40,7 @@ const FAQ = [
   },
   {
     q: "Wie kann ich meine Träume besser erinnern?",
-    a: "Am effektivsten: Sofort nach dem Aufwachen schreiben, noch im Halbschlaf. Auch Stichwörter reichen. MeinTraum ist so gestaltet, dass du in unter 30 Sekunden einen Traum festhalten kannst.",
+    a: "Am effektivsten: Sofort nach dem Aufwachen schreiben, noch im Halbschlaf. Auch Stichworte reichen. MeinTraum ist so gestaltet, dass du in unter 30 Sekunden einen Traum festhalten kannst.",
   },
   {
     q: "Was ist ein luzider Traum?",
@@ -218,7 +218,7 @@ export default function TraumdeutungClient() {
                     Neuen Traum deuten
                   </button>
                 </div>
-                <p className="text-xs text-white/18">Kein Kreditkarte · Traum wird automatisch gespeichert</p>
+                <p className="text-xs text-white/18">Keine Kreditkarte · Traum wird automatisch gespeichert</p>
               </div>
             </div>
           )}

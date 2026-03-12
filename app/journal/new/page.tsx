@@ -272,7 +272,7 @@ export default function JournalNewPage() {
                   className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-amber-300/20 bg-amber-300/8 px-4 py-4 text-sm font-medium text-amber-100 transition hover:bg-amber-300/15 disabled:opacity-35">
                   {expanding
                     ? <><span className="animate-spin">✦</span> Generiere…</>
-                    : <>✨ KI zusammenfassen</>
+                    : <>✨ Auto-Text</>
                   }
                 </button>
                 <button type="submit" disabled={isSubmitting || !user}

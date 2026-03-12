@@ -240,7 +240,7 @@ export default function ProfilePage() {
           <div>
             <p className="text-xs uppercase tracking-[0.15em] text-white/30 mb-1">KI-Gedächtnis</p>
             <p className="text-xs text-white/30 leading-6">
-              Analysiert alle Einträge und erstellt eine Zusammenfassung die die KI in jedem Gespräch nutzt.
+              Analysiert alle Einträge und erstellt eine Zusammenfassung, die die KI in jedem Gespräch nutzt.
               {lastSummaryDate && <span className="block mt-1 text-white/18">Zuletzt: {lastSummaryDate}</span>}
             </p>
           </div>

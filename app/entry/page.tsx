@@ -234,7 +234,7 @@ export default function DreamEntryPage() {
                 Neuen Traum eingeben
               </button>
             </div>
-            <p className="text-xs text-white/20">Kein Kreditkarte · Kostenlos starten</p>
+            <p className="text-xs text-white/20">Keine Kreditkarte · Kostenlos starten</p>
           </div>
 
           {/* Teaser: Was noch möglich wäre */}
@@ -385,14 +385,14 @@ export default function DreamEntryPage() {
           {/* Submit – zwei Buttons nebeneinander */}
           <div className="space-y-3 pt-2">
             <div className="flex gap-3">
-              {/* KI zusammenfassen – nur wenn Text vorhanden */}
+              {/* Auto-Text – nur wenn Text vorhanden */}
               <button type="button"
-                onClick={user ? expandText : expandText}
+                onClick={expandText}
                 disabled={expanding || analyzingGuest || !rawInputText.trim()}
                 className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-300/8 px-4 py-4 text-sm font-medium text-cyan-100 transition hover:bg-cyan-300/15 disabled:opacity-35">
                 {expanding
                   ? <><span className="animate-spin">✦</span> Generiere…</>
-                  : <>✨ KI zusammenfassen</>
+                  : <>✨ Auto-Text</>
                 }
               </button>
 

@@ -250,7 +250,7 @@ export default function Home() {
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { n: "01", title: "Traum eingeben", text: "Direkt nach dem Aufwachen – per Freitext oder Stichwörter. In unter 30 Sekunden. Ohne Anmeldung." },
+            { n: "01", title: "Traum eingeben", text: "Direkt nach dem Aufwachen – per Freitext oder Stichworte. In unter 30 Sekunden. Ohne Anmeldung." },
             { n: "02", title: "Sofort analysieren", text: "Die KI analysiert deinen Traum aus mehreren Blickwinkeln – und stellt dir eine Reflexionsfrage." },
             { n: "03", title: "Muster entdecken", text: "Mit jedem weiteren Traum werden die Zusammenhänge klarer. Dein persönliches Archiv wächst." },
           ].map((step) => (
@@ -312,7 +312,7 @@ export default function Home() {
                 Erst Demo anschauen
               </Link>
             </div>
-            <p className="text-xs text-white/20">Kostenlos · Kein Kreditkarte · Konto optional</p>
+            <p className="text-xs text-white/20">Kostenlos · Keine Kreditkarte · Konto optional</p>
           </div>
         </div>
       </section>
