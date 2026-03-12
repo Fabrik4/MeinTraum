@@ -139,7 +139,7 @@ export default function DreamEntryPage() {
   // Nach Login: falls Gast-Analyse vorhanden → Speichern anbieten
   if (!authLoading && user && guestAnalysis) {
     return (
-      <main className="min-h-screen bg-[#070b14] px-5 pt-16 pb-24 md:py-14 text-white">
+      <main className="min-h-screen bg-[#070b14] px-5 pt-5 pb-24 md:py-14 text-white">
         <div className="mx-auto max-w-2xl space-y-8">
           <div className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-6 text-center space-y-4">
             <p className="text-2xl">✓</p>
@@ -164,7 +164,7 @@ export default function DreamEntryPage() {
   // ── Gast-Analyse Ergebnis ─────────────────────────────────
   if (guestAnalysis && !user) {
     return (
-      <main className="min-h-screen bg-[#070b14] px-5 pt-16 pb-24 md:py-14 text-white">
+      <main className="min-h-screen bg-[#070b14] px-5 pt-5 pb-24 md:py-14 text-white">
         <div className="mx-auto max-w-2xl space-y-8">
 
           {/* Traum */}
@@ -270,7 +270,7 @@ export default function DreamEntryPage() {
 
   // ── Eingabe-Formular ──────────────────────────────────────
   return (
-    <main className="min-h-screen bg-[#070b14] px-5 pt-16 pb-24 md:py-14 text-white">
+    <main className="min-h-screen bg-[#070b14] px-5 pt-5 pb-24 md:py-14 text-white">
       <div className="mx-auto max-w-2xl space-y-10">
 
         {/* Header */}

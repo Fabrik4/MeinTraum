@@ -124,7 +124,7 @@ export default function TimelinePage() {
   }, {} as Record<string, TimelineEntry[]>)
 
   return (
-    <main className="min-h-screen bg-[#070b14] px-6 pt-16 pb-24 md:py-16 text-white">
+    <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
       <div className="mx-auto max-w-4xl">
 
         {/* Header */}

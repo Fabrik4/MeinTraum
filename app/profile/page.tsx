@@ -104,7 +104,7 @@ export default function ProfilePage() {
   if (authLoading || loading) return <main className="min-h-screen bg-[#070b14]" />
 
   return (
-    <main className="min-h-screen bg-[#070b14] px-5 pt-16 pb-24 md:py-14 text-white">
+    <main className="min-h-screen bg-[#070b14] px-5 pt-5 pb-24 md:py-14 text-white">
       <div className="mx-auto max-w-2xl space-y-8">
 
         <div>

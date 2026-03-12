@@ -269,8 +269,6 @@ export default function AppHeader() {
         </div>
       </nav>
 
-      {/* Spacer – verhindert dass Content hinter Bottom Bar verschwindet */}
-      <div className="md:hidden h-[72px]" />
     </>
   )
 }
