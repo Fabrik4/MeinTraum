@@ -46,6 +46,15 @@ function ProfileIcon({ size = 20, color = "currentColor" }) {
     </svg>
   )
 }
+function PatternsIcon({ size = 20, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
+      <path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z" />
+      <path d="M19 3l.6 1.8L21.4 5l-1.8.6L19 7.4l-.6-1.8L16.6 5l1.8-.6L19 3z" />
+    </svg>
+  )
+}
 function GlobeIcon({ size = 20, color = "currentColor" }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -74,10 +83,10 @@ function ChatIcon({ size = 20, color = "currentColor" }) {
 // ── Nav Items ─────────────────────────────────────────────────
 const NAV_ITEMS = [
   { href: "/dashboard",   label: "Home",    Icon: HomeIcon },
-  { href: "/timeline",    label: "Archiv",  Icon: ArchivIcon },
-  { href: "/entry",       label: "Traum",   Icon: MoonIcon,  primary: true },
-  { href: "/journal/new", label: "Journal", Icon: PenIcon },
-  { href: "/profile",     label: "Profil",  Icon: ProfileIcon },
+  { href: "/timeline",    label: "Timeline", Icon: ArchivIcon },
+  { href: "/entry",       label: "Traum",    Icon: MoonIcon,  primary: true },
+  { href: "/journal/new", label: "Journal",  Icon: PenIcon },
+  { href: "/patterns",    label: "Muster",   Icon: PatternsIcon },
 ]
 
 function checkActive(pathname: string, href: string) {
@@ -86,6 +95,7 @@ function checkActive(pathname: string, href: string) {
   if (href === "/timeline") return pathname === "/timeline"
   if (href === "/dashboard") return pathname === "/dashboard"
   if (href === "/profile") return pathname.startsWith("/profile")
+  if (href === "/patterns") return pathname.startsWith("/patterns")
   return false
 }
 
