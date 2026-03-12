@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/useAuth"
 import Link from "next/link"
+import { useSpeechRecorder } from "@/lib/useSpeechRecorder"
 
 const EMOTIONS = ["Angst", "Freude", "Trauer", "Verwirrung", "Neugier", "Ruhe", "Wut", "Ekel"]
 const CLARITY_OPTIONS = ["Verschwommen", "Mittel", "Sehr klar"]
@@ -39,6 +40,12 @@ export default function DreamEntryPage() {
   const [expanding, setExpanding] = useState(false)
   const [expandedPreview, setExpandedPreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Speech-to-Text
+  const onTranscript = useCallback((text: string) => {
+    setRawInputText((prev) => prev ? prev + " " + text : text)
+  }, [])
+  const { state: recState, errorMsg: recError, start: startRec, stop: stopRec } = useSpeechRecorder(onTranscript)
 
   // Gast-Analyse State
   const [guestAnalysis, setGuestAnalysis] = useState<GuestAnalysis | null>(null)
@@ -292,6 +299,35 @@ export default function DreamEntryPage() {
               placeholder="Stichworte reichen – z.B. «Brücke, alte Chefin, konnte nicht weglaufen»"
               rows={6} required
               className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/20 focus:border-cyan-300/30 focus:outline-none transition resize-none" />
+
+            {/* Mikrofon-Button */}
+            <div className="mt-3 flex items-center gap-3">
+              <button type="button"
+                onClick={recState === "recording" ? stopRec : startRec}
+                disabled={recState === "transcribing"}
+                className={`flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm transition-all ${
+                  recState === "recording"
+                    ? "border-red-400/40 bg-red-400/15 text-red-200 animate-pulse"
+                    : recState === "transcribing"
+                    ? "border-cyan-300/20 bg-cyan-300/8 text-cyan-300/60 cursor-wait"
+                    : recState === "error"
+                    ? "border-red-300/20 bg-red-300/8 text-red-300/60"
+                    : "border-white/10 bg-white/5 text-white/45 hover:border-white/20 hover:text-white/70"
+                }`}>
+                {recState === "recording" ? (
+                  <><span className="h-2 w-2 rounded-full bg-red-400 animate-pulse" /> Aufnahme stoppen</>
+                ) : recState === "transcribing" ? (
+                  <><span className="animate-spin">✦</span> Wird transkribiert…</>
+                ) : recState === "error" ? (
+                  <>🎤 {recError}</>
+                ) : (
+                  <>🎤 Einsprechen</>
+                )}
+              </button>
+              {recState === "idle" && (
+                <span className="text-xs text-white/20">Traum einfach erzählen – KI schreibt mit</span>
+              )}
+            </div>
 
             {/* Expanded preview – erscheint direkt unter Textarea */}
             {expandedPreview && (
