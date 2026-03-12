@@ -1,11 +1,13 @@
 "use client"
 
 import { useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Moon, Sparkles, Brain, Search, Mic, Bell,
   TrendingUp, Shield, Star, ArrowRight
 } from "lucide-react"
+import { useAuth } from "@/lib/useAuth"
 
 function useFadeIn(delay = 0) {
   const ref = useRef<HTMLDivElement>(null)
@@ -77,10 +79,24 @@ const principles = [
 ]
 
 export default function Home() {
+  const router = useRouter()
+  const { user, loading } = useAuth()
   const hero  = useFadeIn(0)
   const sub   = useFadeIn(150)
   const cta   = useFadeIn(280)
   const badge = useFadeIn(50)
+
+  // Eingeloggte User direkt zum Dashboard
+  useEffect(() => {
+    if (!loading && user) router.replace("/dashboard")
+  }, [user, loading])
+
+  // Kurz warten während Auth-Status geladen wird
+  if (loading || user) return (
+    <main className="min-h-screen bg-[#070b14] flex items-center justify-center">
+      <p className="text-3xl animate-pulse">🌙</p>
+    </main>
+  )
 
   return (
     <main className="min-h-screen bg-[#070b14] text-white overflow-x-hidden">

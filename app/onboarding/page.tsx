@@ -11,7 +11,7 @@ const GOALS = [
   { value: "Schlaf verbessern", emoji: "💤" },
   { value: "Selbstreflexion", emoji: "🪞" },
   { value: "Luzides Träumen", emoji: "⚡" },
-  { value: "Einfach aufschreiben", emoji: "📓" },
+  { value: "Journal", emoji: "📓" },
 ]
 
 const AGE_RANGES = ["Unter 20", "20–29", "30–39", "40–49", "50+"]
@@ -24,7 +24,6 @@ export default function OnboardingPage() {
   const [name, setName] = useState("")
   const [ageRange, setAgeRange] = useState("")
   const [selectedGoals, setSelectedGoals] = useState<string[]>([])
-  const [dreamText, setDreamText] = useState("")
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -60,35 +59,6 @@ export default function OnboardingPage() {
     await saveProfile(false)
     setSaving(false)
     setStep(2)
-  }
-
-  // Schritt 3: Mit Traum abschliessen
-  async function handleFinishWithDream() {
-    if (!user || !dreamText.trim()) return
-    setSaving(true)
-    const [dreamRes] = await Promise.all([
-      supabase.from("dream_entries").insert([{
-        user_id: user.id,
-        raw_input_text: dreamText.trim(),
-        dreamed_at: new Date().toISOString(),
-      }]).select("id").single(),
-      saveProfile(true),
-    ])
-    setSaving(false)
-    if (dreamRes.data) {
-      router.replace(`/entries/${dreamRes.data.id}?type=dream`)
-    } else {
-      router.replace("/dashboard")
-    }
-  }
-
-  // Schritt 3: Ohne Traum abschliessen
-  async function handleFinishWithout() {
-    if (!user) return
-    setSaving(true)
-    await saveProfile(true)
-    setSaving(false)
-    router.replace("/dashboard")
   }
 
   const toggleGoal = (g: string) =>
@@ -151,8 +121,8 @@ export default function OnboardingPage() {
           <div className="space-y-8 animate-in fade-in duration-500">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-semibold">Hey {displayName} 👋</h2>
-              <p className="text-white/40 text-sm leading-7">
-                Ein paar optionale Angaben – hilft der KI dir besser zu verstehen.
+              <p className="text-white/40 text-sm">
+                Ein paar optionale Angaben.
               </p>
             </div>
 
@@ -203,45 +173,52 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── Schritt 2: Erster Traum ── */}
+        {/* ── Schritt 2: Los geht's ── */}
         {step === 2 && (
           <div className="space-y-8 animate-in fade-in duration-500">
             <div className="text-center space-y-2">
-              <h2 className="text-2xl font-semibold">Deinen ersten Traum festhalten?</h2>
-              <p className="text-white/40 text-sm leading-7 max-w-sm mx-auto">
-                Stichworte reichen völlig – du kannst später jederzeit ergänzen.
-              </p>
+              <p className="text-3xl">✓</p>
+              <h2 className="text-2xl font-semibold">Alles bereit, {displayName}!</h2>
+              <p className="text-white/40 text-sm">Womit möchtest du beginnen?</p>
             </div>
 
-            <textarea
-              value={dreamText}
-              onChange={(e) => setDreamText(e.target.value)}
-              placeholder="Was hast du geträumt? Auch Fragmente oder Gefühle sind wertvoll…"
-              rows={5}
-              className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/20 focus:border-cyan-300/30 focus:outline-none transition resize-none"
-            />
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleFinishWithout}
-                disabled={saving}
-                className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white/40 transition hover:text-white/70 hover:bg-white/8">
-                Zum Dashboard
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={async () => { await saveProfile(true); router.replace("/entry") }}
+                className="flex flex-col gap-3 rounded-3xl border border-cyan-300/15 bg-cyan-300/5 p-5 text-left transition hover:bg-cyan-300/10 hover:border-cyan-300/25">
+                <span className="text-2xl">🌙</span>
+                <div>
+                  <p className="font-medium text-white text-sm">Traum erfassen</p>
+                  <p className="text-xs text-white/35 mt-0.5 leading-5">Direkt loslegen</p>
+                </div>
               </button>
-              <button
-                onClick={handleFinishWithDream}
-                disabled={!dreamText.trim() || saving}
-                className="flex-1 rounded-2xl bg-white px-4 py-3.5 font-medium text-[#070b14] transition hover:scale-[1.01] disabled:opacity-40">
-                {saving
-                  ? <span className="flex items-center justify-center gap-2"><span className="animate-spin">✦</span> Speichert…</span>
-                  : "🌙 Speichern & starten"
-                }
+
+              <button onClick={async () => { await saveProfile(true); router.replace("/journal/new") }}
+                className="flex flex-col gap-3 rounded-3xl border border-amber-300/15 bg-amber-300/5 p-5 text-left transition hover:bg-amber-300/10 hover:border-amber-300/25">
+                <span className="text-2xl">📓</span>
+                <div>
+                  <p className="font-medium text-white text-sm">Journal schreiben</p>
+                  <p className="text-xs text-white/35 mt-0.5 leading-5">Stimmung festhalten</p>
+                </div>
+              </button>
+
+              <button onClick={async () => { await saveProfile(true); router.replace("/profile") }}
+                className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-5 text-left transition hover:bg-white/8 hover:border-white/20">
+                <span className="text-2xl">🪞</span>
+                <div>
+                  <p className="font-medium text-white text-sm">Profil einrichten</p>
+                  <p className="text-xs text-white/35 mt-0.5 leading-5">KI-Kontext ergänzen</p>
+                </div>
+              </button>
+
+              <button onClick={async () => { await saveProfile(true); router.replace("/dashboard") }}
+                className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-5 text-left transition hover:bg-white/8 hover:border-white/20">
+                <span className="text-2xl">✦</span>
+                <div>
+                  <p className="font-medium text-white text-sm">Dashboard</p>
+                  <p className="text-xs text-white/35 mt-0.5 leading-5">Übersicht ansehen</p>
+                </div>
               </button>
             </div>
-
-            <p className="text-center text-xs text-white/18">
-              Nach dem Speichern siehst du sofort die KI-Analyse deines Traums
-            </p>
           </div>
         )}
 
