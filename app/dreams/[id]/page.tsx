@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 // ── Typen ────────────────────────────────────────────────────
@@ -25,6 +25,7 @@ type Dream = {
   familiar_place_flag: boolean
   nightmare_flag: boolean
   created_at: string
+  dreamed_at: string | null
 }
 
 type Analysis = {
@@ -41,17 +42,15 @@ type SavedAnalysis = {
   mode: string
   summary: string
   themes: string[]
-  emotions: string[]
-  caution_note: string | null
   created_at: string
 }
 
 // ── Konstanten ───────────────────────────────────────────────
 const ANALYSIS_MODES = [
-  { value: "psychological", label: "Psychologisch",     emoji: "🧠", desc: "Neutral & reflektiert" },
-  { value: "poetic",        label: "Poetisch",          emoji: "🌙", desc: "Märchenhaft & bildhaft" },
-  { value: "humorous",      label: "Humorvoll",         emoji: "😄", desc: "Mit Augenzwinkern" },
-  { value: "scientific",    label: "Wissenschaftlich",  emoji: "🔬", desc: "Neurowissenschaftlich" },
+  { value: "psychological", label: "Psychologisch",    emoji: "🧠", desc: "Neutral & reflektiert" },
+  { value: "poetic",        label: "Poetisch",         emoji: "🌙", desc: "Märchenhaft & bildhaft" },
+  { value: "humorous",      label: "Humorvoll",        emoji: "😄", desc: "Mit Augenzwinkern" },
+  { value: "scientific",    label: "Wissenschaftlich", emoji: "🔬", desc: "Neurowissenschaftlich" },
 ]
 
 const PERSON_PRESETS = [
@@ -97,6 +96,14 @@ function toneToIndex(tone: string | null, nightmareFlag: boolean) {
   if (tone === "nightmare" || (!tone && nightmareFlag)) return 0
   if (tone === "pleasant") return 2
   return 1
+}
+function toLocalDatetimeString(iso: string | null) {
+  if (!iso) {
+    const now = new Date()
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+  }
+  const d = new Date(iso)
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 }
 function modeLabel(mode: string) {
   return ANALYSIS_MODES.find((m) => m.value === mode)?.label ?? mode
@@ -191,9 +198,7 @@ function AnalysisCard({ analysis, mode, onSave, saving }: {
           {saving ? "Wird gespeichert…" : "Analyse speichern"}
         </button>
       </div>
-
       <p className="leading-8 text-white/80">{analysis.summary}</p>
-
       {analysis.themes.length > 0 && (
         <div>
           <p className="mb-2 text-xs uppercase tracking-[0.15em] text-white/40">Themen</p>
@@ -204,17 +209,14 @@ function AnalysisCard({ analysis, mode, onSave, saving }: {
           </div>
         </div>
       )}
-
       <div>
         <p className="mb-2 text-xs uppercase tracking-[0.15em] text-white/40">Reflexion</p>
         <p className="leading-8 text-white/70">{analysis.reflection}</p>
       </div>
-
       <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
         <p className="text-sm text-white/50 mb-1">Frage für dich</p>
         <p className="text-white/85 leading-7 italic">"{analysis.question}"</p>
       </div>
-
       <p className="text-xs text-white/30 border-t border-white/5 pt-4">{analysis.caution}</p>
     </div>
   )
@@ -222,6 +224,7 @@ function AnalysisCard({ analysis, mode, onSave, saving }: {
 
 // ── Haupt-Komponente ─────────────────────────────────────────
 export default function DreamDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const router = useRouter()
   const searchParams = useSearchParams()
 
   const [dream, setDream] = useState<Dream | null>(null)
@@ -235,11 +238,20 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
 
   // Edit-State
   const [rawInputText, setRawInputText] = useState("")
+  const [dreamedAt, setDreamedAt] = useState("")
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([])
   const [dreamClarity, setDreamClarity] = useState(1)
   const [dreamTone, setDreamTone] = useState(1)
   const [customPersonInput, setCustomPersonInput] = useState("")
   const [customPlaceInput, setCustomPlaceInput] = useState("")
+
+  // Expand-State
+  const [expanding, setExpanding] = useState(false)
+  const [expandedPreview, setExpandedPreview] = useState<string | null>(null)
+
+  // Delete-State
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // Analyse-State
   const [selectedMode, setSelectedMode] = useState("psychological")
@@ -265,7 +277,7 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
         .select("id, user_entity_id, user_entities(entity_type, entity_category, entity_label)")
         .eq("dream_entry_id", resolvedId),
       supabase.from("dream_analysis")
-        .select("id, mode, summary, themes, emotions, caution_note, created_at")
+        .select("id, mode, summary, themes, created_at")
         .eq("dream_entry_id", resolvedId)
         .order("created_at", { ascending: false }),
     ])
@@ -274,26 +286,21 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
       const d = dreamRes.data
       setDream(d)
       setRawInputText(d.raw_input_text || "")
+      setDreamedAt(toLocalDatetimeString(d.dreamed_at || d.created_at))
       setSelectedEmotions(d.dominant_emotion?.split(", ").filter(Boolean) ?? [])
       setDreamClarity(clarityToIndex(d.dream_clarity))
       setDreamTone(toneToIndex(d.dream_tone, d.nightmare_flag))
     }
-
     if (!entitiesRes.error && entitiesRes.data) {
       setLinkedEntities(entitiesRes.data.map((e: any) => ({
-        id: e.id,
-        user_entity_id: e.user_entity_id,
+        id: e.id, user_entity_id: e.user_entity_id,
         entity_type: e.user_entities?.entity_type ?? "",
         entity_category: e.user_entities?.entity_category ?? "",
         entity_label: e.user_entities?.entity_label ?? "",
         display_label: e.user_entities?.entity_label ?? "",
       })))
     }
-
-    if (!analysisRes.error && analysisRes.data) {
-      setSavedAnalyses(analysisRes.data)
-    }
-
+    if (!analysisRes.error && analysisRes.data) setSavedAnalyses(analysisRes.data)
     setLoading(false)
   }
 
@@ -335,6 +342,40 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
     }])
   }
 
+  // ── Traumtext erweitern ──────────────────────────────────
+  async function expandDreamText() {
+    if (!rawInputText.trim()) return
+    setExpanding(true)
+    setExpandedPreview(null)
+
+    const persons = linkedEntities.filter((e) => e.entity_type === "person").map((e) => e.display_label)
+    const places  = linkedEntities.filter((e) => e.entity_type === "place").map((e) => e.display_label)
+
+    try {
+      const res = await fetch("/api/expand-dream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rawText: rawInputText,
+          emotion: selectedEmotions.join(", "),
+          persons, places,
+        }),
+      })
+      const data = await res.json()
+      if (data.expanded) setExpandedPreview(data.expanded)
+      else setMessage("Text konnte nicht generiert werden.")
+    } catch {
+      setMessage("Fehler bei der Textgenerierung.")
+    }
+    setExpanding(false)
+  }
+
+  function acceptExpanded() {
+    if (expandedPreview) setRawInputText(expandedPreview)
+    setExpandedPreview(null)
+  }
+
+  // ── Speichern ────────────────────────────────────────────
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -358,6 +399,7 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
       dream_clarity: CLARITY_OPTIONS[dreamClarity],
       dream_tone: selectedTone,
       nightmare_flag: selectedTone === "nightmare",
+      dreamed_at: new Date(dreamedAt).toISOString(),
       familiar_person_flag: linkedEntities.some((e) => e.entity_type === "person"),
       familiar_place_flag: linkedEntities.some((e) => e.entity_type === "place"),
     }).eq("id", resolvedId)
@@ -368,15 +410,20 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
     setSaving(false)
   }
 
+  // ── Löschen ──────────────────────────────────────────────
+  async function handleDelete() {
+    setDeleting(true)
+    await supabase.from("dream_entries").delete().eq("id", resolvedId)
+    router.push("/dreams")
+  }
+
   // ── KI-Analyse ───────────────────────────────────────────
   async function runAnalysis() {
     if (!dream) return
     setAnalyzing(true)
     setCurrentAnalysis(null)
-
     const persons = linkedEntities.filter((e) => e.entity_type === "person").map((e) => e.display_label)
     const places  = linkedEntities.filter((e) => e.entity_type === "place").map((e) => e.display_label)
-
     try {
       const res = await fetch("/api/analyze-dream", {
         method: "POST",
@@ -390,25 +437,16 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
           mode: selectedMode,
         }),
       })
-
       const data = await res.json()
-      if (data.analysis) {
-        setCurrentAnalysis(data.analysis)
-        setCurrentAnalysisMode(selectedMode)
-      } else {
-        setMessage("Analyse fehlgeschlagen. Bitte erneut versuchen.")
-      }
-    } catch {
-      setMessage("Analyse konnte nicht erstellt werden.")
-    }
-
+      if (data.analysis) { setCurrentAnalysis(data.analysis); setCurrentAnalysisMode(selectedMode) }
+      else setMessage("Analyse fehlgeschlagen.")
+    } catch { setMessage("Analyse konnte nicht erstellt werden.") }
     setAnalyzing(false)
   }
 
   async function saveAnalysis() {
     if (!currentAnalysis) return
     setSavingAnalysis(true)
-
     await supabase.from("dream_analysis").insert({
       dream_entry_id: Number(resolvedId),
       mode: currentAnalysisMode,
@@ -418,7 +456,6 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
       caution_note: currentAnalysis.caution,
       based_on_confirmed_entities_only: false,
     })
-
     setCurrentAnalysis(null)
     setSavingAnalysis(false)
     fetchAll()
@@ -468,7 +505,9 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
         {!isEditing && (
           <div className="space-y-6">
             <p className="text-sm text-white/40">
-              {new Date(dream.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
+              {new Date(dream.dreamed_at || dream.created_at).toLocaleDateString("de-CH", {
+                day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
+              })}
             </p>
             <p className="leading-8 text-white/85 whitespace-pre-wrap text-lg">{dream.raw_input_text}</p>
             <div className="flex flex-wrap gap-2">
@@ -498,11 +537,10 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
           <div className="space-y-6">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
               <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80 mb-6">Analyse-Modus wählen</p>
-
               <div className="grid gap-3 sm:grid-cols-2 mb-8">
                 {ANALYSIS_MODES.map((mode) => (
                   <button key={mode.value} type="button" onClick={() => setSelectedMode(mode.value)}
-                    className={`rounded-2xl border p-4 text-left transition-all ${selectedMode === mode.value ? "border-cyan-300/30 bg-cyan-300/10" : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8"}`}>
+                    className={`rounded-2xl border p-4 text-left transition-all ${selectedMode === mode.value ? "border-cyan-300/30 bg-cyan-300/10" : "border-white/10 bg-white/5 hover:border-white/20"}`}>
                     <div className="flex items-center gap-3 mb-1">
                       <span className="text-xl">{mode.emoji}</span>
                       <span className="font-medium text-white text-sm">{mode.label}</span>
@@ -511,28 +549,14 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                   </button>
                 ))}
               </div>
-
               <button onClick={runAnalysis} disabled={analyzing}
-                className="w-full rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60">
-                {analyzing ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="animate-spin">✦</span> Analysiere…
-                  </span>
-                ) : "Traum analysieren"}
+                className="w-full rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] disabled:opacity-60">
+                {analyzing ? <span className="flex items-center justify-center gap-2"><span className="animate-spin">✦</span> Analysiere…</span> : "Traum analysieren"}
               </button>
             </div>
-
-            {/* Aktuelle Analyse (noch nicht gespeichert) */}
             {currentAnalysis && (
-              <AnalysisCard
-                analysis={currentAnalysis}
-                mode={currentAnalysisMode}
-                onSave={saveAnalysis}
-                saving={savingAnalysis}
-              />
+              <AnalysisCard analysis={currentAnalysis} mode={currentAnalysisMode} onSave={saveAnalysis} saving={savingAnalysis} />
             )}
-
-            {/* Gespeicherte Analysen */}
             {savedAnalyses.length > 0 && (
               <div className="space-y-4">
                 <p className="text-sm uppercase tracking-[0.15em] text-white/40">Gespeicherte Analysen</p>
@@ -566,12 +590,45 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
         {isEditing && (
           <form onSubmit={handleSave} className="space-y-10">
 
+            {/* Traumtext + Expand */}
             <div>
-              <label className="mb-3 block text-sm font-medium text-white/80">Traumtext</label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-medium text-white/80">Traumtext</label>
+                <button type="button" onClick={expandDreamText} disabled={expanding || !rawInputText.trim()}
+                  className="flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-300/5 px-3 py-1.5 text-xs text-cyan-200 transition hover:bg-cyan-300/10 disabled:opacity-40">
+                  {expanding ? <><span className="animate-spin">✦</span> Generiere…</> : <>✨ Aus Stichworten generieren</>}
+                </button>
+              </div>
               <textarea value={rawInputText} onChange={(e) => setRawInputText(e.target.value)} rows={6}
                 className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white focus:border-cyan-300/40 focus:outline-none transition resize-none" />
+
+              {/* Expanded Preview */}
+              {expandedPreview && (
+                <div className="mt-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/5 p-5">
+                  <p className="text-xs uppercase tracking-[0.15em] text-cyan-300/60 mb-3">KI-Vorschlag</p>
+                  <p className="leading-7 text-white/80 text-sm mb-4">{expandedPreview}</p>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={acceptExpanded}
+                      className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] transition hover:scale-[1.02]">
+                      Übernehmen
+                    </button>
+                    <button type="button" onClick={() => setExpandedPreview(null)}
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 transition hover:bg-white/10">
+                      Verwerfen
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* Datum & Uhrzeit */}
+            <div>
+              <label className="mb-3 block text-sm font-medium text-white/80">Wann war dieser Traum?</label>
+              <input type="datetime-local" value={dreamedAt} onChange={(e) => setDreamedAt(e.target.value)}
+                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white focus:border-cyan-300/40 focus:outline-none transition" />
+            </div>
+
+            {/* Emotionen */}
             <div>
               <p className="mb-3 text-sm font-medium text-white/80">
                 Emotionen <span className="font-normal text-white/35">(mehrere möglich)</span>
@@ -589,6 +646,7 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
+            {/* Stimmungs-Regler */}
             <div>
               <p className="mb-4 text-sm font-medium text-white/80">Stimmung des Traums</p>
               <div className="flex justify-between mb-2">
@@ -604,6 +662,7 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setDreamTone(Number(e.target.value))} className="w-full accent-cyan-300 cursor-pointer" />
             </div>
 
+            {/* Klarheits-Regler */}
             <div>
               <p className="mb-4 text-sm font-medium text-white/80">Klarheit des Traums</p>
               <div className="flex justify-between mb-2">
@@ -648,8 +707,7 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomEntity("person", "other", customPersonInput); setCustomPersonInput("") } }}
                   placeholder="z.B. Bruder Max, Kollegin Anna …"
                   className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-300/40 focus:outline-none transition" />
-                <button type="button"
-                  onClick={() => { addCustomEntity("person", "other", customPersonInput); setCustomPersonInput("") }}
+                <button type="button" onClick={() => { addCustomEntity("person", "other", customPersonInput); setCustomPersonInput("") }}
                   className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white transition">
                   + Hinzufügen
                 </button>
@@ -685,14 +743,14 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomEntity("place", "other", customPlaceInput); setCustomPlaceInput("") } }}
                   placeholder="z.B. Grossmutters Küche, der alte Bahnhof …"
                   className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-300/40 focus:outline-none transition" />
-                <button type="button"
-                  onClick={() => { addCustomEntity("place", "other", customPlaceInput); setCustomPlaceInput("") }}
+                <button type="button" onClick={() => { addCustomEntity("place", "other", customPlaceInput); setCustomPlaceInput("") }}
                   className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white transition">
                   + Hinzufügen
                 </button>
               </div>
             </div>
 
+            {/* Speichern / Abbrechen */}
             <div className="flex gap-4">
               <button type="submit" disabled={saving}
                 className="flex-1 rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60">
@@ -702,6 +760,30 @@ export default function DreamDetailPage({ params }: { params: Promise<{ id: stri
                 className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white/70 transition hover:bg-white/10 hover:text-white">
                 Abbrechen
               </button>
+            </div>
+
+            {/* Traum löschen */}
+            <div className="border-t border-white/5 pt-8">
+              {!showDeleteConfirm ? (
+                <button type="button" onClick={() => setShowDeleteConfirm(true)}
+                  className="text-sm text-red-300/50 hover:text-red-300/80 transition">
+                  Traum löschen
+                </button>
+              ) : (
+                <div className="rounded-2xl border border-red-300/20 bg-red-300/5 p-5">
+                  <p className="text-sm text-white/70 mb-4">Diesen Traum wirklich löschen? Das kann nicht rückgängig gemacht werden.</p>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={handleDelete} disabled={deleting}
+                      className="rounded-xl bg-red-400/20 border border-red-300/30 px-4 py-2 text-sm text-red-100 transition hover:bg-red-400/30 disabled:opacity-50">
+                      {deleting ? "Wird gelöscht…" : "Ja, löschen"}
+                    </button>
+                    <button type="button" onClick={() => setShowDeleteConfirm(false)}
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 transition hover:bg-white/10">
+                      Abbrechen
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {message && (
