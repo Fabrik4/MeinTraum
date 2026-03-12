@@ -10,12 +10,19 @@ type Stats = {
   totalDreams: number
   totalJournal: number
   thisWeekEntries: number
-  avgMood: number | null
   lastDream: { id: number; text: string; created_at: string } | null
   lastJournal: { id: number; text: string; mood_score: number | null; created_at: string } | null
 }
 
-const MOOD_COLOR = (s: number) => s <= 4 ? "text-amber-300/80" : s <= 6 ? "text-amber-300/80" : "text-emerald-300/80"
+type MoodPoint = { date: string; score: number }
+type MoodData = {
+  points: MoodPoint[]
+  avg7d: number | null
+  avg30d: number | null
+  trend: "rising" | "falling" | "stable" | null
+}
+
+const MOOD_COLOR = (s: number) => s <= 4 ? "text-red-300" : s <= 6 ? "text-amber-300" : "text-emerald-300"
 
 function truncate(t: string, n = 90) { return t.length <= n ? t : t.slice(0, n).trim() + "…" }
 
@@ -38,6 +45,7 @@ export default function DashboardPage() {
   const [hasTodayEntry, setHasTodayEntry] = useState<boolean | null>(null)
   const [checkinDone, setCheckinDone] = useState(false)
   const [checkinLoading, setCheckinLoading] = useState<string | null>(null)
+  const [moodData, setMoodData] = useState<MoodData | null>(null)
   const { streak, reload: reloadStreak } = useStreak(user?.id ?? null)
 
   useEffect(() => {
@@ -45,16 +53,18 @@ export default function DashboardPage() {
   }, [user, authLoading])
 
   async function fetchAll() {
-    const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString()
-    const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString()
+    const weekAgo   = new Date(Date.now() -  7 * 864e5).toISOString()
+    const monthAgo  = new Date(Date.now() - 30 * 864e5).toISOString()
+    const twoMonthAgo = new Date(Date.now() - 60 * 864e5).toISOString()
     const todayStart = new Date().toISOString().slice(0, 10) + "T00:00:00.000Z"
 
     const [
       lastDreamRes, lastJournalRes,
       totalDreamsRes, totalJournalsRes,
       weekDreamsRes, weekJournalsRes,
-      moodRes, profileRes,
+      profileRes,
       todayDreamRes, todayJournalRes,
+      moodRes,
     ] = await Promise.all([
       supabase.from("dream_entries").select("id, raw_input_text, created_at").order("created_at", { ascending: false }).limit(1),
       supabase.from("journal_entries").select("id, body_text, mood_score, created_at").order("created_at", { ascending: false }).limit(1),
@@ -62,26 +72,57 @@ export default function DashboardPage() {
       supabase.from("journal_entries").select("id", { count: "exact", head: true }),
       supabase.from("dream_entries").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
       supabase.from("journal_entries").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
-      supabase.from("journal_entries").select("mood_score").gte("created_at", monthAgo).not("mood_score", "is", null),
       supabase.from("user_profiles").select("display_name").eq("id", user!.id).maybeSingle(),
       supabase.from("dream_entries").select("id", { count: "exact", head: true }).gte("created_at", todayStart),
       supabase.from("journal_entries").select("id", { count: "exact", head: true }).gte("created_at", todayStart),
+      supabase.from("journal_entries")
+        .select("mood_score, entry_date, created_at")
+        .gte("created_at", twoMonthAgo)
+        .not("mood_score", "is", null)
+        .order("entry_date", { ascending: true }),
     ])
 
     setHasTodayEntry((todayDreamRes.count ?? 0) + (todayJournalRes.count ?? 0) > 0)
-
-    const avgMood = moodRes.data?.length
-      ? Math.round(moodRes.data.reduce((s: number, r: any) => s + r.mood_score, 0) / moodRes.data.length * 10) / 10
-      : null
-
     setDisplayName(profileRes.data?.display_name ?? null)
+
+    // Mood-Daten aufbereiten
+    const raw = (moodRes.data ?? []) as any[]
+    const points: MoodPoint[] = raw.map((j) => ({
+      date:  (j.entry_date || j.created_at).slice(0, 10),
+      score: j.mood_score,
+    }))
+
+    const now = Date.now()
+    const recent7  = raw.filter((j) => new Date(j.created_at).getTime() > now - 7  * 864e5).map((j) => j.mood_score)
+    const recent30 = raw.filter((j) => new Date(j.created_at).getTime() > now - 30 * 864e5).map((j) => j.mood_score)
+    const older30  = raw.filter((j) => {
+      const t = new Date(j.created_at).getTime()
+      return t < now - 30 * 864e5 && t > now - 60 * 864e5
+    }).map((j) => j.mood_score)
+
+    const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 10) / 10 : null
+    const avg7d  = avg(recent7)
+    const avg30d = avg(recent30)
+    const avgOld = avg(older30)
+
+    let trend: MoodData["trend"] = null
+    if (avg30d && avgOld) {
+      const diff = avg30d - avgOld
+      trend = diff > 0.5 ? "rising" : diff < -0.5 ? "falling" : "stable"
+    }
+
+    setMoodData({ points: points.slice(-30), avg7d, avg30d, trend })
+
     setStats({
-      totalDreams: totalDreamsRes.count ?? 0,
-      totalJournal: totalJournalsRes.count ?? 0,
+      totalDreams:    totalDreamsRes.count  ?? 0,
+      totalJournal:   totalJournalsRes.count ?? 0,
       thisWeekEntries: (weekDreamsRes.count ?? 0) + (weekJournalsRes.count ?? 0),
-      avgMood,
-      lastDream: lastDreamRes.data?.[0] ? { id: lastDreamRes.data[0].id, text: lastDreamRes.data[0].raw_input_text, created_at: lastDreamRes.data[0].created_at } : null,
-      lastJournal: lastJournalRes.data?.[0] ? { id: lastJournalRes.data[0].id, text: lastJournalRes.data[0].body_text, mood_score: lastJournalRes.data[0].mood_score, created_at: lastJournalRes.data[0].created_at } : null,
+      lastDream:   lastDreamRes.data?.[0]
+        ? { id: lastDreamRes.data[0].id, text: lastDreamRes.data[0].raw_input_text, created_at: lastDreamRes.data[0].created_at }
+        : null,
+      lastJournal: lastJournalRes.data?.[0]
+        ? { id: lastJournalRes.data[0].id, text: lastJournalRes.data[0].body_text, mood_score: lastJournalRes.data[0].mood_score, created_at: lastJournalRes.data[0].created_at }
+        : null,
     })
     setLoading(false)
   }
@@ -126,7 +167,7 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[#070b14] px-5 pt-5 pb-24 md:py-12 text-white">
-      <div className="mx-auto max-w-4xl space-y-10">
+      <div className="mx-auto max-w-4xl space-y-8">
 
         {/* Begrüssung */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -157,16 +198,12 @@ export default function DashboardPage() {
                 <span className="text-xl">🌙</span>
                 <span className="text-xs font-medium text-cyan-100">Traum erfassen</span>
               </Link>
-              <button
-                onClick={() => handleCheckin("no_memory")}
-                disabled={checkinLoading !== null}
+              <button onClick={() => handleCheckin("no_memory")} disabled={checkinLoading !== null}
                 className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-4 text-center transition hover:bg-white/8 active:scale-[0.98] disabled:opacity-50">
                 <span className="text-xl">{checkinLoading === "no_memory" ? "⏳" : "😶"}</span>
                 <span className="text-xs font-medium text-white/60">Nichts erinnert</span>
               </button>
-              <button
-                onClick={() => handleCheckin("no_sleep")}
-                disabled={checkinLoading !== null}
+              <button onClick={() => handleCheckin("no_sleep")} disabled={checkinLoading !== null}
                 className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-4 text-center transition hover:bg-white/8 active:scale-[0.98] disabled:opacity-50">
                 <span className="text-xl">{checkinLoading === "no_sleep" ? "⏳" : "💤"}</span>
                 <span className="text-xs font-medium text-white/60">Nicht geschlafen</span>
@@ -179,9 +216,7 @@ export default function DashboardPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <Link href="/entry"
             className="group flex items-center gap-4 rounded-3xl border border-cyan-300/15 bg-cyan-300/5 px-6 py-5 transition hover:border-cyan-300/25 hover:bg-cyan-300/8 active:scale-[0.99]">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-300/12 text-xl transition group-hover:bg-cyan-300/20">
-              🌙
-            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-300/12 text-xl transition group-hover:bg-cyan-300/20">🌙</div>
             <div>
               <p className="font-semibold text-white">Traum erfassen</p>
               <p className="text-sm text-white/40">Solange er noch frisch ist</p>
@@ -190,9 +225,7 @@ export default function DashboardPage() {
           </Link>
           <Link href="/journal/new"
             className="group flex items-center gap-4 rounded-3xl border border-amber-300/15 bg-amber-300/5 px-6 py-5 transition hover:border-amber-300/25 hover:bg-amber-300/8 active:scale-[0.99]">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-300/12 text-xl transition group-hover:bg-amber-300/20">
-              📓
-            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-300/12 text-xl transition group-hover:bg-amber-300/20">📓</div>
             <div>
               <p className="font-semibold text-white">Journal-Eintrag</p>
               <p className="text-sm text-white/40">Wie geht es dir heute?</p>
@@ -201,21 +234,58 @@ export default function DashboardPage() {
           </Link>
         </div>
 
+        {/* Stimmungsmonitor */}
+        {!loading && moodData && moodData.points.length >= 3 && (
+          <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/25">Stimmungsmonitor</p>
+              <Link href="/patterns" className="text-xs text-white/30 hover:text-white/60 transition">Muster-Analyse →</Link>
+            </div>
+
+            {/* Kennzahlen */}
+            <div className="grid grid-cols-3 gap-3">
+              {moodData.avg7d && (
+                <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-3">
+                  <p className="text-xs text-white/35 mb-1">7 Tage</p>
+                  <p className={`text-xl font-semibold ${MOOD_COLOR(moodData.avg7d)}`}>
+                    {moodData.avg7d}<span className="text-xs font-normal text-white/25 ml-0.5">/10</span>
+                  </p>
+                </div>
+              )}
+              {moodData.avg30d && (
+                <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-3">
+                  <p className="text-xs text-white/35 mb-1">30 Tage</p>
+                  <p className={`text-xl font-semibold ${MOOD_COLOR(moodData.avg30d)}`}>
+                    {moodData.avg30d}<span className="text-xs font-normal text-white/25 ml-0.5">/10</span>
+                  </p>
+                </div>
+              )}
+              {moodData.trend && (
+                <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-3">
+                  <p className="text-xs text-white/35 mb-1">Trend</p>
+                  <p className={`text-xl font-semibold ${moodData.trend === "rising" ? "text-emerald-300" : moodData.trend === "falling" ? "text-red-300" : "text-white/50"}`}>
+                    {moodData.trend === "rising" ? "↗" : moodData.trend === "falling" ? "↘" : "→"}
+                    <span className="text-xs font-normal ml-1.5 text-white/40">
+                      {moodData.trend === "rising" ? "Steigend" : moodData.trend === "falling" ? "Fallend" : "Stabil"}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Chart */}
+            <MoodChart points={moodData.points} />
+          </div>
+        )}
+
         {/* Statistiken */}
         {!loading && stats && (
           <div>
             <p className="mb-4 text-xs uppercase tracking-[0.2em] text-white/25">Deine Zahlen</p>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-3 gap-3">
               <StatCard label="Träume" value={stats.totalDreams} accent="cyan" />
-              <StatCard label="Journaleinträge" value={stats.totalJournal} accent="rose" />
-              <StatCard label="Diese Woche" value={stats.thisWeekEntries} suffix="Einträge" accent="violet" />
-              <StatCard
-                label="Ø Stimmung (30 T.)"
-                value={stats.avgMood ?? "–"}
-                suffix={stats.avgMood ? "/10" : ""}
-                accent="amber"
-                customColor={stats.avgMood ? MOOD_COLOR(Math.round(stats.avgMood)) : undefined}
-              />
+              <StatCard label="Journal" value={stats.totalJournal} accent="amber" />
+              <StatCard label="Diese Woche" value={stats.thisWeekEntries} suffix="Eintr." accent="violet" />
             </div>
           </div>
         )}
@@ -232,9 +302,7 @@ export default function DashboardPage() {
                     <span className="text-xs font-medium uppercase tracking-wider text-cyan-300/55">🌙 Traum</span>
                     <span className="ml-auto text-xs text-white/22">{timeAgo(stats.lastDream.created_at)}</span>
                   </div>
-                  <p className="text-sm leading-6 text-white/65 group-hover:text-white/80 transition">
-                    {truncate(stats.lastDream.text)}
-                  </p>
+                  <p className="text-sm leading-6 text-white/65 group-hover:text-white/80 transition">{truncate(stats.lastDream.text)}</p>
                   <p className="mt-3 text-xs text-cyan-300/35 group-hover:text-cyan-300/65 transition">Ansehen →</p>
                 </Link>
               )}
@@ -244,15 +312,11 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs font-medium uppercase tracking-wider text-amber-300/55">📓 Journal</span>
                     {stats.lastJournal.mood_score && (
-                      <span className={`text-xs font-medium ${MOOD_COLOR(stats.lastJournal.mood_score)}`}>
-                        {stats.lastJournal.mood_score}/10
-                      </span>
+                      <span className={`text-xs font-medium ${MOOD_COLOR(stats.lastJournal.mood_score)}`}>{stats.lastJournal.mood_score}/10</span>
                     )}
                     <span className="ml-auto text-xs text-white/22">{timeAgo(stats.lastJournal.created_at)}</span>
                   </div>
-                  <p className="text-sm leading-6 text-white/65 group-hover:text-white/80 transition">
-                    {truncate(stats.lastJournal.text)}
-                  </p>
+                  <p className="text-sm leading-6 text-white/65 group-hover:text-white/80 transition">{truncate(stats.lastJournal.text)}</p>
                   <p className="mt-3 text-xs text-amber-300/35 group-hover:text-amber-300/65 transition">Ansehen →</p>
                 </Link>
               )}
@@ -282,15 +346,87 @@ export default function DashboardPage() {
   )
 }
 
+// ── Mood Chart ────────────────────────────────────────────────
+function MoodChart({ points }: { points: MoodPoint[] }) {
+  if (points.length < 2) return null
+
+  const W = 600, H = 100, padX = 8, padY = 12
+  const minScore = 1, maxScore = 10
+
+  const toX = (i: number) => padX + (i / (points.length - 1)) * (W - 2 * padX)
+  const toY = (s: number) => H - padY - ((s - minScore) / (maxScore - minScore)) * (H - 2 * padY)
+
+  const pts = points.map((p, i) => ({ x: toX(i), y: toY(p.score), ...p }))
+
+  // Smooth bezier path
+  const linePath = pts.map((p, i) => {
+    if (i === 0) return `M ${p.x} ${p.y}`
+    const prev = pts[i - 1]
+    const cx = (prev.x + p.x) / 2
+    return `C ${cx} ${prev.y} ${cx} ${p.y} ${p.x} ${p.y}`
+  }).join(" ")
+
+  const areaPath = `${linePath} L ${pts[pts.length - 1].x} ${H} L ${pts[0].x} ${H} Z`
+
+  // Zeige Datumslabels für ersten, mittleren und letzten Punkt
+  const labelIndices = [0, Math.floor(pts.length / 2), pts.length - 1]
+  const formatDate = (d: string) => new Date(d).toLocaleDateString("de-CH", { day: "numeric", month: "short" })
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-20 overflow-visible">
+        <defs>
+          <linearGradient id="dashMoodGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgb(251 191 36)" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="rgb(251 191 36)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* Referenzlinie bei 5 (Mitte) */}
+        <line x1={padX} y1={toY(5)} x2={W - padX} y2={toY(5)} stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="4 4" />
+        {/* Area */}
+        <path d={areaPath} fill="url(#dashMoodGrad)" />
+        {/* Line */}
+        <path d={linePath} fill="none" stroke="rgb(251 191 36 / 0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Dots – nur erster, letzter und Extremwerte */}
+        {pts.map((p, i) => {
+          const isEdge = i === 0 || i === pts.length - 1
+          const score = points[i].score
+          const isHigh = score >= 8
+          const isLow  = score <= 3
+          if (!isEdge && !isHigh && !isLow) return null
+          return (
+            <g key={i}>
+              <circle cx={p.x} cy={p.y} r="3.5" fill="#070b14" stroke="rgb(251 191 36 / 0.8)" strokeWidth="1.5" />
+              {(isEdge || isHigh || isLow) && (
+                <text x={p.x} y={p.y - 7} textAnchor="middle" fontSize="9" fill={isHigh ? "rgb(110 231 183 / 0.8)" : isLow ? "rgb(252 165 165 / 0.8)" : "rgba(255,255,255,0.35)"}>
+                  {score}
+                </text>
+              )}
+            </g>
+          )
+        })}
+      </svg>
+      {/* Datumslabels */}
+      <div className="flex justify-between mt-1 px-1">
+        {labelIndices.map((idx) => (
+          <span key={idx} className="text-[10px] text-white/20">{formatDate(points[idx].date)}</span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Stat Card ─────────────────────────────────────────────────
 function StatCard({ label, value, suffix, accent, customColor }: {
   label: string; value: number | string; suffix?: string; accent: string; customColor?: string
 }) {
   const borders: Record<string, string> = {
-    cyan: "border-cyan-300/12 bg-cyan-300/4", rose: "border-amber-300/12 bg-amber-300/4",
-    violet: "border-violet-300/12 bg-violet-300/4", amber: "border-amber-300/12 bg-amber-300/4",
+    cyan:   "border-cyan-300/12 bg-cyan-300/4",
+    amber:  "border-amber-300/12 bg-amber-300/4",
+    violet: "border-violet-300/12 bg-violet-300/4",
   }
   const valueColors: Record<string, string> = {
-    cyan: "text-cyan-200", rose: "text-amber-200", violet: "text-violet-200", amber: "text-amber-200",
+    cyan: "text-cyan-200", amber: "text-amber-200", violet: "text-violet-200",
   }
   return (
     <div className={`rounded-3xl border p-5 ${borders[accent]}`}>
