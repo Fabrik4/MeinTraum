@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 
 type RecordingState = "idle" | "recording" | "transcribing" | "error"
 
@@ -9,6 +9,10 @@ export function useSpeechRecorder(onTranscript: (text: string) => void) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const onTranscriptRef = useRef(onTranscript)
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => { onTranscriptRef.current = onTranscript }, [onTranscript])
+  useEffect(() => () => { if (resetTimerRef.current) clearTimeout(resetTimerRef.current) }, [])
 
   const start = useCallback(async () => {
     setErrorMsg(null)
@@ -53,7 +57,7 @@ export function useSpeechRecorder(onTranscript: (text: string) => void) {
           const data = await res.json()
 
           if (data.text) {
-            onTranscript(data.text)
+            onTranscriptRef.current(data.text)
             setState("idle")
           } else {
             throw new Error(data.error || "Kein Text erkannt")
@@ -61,7 +65,7 @@ export function useSpeechRecorder(onTranscript: (text: string) => void) {
         } catch (err: any) {
           setErrorMsg(err.message || "Transkription fehlgeschlagen")
           setState("error")
-          setTimeout(() => setState("idle"), 3000)
+          resetTimerRef.current = setTimeout(() => setState("idle"), 3000)
         }
       }
 
@@ -74,9 +78,9 @@ export function useSpeechRecorder(onTranscript: (text: string) => void) {
         setErrorMsg("Mikrofon nicht verfügbar")
       }
       setState("error")
-      setTimeout(() => setState("idle"), 3000)
+      resetTimerRef.current = setTimeout(() => setState("idle"), 3000)
     }
-  }, [onTranscript])
+  }, [])
 
   const stop = useCallback(() => {
     if (mediaRecorderRef.current?.state === "recording") {

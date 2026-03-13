@@ -343,10 +343,12 @@ function SleepWheelPicker({ value, onChange }: { value: string; onChange: (v: st
   const [activeIdx, setActiveIdx] = useState(() => Math.max(0, SLEEP_VALUES.indexOf(value)))
 
   useEffect(() => {
+    const idx = Math.max(0, SLEEP_VALUES.indexOf(value))
+    setActiveIdx(idx)
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = activeIdx * ITEM_H
+      scrollRef.current.scrollTop = idx * ITEM_H
     }
-  }, [])
+  }, [value])
 
   function handleScroll() {
     if (!scrollRef.current) return
