@@ -489,10 +489,9 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
     canvas.height = dims.h
     const ctx = canvas.getContext("2d")!
 
-    // Load + cover-fit image
+    // Load + cover-fit image via Proxy (verhindert Canvas CORS-Taint)
     const img = new Image()
-    img.crossOrigin = "anonymous"
-    await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); img.src = imgUrl })
+    await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); img.src = `/api/proxy-image?url=${encodeURIComponent(imgUrl)}` })
     const scale = Math.max(dims.w / img.width, dims.h / img.height)
     const sw = img.width * scale, sh = img.height * scale
     ctx.drawImage(img, (dims.w - sw) / 2, (dims.h - sh) / 2, sw, sh)
@@ -581,17 +580,24 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   async function shareCard() {
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({
-          title: cardTitle || "Mein Traum",
-          text: "Mein Traum auf MeinTraum",
-          url: "https://meintraum.app",
-        })
-        return
-      } catch { /* fall through */ }
-    }
-    downloadCard()
+    const canvas = canvasRef.current
+    if (!canvas) return
+    canvas.toBlob(async (blob) => {
+      if (!blob) { downloadCard(); return }
+      const safe = (cardTitle || "traum").replace(/[^a-z0-9äöü]/gi, "-").toLowerCase().slice(0, 40)
+      const file = new File([blob], `traumbild_${safe}.png`, { type: "image/png" })
+      if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: cardTitle || "Mein Traum",
+            text: "Mein Traum auf MeinTraum · meintraum.app",
+          })
+          return
+        } catch { /* fall through to download */ }
+      }
+      downloadCard()
+    }, "image/png")
   }
 
 

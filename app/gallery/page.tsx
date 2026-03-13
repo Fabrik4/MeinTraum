@@ -10,7 +10,8 @@ type DreamImage = {
   image_url: string
   format: string
   created_at: string
-  dream_entry_id: number
+  dream_entry_id: number | null
+  journal_entry_id: number | null
   dream_entries: { raw_input_text: string; dreamed_at: string | null } | null
 }
 
@@ -35,7 +36,7 @@ export default function GalleryPage() {
     setLoading(true)
     const { data } = await supabase
       .from("dream_images")
-      .select("id, image_url, format, created_at, dream_entry_id, dream_entries(raw_input_text, dreamed_at)")
+      .select("id, image_url, format, created_at, dream_entry_id, journal_entry_id, dream_entries(raw_input_text, dreamed_at)")
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false })
     if (data) setImages(data as unknown as DreamImage[])
@@ -53,11 +54,10 @@ export default function GalleryPage() {
     const ctx = canvas.getContext("2d")!
 
     const image = new Image()
-    image.crossOrigin = "anonymous"
     await new Promise<void>((resolve, reject) => {
       image.onload = () => resolve()
       image.onerror = () => reject()
-      image.src = img.image_url
+      image.src = `/api/proxy-image?url=${encodeURIComponent(img.image_url)}`
     })
     ctx.drawImage(image, 0, 0, dims.w, dims.h)
 
@@ -153,6 +153,11 @@ export default function GalleryPage() {
                 <button key={img.id} onClick={() => setLightbox(img)}
                   className="relative group rounded-2xl overflow-hidden border border-white/8 hover:border-white/20 transition-all aspect-square">
                   <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute top-2 left-2">
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${img.journal_entry_id ? "bg-amber-300/20 text-amber-200" : "bg-cyan-300/20 text-cyan-200"}`}>
+                      {img.journal_entry_id ? "Journal" : "Traum"}
+                    </span>
+                  </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all">
                     <div className="absolute bottom-0 left-0 right-0 p-3">
                       <span className="text-[10px] font-medium text-white/70 uppercase tracking-wider bg-black/40 rounded-full px-2 py-0.5">
@@ -189,7 +194,7 @@ export default function GalleryPage() {
                 className="flex-1 rounded-xl border border-white/10 bg-white/8 px-4 py-2.5 text-sm text-white/70 hover:bg-white/12 hover:text-white transition flex items-center justify-center gap-2">
                 ⬇ Herunterladen
               </button>
-              <Link href={`/entries/${lightbox.dream_entry_id}?type=dream`}
+              <Link href={lightbox.journal_entry_id ? `/entries/${lightbox.journal_entry_id}?type=journal` : `/entries/${lightbox.dream_entry_id}?type=dream`}
                 className="flex-1 rounded-xl border border-cyan-300/20 bg-cyan-300/8 px-4 py-2.5 text-sm text-cyan-100 hover:bg-cyan-300/12 transition flex items-center justify-center gap-2">
                 Zum Traum →
               </Link>
