@@ -303,10 +303,11 @@ export default function DreamEntryPage() {
           <div>
             <label className="block mb-3 text-sm font-medium text-white/70">
               Was hast du geträumt?
+              {user && <span className="ml-2 font-normal text-white/30">(optional)</span>}
             </label>
             <textarea value={rawInputText} onChange={(e) => setRawInputText(e.target.value)}
               placeholder="Stichworte reichen – z.B. «Brücke, alte Chefin, konnte nicht weglaufen»"
-              rows={6} required
+              rows={6} required={!user}
               className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/20 focus:border-cyan-300/30 focus:outline-none transition resize-none" />
 
             {/* Mikrofon-Button */}
@@ -443,7 +444,7 @@ export default function DreamEntryPage() {
 
               {/* Speichern / Analysieren */}
               <button type="submit"
-                disabled={isSubmitting || analyzingGuest || !rawInputText.trim()}
+                disabled={isSubmitting || analyzingGuest || (!user && !rawInputText.trim())}
                 className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50">
                 {isSubmitting || analyzingGuest
                   ? <><span className="animate-spin inline-block">✦</span> {user ? "Speichert…" : "Analysiere…"}</>
