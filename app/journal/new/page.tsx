@@ -40,7 +40,8 @@ export default function JournalNewPage() {
   const [bodyText, setBodyText] = useState("")
   const [moodScore, setMoodScore] = useState(5)
   const [energyLevel, setEnergyLevel] = useState(3)
-  const [sleepHours, setSleepHours] = useState<string>("7.5")
+  const [sleepHours, setSleepHours] = useState<string>("")
+  const [showSleepPicker, setShowSleepPicker] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [customTag, setCustomTag] = useState("")
   const [entryDate, setEntryDate] = useState(() => new Date().toISOString().slice(0, 10))
@@ -286,11 +287,26 @@ export default function JournalNewPage() {
                 <label className="text-sm font-medium text-white/80">
                   Schlafstunden <span className="font-normal text-white/60">(optional)</span>
                 </label>
-                {sleepHours && (
+                {showSleepPicker && sleepHours && (
                   <span className="text-sm font-semibold text-amber-200">{sleepHours} h</span>
                 )}
               </div>
-              <SleepWheelPicker value={sleepHours} onChange={setSleepHours} />
+              {showSleepPicker ? (
+                <div className="space-y-2">
+                  <SleepWheelPicker value={sleepHours} onChange={setSleepHours} />
+                  <button type="button"
+                    onClick={() => { setShowSleepPicker(false); setSleepHours("") }}
+                    className="text-xs text-white/30 hover:text-white/60 transition">
+                    × Entfernen
+                  </button>
+                </div>
+              ) : (
+                <button type="button"
+                  onClick={() => { setShowSleepPicker(true); setSleepHours("7.5") }}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/60 hover:border-white/20 hover:text-white/80 transition">
+                  + Hinzufügen
+                </button>
+              )}
             </div>
 
             {/* Tags */}
