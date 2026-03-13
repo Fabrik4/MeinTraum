@@ -216,7 +216,8 @@ function DreamCard({ dream, onPin, pinning }: { dream: DreamEntry; onPin: () => 
         <div className="absolute inset-[10px] rounded-full bg-cyan-200" />
       </div>
 
-      <div className={`flex-1 rounded-3xl border bg-white/5 p-6 backdrop-blur transition ${dream.is_key_event ? "border-amber-300/25 bg-amber-300/3" : "border-white/10 hover:border-white/20"}`}>
+      <Link href={`/entries/${dream.id}?type=dream`}
+        className={`flex-1 rounded-3xl border bg-white/5 p-6 backdrop-blur transition ${dream.is_key_event ? "border-amber-300/25 bg-amber-300/3" : "border-white/10 hover:border-white/20"}`}>
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-base">🌙</span>
@@ -229,20 +230,14 @@ function DreamCard({ dream, onPin, pinning }: { dream: DreamEntry; onPin: () => 
             {dream.dream_clarity && <span className="text-xs text-white/50">✨ {dream.dream_clarity}</span>}
             {dream.is_key_event && <span className="text-xs text-amber-300/70">📌 Keyevent</span>}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {/* Pin Button */}
-            <button onClick={onPin} disabled={pinning} title={dream.is_key_event ? "Entpinnen" : "Als Keyevent pinnen"}
-              className={`rounded-xl border px-2.5 py-1.5 text-sm transition ${dream.is_key_event
-                ? "border-amber-300/30 bg-amber-300/12 text-amber-300 hover:bg-amber-300/20"
-                : "border-white/10 bg-white/5 text-white/45 hover:border-amber-300/25 hover:bg-amber-300/8 hover:text-amber-300/70"
-              } disabled:opacity-40`}>
-              {pinning ? <span className="animate-spin inline-block">✦</span> : "📌"}
-            </button>
-            <Link href={`/entries/${dream.id}?type=dream`}
-              className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/80 transition hover:bg-white/10 hover:text-white">
-              Ansehen
-            </Link>
-          </div>
+          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPin() }} disabled={pinning}
+            title={dream.is_key_event ? "Entpinnen" : "Als Keyevent pinnen"}
+            className={`rounded-xl border px-2.5 py-1.5 text-sm transition ${dream.is_key_event
+              ? "border-amber-300/30 bg-amber-300/12 text-amber-300 hover:bg-amber-300/20"
+              : "border-white/10 bg-white/5 text-white/45 hover:border-amber-300/25 hover:bg-amber-300/8 hover:text-amber-300/70"
+            } disabled:opacity-40`}>
+            {pinning ? <span className="animate-spin inline-block">✦</span> : "📌"}
+          </button>
         </div>
 
         <p className="leading-7 text-white/80 mb-4">{truncate(dream.raw_input_text)}</p>
@@ -256,7 +251,7 @@ function DreamCard({ dream, onPin, pinning }: { dream: DreamEntry; onPin: () => 
             {dream.places.map((p)  => <span key={p} className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs text-amber-100">📍 {p}</span>)}
           </div>
         )}
-      </div>
+      </Link>
     </div>
   )
 }
@@ -271,7 +266,8 @@ function JournalCard({ journal, onPin, pinning }: { journal: JournalEntry; onPin
         <div className="absolute inset-[10px] rounded-full bg-amber-200" />
       </div>
 
-      <div className={`flex-1 rounded-3xl border bg-white/5 p-6 backdrop-blur transition ${journal.is_key_event ? "border-amber-300/25 bg-amber-300/3" : "border-white/10 hover:border-white/20"}`}>
+      <Link href={`/entries/${journal.id}?type=journal`}
+        className={`flex-1 rounded-3xl border bg-white/5 p-6 backdrop-blur transition ${journal.is_key_event ? "border-amber-300/25 bg-amber-300/3" : "border-white/10 hover:border-white/20"}`}>
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-base">📓</span>
@@ -279,19 +275,14 @@ function JournalCard({ journal, onPin, pinning }: { journal: JournalEntry; onPin
             {moodInfo && <span className={`text-xs font-medium ${moodInfo.color}`}>{journal.mood_score}/10 {moodInfo.label}</span>}
             {journal.is_key_event && <span className="text-xs text-amber-300/70">📌 Keyevent</span>}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button onClick={onPin} disabled={pinning} title={journal.is_key_event ? "Entpinnen" : "Als Keyevent pinnen"}
-              className={`rounded-xl border px-2.5 py-1.5 text-sm transition ${journal.is_key_event
-                ? "border-amber-300/30 bg-amber-300/12 text-amber-300 hover:bg-amber-300/20"
-                : "border-white/10 bg-white/5 text-white/45 hover:border-amber-300/25 hover:bg-amber-300/8 hover:text-amber-300/70"
-              } disabled:opacity-40`}>
-              {pinning ? <span className="animate-spin inline-block">✦</span> : "📌"}
-            </button>
-            <Link href={`/entries/${journal.id}?type=journal`}
-              className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/80 transition hover:bg-white/10 hover:text-white">
-              Ansehen
-            </Link>
-          </div>
+          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPin() }} disabled={pinning}
+            title={journal.is_key_event ? "Entpinnen" : "Als Keyevent pinnen"}
+            className={`rounded-xl border px-2.5 py-1.5 text-sm transition ${journal.is_key_event
+              ? "border-amber-300/30 bg-amber-300/12 text-amber-300 hover:bg-amber-300/20"
+              : "border-white/10 bg-white/5 text-white/45 hover:border-amber-300/25 hover:bg-amber-300/8 hover:text-amber-300/70"
+            } disabled:opacity-40`}>
+            {pinning ? <span className="animate-spin inline-block">✦</span> : "📌"}
+          </button>
         </div>
 
         <p className="leading-7 text-white/80 mb-4">{truncate(journal.body_text)}</p>
@@ -301,7 +292,7 @@ function JournalCard({ journal, onPin, pinning }: { journal: JournalEntry; onPin
           {journal.sleep_hours  && <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/75">💤 {journal.sleep_hours}h</span>}
           {journal.tags?.map((tag) => <span key={tag} className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs text-amber-100">{tag}</span>)}
         </div>
-      </div>
+      </Link>
     </div>
   )
 }
