@@ -2,7 +2,9 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/lib/useAuth"
 
 type DreamEntry = {
   id: number; type: "dream"
@@ -40,24 +42,27 @@ function getEntryDate(e: TimelineEntry) { return e.type === "dream" ? e.dreamed_
 type Filter = "all" | "dream" | "journal"
 
 export default function TimelinePage() {
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [dreams, setDreams] = useState<DreamEntry[]>([])
   const [journals, setJournals] = useState<JournalEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>("all")
-  const [userId, setUserId] = useState<string | null>(null)
   const [pinning, setPinning] = useState<string | null>(null) // "dream-123" | "journal-123"
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null))
-    fetchAll()
-  }, [])
+    if (authLoading) return
+    if (!user) { router.push("/login"); return }
+    fetchAll(user.id)
+  }, [user, authLoading])
 
-  async function fetchAll() {
+  async function fetchAll(userId: string) {
     const [dreamsRes, journalsRes] = await Promise.all([
       supabase.from("dream_entries")
         .select(`*, dream_entry_entities(user_entities(entity_type, entity_label))`)
+        .eq("user_id", userId)
         .order("dreamed_at", { ascending: false, nullsFirst: false }),
-      supabase.from("journal_entries").select("*").order("entry_date", { ascending: false }),
+      supabase.from("journal_entries").select("*").eq("user_id", userId).order("entry_date", { ascending: false }),
     ])
     if (!dreamsRes.error && dreamsRes.data) {
       setDreams(dreamsRes.data.map((d: any) => ({
@@ -73,7 +78,7 @@ export default function TimelinePage() {
   }
 
   async function togglePin(entry: TimelineEntry) {
-    if (!userId) return
+    if (!user) return
     const key = `${entry.type}-${entry.id}`
     setPinning(key)
 
@@ -89,7 +94,7 @@ export default function TimelinePage() {
         : truncate(entry.body_text, 50)
       const date = getEntryDate(entry).slice(0, 10)
       await supabase.from("key_events").insert({
-        user_id: userId,
+        user_id: user.id,
         title,
         event_date: date,
         emoji: entry.type === "dream" ? "🌙" : "📓",
@@ -99,7 +104,7 @@ export default function TimelinePage() {
     } else {
       // Keyevent entfernen
       const col = entry.type === "dream" ? "linked_dream_id" : "linked_journal_id"
-      await supabase.from("key_events").delete().eq(col, entry.id).eq("user_id", userId)
+      await supabase.from("key_events").delete().eq(col, entry.id).eq("user_id", user.id)
     }
 
     // State lokal updaten

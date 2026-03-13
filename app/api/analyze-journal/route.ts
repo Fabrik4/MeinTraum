@@ -74,7 +74,14 @@ export async function POST(req: NextRequest) {
     })
 
     const raw = message.content.filter((b) => b.type === "text").map((b) => (b as any).text).join("")
-    const analysis = JSON.parse(raw.replace(/```json|```/g, "").trim())
+    const cleaned = raw.replace(/```json|```/g, "").trim()
+    let analysis
+    try {
+      analysis = JSON.parse(cleaned)
+    } catch {
+      console.error("JSON-Parse-Fehler:", cleaned)
+      return NextResponse.json({ error: "Analyse konnte nicht verarbeitet werden." }, { status: 500 })
+    }
     return NextResponse.json({ analysis, mode })
   } catch (error) {
     console.error("Journal-Analyse-Fehler:", error)

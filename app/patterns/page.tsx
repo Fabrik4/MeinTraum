@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/useAuth"
 
@@ -38,6 +39,7 @@ type AIInsight = {
 }
 
 export default function PatternsPage() {
+  const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const [data, setData] = useState<PatternData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -46,7 +48,9 @@ export default function PatternsPage() {
   const [timeRange, setTimeRange] = useState<30 | 90 | 365>(30)
 
   useEffect(() => {
-    if (!authLoading && user) fetchPatterns()
+    if (authLoading) return
+    if (!user) { router.push("/login"); return }
+    fetchPatterns()
   }, [user, authLoading, timeRange])
 
   async function fetchPatterns() {

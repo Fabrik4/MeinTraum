@@ -97,7 +97,13 @@ export async function POST(req: NextRequest) {
 
     // JSON parsen
     const cleaned = responseText.replace(/```json|```/g, "").trim()
-    const analysis = JSON.parse(cleaned)
+    let analysis
+    try {
+      analysis = JSON.parse(cleaned)
+    } catch {
+      console.error("JSON-Parse-Fehler:", cleaned)
+      return NextResponse.json({ error: "Analyse konnte nicht verarbeitet werden." }, { status: 500 })
+    }
 
     return NextResponse.json({ analysis, mode })
   } catch (error) {

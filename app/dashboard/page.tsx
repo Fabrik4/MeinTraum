@@ -66,17 +66,18 @@ export default function DashboardPage() {
       todayDreamRes, todayJournalRes,
       moodRes,
     ] = await Promise.all([
-      supabase.from("dream_entries").select("id, raw_input_text, created_at").order("created_at", { ascending: false }).limit(1),
-      supabase.from("journal_entries").select("id, body_text, mood_score, created_at").order("created_at", { ascending: false }).limit(1),
-      supabase.from("dream_entries").select("id", { count: "exact", head: true }),
-      supabase.from("journal_entries").select("id", { count: "exact", head: true }),
-      supabase.from("dream_entries").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
-      supabase.from("journal_entries").select("id", { count: "exact", head: true }).gte("created_at", weekAgo),
+      supabase.from("dream_entries").select("id, raw_input_text, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1),
+      supabase.from("journal_entries").select("id, body_text, mood_score, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1),
+      supabase.from("dream_entries").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+      supabase.from("journal_entries").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
+      supabase.from("dream_entries").select("id", { count: "exact", head: true }).eq("user_id", user!.id).gte("created_at", weekAgo),
+      supabase.from("journal_entries").select("id", { count: "exact", head: true }).eq("user_id", user!.id).gte("created_at", weekAgo),
       supabase.from("user_profiles").select("display_name").eq("id", user!.id).maybeSingle(),
-      supabase.from("dream_entries").select("id", { count: "exact", head: true }).gte("created_at", todayStart),
-      supabase.from("journal_entries").select("id", { count: "exact", head: true }).gte("created_at", todayStart),
+      supabase.from("dream_entries").select("id", { count: "exact", head: true }).eq("user_id", user!.id).gte("created_at", todayStart),
+      supabase.from("journal_entries").select("id", { count: "exact", head: true }).eq("user_id", user!.id).gte("created_at", todayStart),
       supabase.from("journal_entries")
         .select("mood_score, entry_date, created_at")
+        .eq("user_id", user!.id)
         .gte("created_at", twoMonthAgo)
         .not("mood_score", "is", null)
         .order("entry_date", { ascending: true }),
