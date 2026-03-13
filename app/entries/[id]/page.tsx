@@ -227,6 +227,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   const [existingImages, setExistingImages] = useState<{ id: number; image_url: string; format: string; created_at: string }[]>([])
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   // Revision state
   const [revisions, setRevisions] = useState<Revision[]>([])
@@ -236,6 +237,12 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   const [inlineExpandedPreview, setInlineExpandedPreview] = useState<string | null>(null)
   const [savingRevision, setSavingRevision] = useState(false)
   const [expandingInline, setExpandingInline] = useState(false)
+
+  useEffect(() => {
+    if (showChat || showAnalysisPanel || showImagePanel) {
+      setTimeout(() => panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
+    }
+  }, [showChat, showAnalysisPanel, showImagePanel])
 
   const onInlineTranscript = useCallback((text: string) => {
     setInlineText((prev) => prev ? prev + " " + text : text)
@@ -844,6 +851,9 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
         )}
 
         {/* ── Chat ── */}
+        {/* Scroll-Anker für alle Panels */}
+        <div ref={panelRef} />
+
         {!isEditing && showChat && (
           <DreamChat context={chatContext} onClose={() => setShowChat(false)} />
         )}
