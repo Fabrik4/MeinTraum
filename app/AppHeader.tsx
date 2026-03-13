@@ -269,7 +269,7 @@ export default function AppHeader() {
                     className="flex flex-col items-center gap-1 -mt-4">
                     <div className={`flex h-[54px] w-[54px] items-center justify-center rounded-[18px] transition-all duration-200 active:scale-95 ${
                       active
-                        ? "bg-gradient-to-br from-cyan-200/90 to-violet-300/90 shadow-lg shadow-cyan-300/20"
+                        ? "bg-gradient-to-br from-cyan-300/50 to-violet-500/50 shadow-lg shadow-cyan-300/10"
                         : "bg-gradient-to-br from-cyan-300 to-violet-500 shadow-lg shadow-cyan-300/15"
                     }`}>
                       <item.Icon size={23} color="#070b14" />
