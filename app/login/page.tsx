@@ -1,60 +1,28 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 
-type Mode = "login" | "register" | "forgot"
-
 export default function LoginPage() {
-  const router = useRouter()
-  const [mode, setMode] = useState<Mode>("login")
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+  const [sent, setSent] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    setSuccess(null)
-
-    if (mode === "login") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError("E-Mail oder Passwort falsch.")
-      } else {
-        router.push("/dashboard")
-      }
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: "https://www.meintraum.app/auth/callback" },
+    })
+    if (error) {
+      setError("Fehler beim Senden. Bitte versuche es nochmal.")
+    } else {
+      setSent(true)
     }
-
-    if (mode === "register") {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: "https://www.meintraum.app/auth/callback" },
-      })
-      if (error) {
-        setError("Registrierung fehlgeschlagen. Versuche es nochmal.")
-      } else {
-        setSuccess("Fast geschafft! Bestätige deine E-Mail-Adresse – wir haben dir einen Link geschickt.")
-      }
-    }
-
-    if (mode === "forgot") {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: "https://www.meintraum.app/auth/callback",
-      })
-      if (error) {
-        setError("Fehler beim Senden. Bitte versuche es nochmal.")
-      } else {
-        setSuccess("Link gesendet! Schau in deine E-Mails.")
-      }
-    }
-
     setLoading(false)
   }
 
@@ -76,48 +44,25 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-cyan-300/20 to-violet-400/20 border border-white/10 mb-2">
             <span className="text-2xl">🌙</span>
           </div>
-          <h1 className="text-2xl font-semibold">
-            {mode === "login" && "Willkommen zurück"}
-            {mode === "register" && "Konto erstellen"}
-            {mode === "forgot" && "Passwort vergessen"}
-          </h1>
-          <p className="text-sm text-white/65">
-            {mode === "login" && "Melde dich an um dein Traumarchiv zu öffnen"}
-            {mode === "register" && "Kostenlos starten – keine Kreditkarte"}
-            {mode === "forgot" && "Wir schicken dir einen Reset-Link"}
-          </p>
+          <h1 className="text-2xl font-semibold">Willkommen zurück</h1>
+          <p className="text-sm text-white/65">Melde dich an um dein Traumarchiv zu öffnen</p>
         </div>
 
-        {success ? (
+        {sent ? (
           <div className="rounded-3xl border border-cyan-300/15 bg-cyan-300/5 p-8 text-center space-y-4">
-            <p className="text-3xl">✉️</p>
-            <p className="text-sm text-white/80 leading-7">{success}</p>
-            <button onClick={() => { setSuccess(null); setMode("login") }}
+            <p className="text-3xl">📬</p>
+            <p className="text-sm text-white/80 leading-7">
+              Schau in dein Postfach –<br />wir haben dir einen Link geschickt.
+            </p>
+            <button onClick={() => setSent(false)}
               className="text-xs text-white/50 hover:text-white/80 transition underline underline-offset-2">
-              Zurück zur Anmeldung
+              Andere E-Mail verwenden
             </button>
           </div>
         ) : (
           <>
-            {/* Google Button – nur bei login/register */}
-            {mode !== "forgot" && (
-              <>
-                <button onClick={handleGoogle}
-                  className="w-full flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white active:scale-[0.99]">
-                  <GoogleIcon />
-                  Mit Google {mode === "register" ? "registrieren" : "anmelden"}
-                </button>
-
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 h-px bg-white/8" />
-                  <span className="text-xs text-white/45">oder per E-Mail</span>
-                  <div className="flex-1 h-px bg-white/8" />
-                </div>
-              </>
-            )}
-
-            {/* Formular */}
-            <form onSubmit={handleSubmit} className="space-y-3">
+            {/* Magic Link */}
+            <form onSubmit={handleMagicLink} className="space-y-3">
               <input
                 type="email"
                 value={email}
@@ -126,60 +71,26 @@ export default function LoginPage() {
                 required
                 className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm text-white placeholder:text-white/65 focus:border-cyan-300/30 focus:outline-none transition"
               />
-
-              {mode !== "forgot" && (
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Passwort"
-                  required
-                  minLength={6}
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm text-white placeholder:text-white/65 focus:border-cyan-300/30 focus:outline-none transition"
-                />
-              )}
-
-              {error && (
-                <p className="text-xs text-red-300/70 px-1">{error}</p>
-              )}
-
+              {error && <p className="text-xs text-red-300/70 px-1">{error}</p>}
               <button type="submit" disabled={loading}
                 className="w-full rounded-2xl bg-white px-5 py-3.5 text-sm font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50">
-                {loading ? "Bitte warten…" : (
-                  mode === "login" ? "Anmelden →" :
-                  mode === "register" ? "Konto erstellen →" :
-                  "Reset-Link senden →"
-                )}
+                {loading ? "Bitte warten…" : "Magic Link senden →"}
               </button>
             </form>
 
-            {/* Mode-Wechsel Links */}
-            <div className="text-center space-y-2">
-              {mode === "login" && (
-                <>
-                  <button onClick={() => { setMode("register"); setError(null) }}
-                    className="block w-full text-xs text-white/50 hover:text-white/80 transition">
-                    Noch kein Konto? <span className="underline underline-offset-2">Jetzt registrieren</span>
-                  </button>
-                  <button onClick={() => { setMode("forgot"); setError(null) }}
-                    className="block w-full text-xs text-white/45 hover:text-white/70 transition">
-                    Passwort vergessen?
-                  </button>
-                </>
-              )}
-              {mode === "register" && (
-                <button onClick={() => { setMode("login"); setError(null) }}
-                  className="text-xs text-white/50 hover:text-white/80 transition">
-                  Bereits ein Konto? <span className="underline underline-offset-2">Anmelden</span>
-                </button>
-              )}
-              {mode === "forgot" && (
-                <button onClick={() => { setMode("login"); setError(null) }}
-                  className="text-xs text-white/50 hover:text-white/80 transition">
-                  ← Zurück zur Anmeldung
-                </button>
-              )}
+            {/* Trennlinie */}
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-px bg-white/8" />
+              <span className="text-xs text-white/45">oder</span>
+              <div className="flex-1 h-px bg-white/8" />
             </div>
+
+            {/* Google */}
+            <button onClick={handleGoogle}
+              className="w-full flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white active:scale-[0.99]">
+              <GoogleIcon />
+              Mit Google anmelden
+            </button>
           </>
         )}
 
