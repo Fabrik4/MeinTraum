@@ -38,6 +38,14 @@ type Revision = {
   id: number; text: string; expanded: string | null; created_at: string
 }
 
+type ChatSession = {
+  id: number
+  message_count: number | null
+  last_message_at: string
+  compressed_summary: string | null
+  messages: { role: string; content: string }[]
+}
+
 // ── Konstanten ────────────────────────────────────────────────
 const ANALYSIS_MODES = [
   { value: "psychological", label: "Psychologisch",    emoji: "🧠", desc: "Neutral & reflektiert" },
@@ -150,7 +158,7 @@ function EntityTag({ entity, color, onDelete, onRename }: {
 
 // ── Analysis Card ─────────────────────────────────────────────
 function AnalysisCard({ analysis, mode, onSave, saving, accent }: {
-  analysis: any; mode: string; onSave: () => void; saving: boolean; accent: string
+  analysis: any; mode: string; onSave?: () => void; saving?: boolean; accent: string
 }) {
   return (
     <div className={`rounded-3xl border p-8 space-y-6 ${accent === "amber" ? "border-amber-300/15 bg-amber-300/3" : "border-cyan-300/15 bg-cyan-300/3"}`}>
@@ -162,10 +170,12 @@ function AnalysisCard({ analysis, mode, onSave, saving, accent }: {
             <p className="font-medium text-white">{modeLabel2(mode)}</p>
           </div>
         </div>
-        <button onClick={onSave} disabled={saving}
-          className={`rounded-xl border px-4 py-2 text-sm transition hover:opacity-80 disabled:opacity-40 ${accent === "amber" ? "border-amber-300/20 bg-amber-300/10 text-amber-100" : "border-cyan-300/20 bg-cyan-300/10 text-cyan-100"}`}>
-          {saving ? "Speichert…" : "Speichern"}
-        </button>
+        {onSave && (
+          <button onClick={onSave} disabled={saving}
+            className={`rounded-xl border px-4 py-2 text-sm transition hover:opacity-80 disabled:opacity-40 ${accent === "amber" ? "border-amber-300/20 bg-amber-300/10 text-amber-100" : "border-cyan-300/20 bg-cyan-300/10 text-cyan-100"}`}>
+            {saving ? "Speichert…" : "Speichern"}
+          </button>
+        )}
       </div>
       <p className="leading-8 text-white/80">{analysis.summary}</p>
       {analysis.themes?.length > 0 && (
@@ -226,6 +236,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   const [remainingToday, setRemainingToday] = useState<number | null>(null)
   const [existingImages, setExistingImages] = useState<{ id: number; image_url: string; format: string; created_at: string }[]>([])
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const analysisResultRef = useRef<HTMLDivElement>(null)
@@ -294,7 +305,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   async function fetchAll(type: EntryType) {
     setLoading(true)
     if (type === "dream") {
-      const [dreamRes, entitiesRes, analysisRes, revisionsRes, imagesRes] = await Promise.all([
+      const [dreamRes, entitiesRes, analysisRes, revisionsRes, imagesRes, chatsRes] = await Promise.all([
         supabase.from("dream_entries").select("*").eq("id", resolvedId).single(),
         supabase.from("dream_entry_entities")
           .select("id, user_entity_id, user_entities(entity_type, entity_category, entity_label)")
@@ -305,6 +316,8 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
           .eq("dream_entry_id", resolvedId).order("created_at", { ascending: true }),
         supabase.from("dream_images").select("id, image_url, format, created_at")
           .eq("dream_entry_id", resolvedId).order("created_at", { ascending: false }),
+        supabase.from("chat_sessions").select("id, message_count, last_message_at, compressed_summary, messages")
+          .eq("linked_dream_id", resolvedId).order("last_message_at", { ascending: false }),
       ])
       if (!dreamRes.error && dreamRes.data) {
         const d = dreamRes.data
@@ -319,8 +332,9 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
       if (!analysisRes.error && analysisRes.data) setSavedAnalyses(analysisRes.data)
       if (!revisionsRes.error && revisionsRes.data) setRevisions(revisionsRes.data)
       if (!imagesRes.error && imagesRes.data) setExistingImages(imagesRes.data)
+      if (!chatsRes.error && chatsRes.data) setChatSessions(chatsRes.data as ChatSession[])
     } else {
-      const [journalRes, entitiesRes, analysisRes, imagesRes, revisionsRes] = await Promise.all([
+      const [journalRes, entitiesRes, analysisRes, imagesRes, revisionsRes, chatsRes] = await Promise.all([
         supabase.from("journal_entries").select("*").eq("id", resolvedId).single(),
         supabase.from("journal_entry_entities")
           .select("id, user_entity_id, user_entities(entity_type, entity_category, entity_label)")
@@ -331,6 +345,8 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
           .eq("journal_entry_id", resolvedId).order("created_at", { ascending: false }),
         supabase.from("dream_revisions").select("id, text, expanded, created_at")
           .eq("journal_entry_id", resolvedId).order("created_at", { ascending: true }),
+        supabase.from("chat_sessions").select("id, message_count, last_message_at, compressed_summary, messages")
+          .eq("linked_journal_id", resolvedId).order("last_message_at", { ascending: false }),
       ])
       if (!journalRes.error && journalRes.data) {
         const j = journalRes.data
@@ -347,6 +363,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
       if (!analysisRes.error && analysisRes.data) setSavedAnalyses(analysisRes.data)
       if (!imagesRes.error && imagesRes.data) setExistingImages(imagesRes.data)
       if (!revisionsRes.error && revisionsRes.data) setRevisions(revisionsRes.data)
+      if (!chatsRes.error && chatsRes.data) setChatSessions(chatsRes.data as ChatSession[])
     }
     setLoading(false)
   }
@@ -679,21 +696,18 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
       if (data.analysis) {
         setCurrentAnalysis(data.analysis); setCurrentAnalysisMode(selectedMode)
         setTimeout(() => analysisResultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
+        // Auto-save
+        const table = entryType === "dream" ? "dream_analysis" : "journal_analysis"
+        const idCol = entryType === "dream" ? "dream_entry_id" : "journal_entry_id"
+        const { data: saved } = await supabase.from(table).insert({
+          [idCol]: Number(resolvedId), mode: selectedMode,
+          summary: data.analysis.summary, themes: data.analysis.themes,
+          emotions: data.analysis.emotions, caution_note: data.analysis.caution,
+        }).select("id, mode, summary, themes, created_at").single()
+        if (saved) setSavedAnalyses((prev) => [saved, ...prev])
       } else setMessage("Analyse fehlgeschlagen.")
     } catch { setMessage("Analyse konnte nicht erstellt werden.") }
     setAnalyzing(false)
-  }
-
-  async function saveAnalysis() {
-    if (!currentAnalysis) return; setSavingAnalysis(true)
-    const table = entryType === "dream" ? "dream_analysis" : "journal_analysis"
-    const idCol = entryType === "dream" ? "dream_entry_id" : "journal_entry_id"
-    await supabase.from(table).insert({
-      [idCol]: Number(resolvedId), mode: currentAnalysisMode,
-      summary: currentAnalysis.summary, themes: currentAnalysis.themes,
-      emotions: currentAnalysis.emotions, caution_note: currentAnalysis.caution,
-    })
-    setCurrentAnalysis(null); setSavingAnalysis(false); fetchAll(entryType)
   }
 
   // ── Chat Kontext ── FIX: dreamId/journalId hinzugefügt ──────
@@ -900,7 +914,70 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
               }
             </div>
-          </div>
+          {/* ── Gespeicherte Analysen ── */}
+          {savedAnalyses.length > 0 && (
+            <div className="space-y-3 border-t border-white/5 pt-6">
+              <p className="text-xs uppercase tracking-[0.15em] text-white/45">Analysen</p>
+              {savedAnalyses.map((a) => (
+                <div key={a.id} className="rounded-2xl border border-white/8 bg-white/3 p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-lg">{modeEmoji(a.mode)}</span>
+                    <div>
+                      <p className="font-medium text-white text-sm">{modeLabel2(a.mode)}</p>
+                      <p className="text-xs text-white/45">{new Date(a.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric" })}</p>
+                    </div>
+                  </div>
+                  <p className="leading-7 text-white/65 text-sm">{a.summary}</p>
+                  {a.themes?.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {a.themes.map((t: string) => <span key={t} className="rounded-full border border-white/8 bg-white/3 px-3 py-1 text-xs text-white/65">{t}</span>)}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Generierte Bilder ── */}
+          {existingImages.length > 0 && (
+            <div className="space-y-3 border-t border-white/5 pt-6">
+              <p className="text-xs uppercase tracking-[0.15em] text-white/45">Traumbilder</p>
+              <div className="flex gap-3 flex-wrap">
+                {existingImages.map((img) => (
+                  <button key={img.id} type="button" onClick={() => setLightboxImage(img.image_url)}
+                    className="relative rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition group w-[72px] h-[72px]">
+                    <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-sm">🔍</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Gespräche ── */}
+          {chatSessions.length > 0 && (
+            <div className="space-y-3 border-t border-white/5 pt-6">
+              <p className="text-xs uppercase tracking-[0.15em] text-white/45">Gespräche</p>
+              {chatSessions.map((session) => (
+                <button key={session.id} type="button"
+                  onClick={() => { setShowChat(true); setShowAnalysisPanel(false); setShowImagePanel(false) }}
+                  className="w-full rounded-2xl border border-white/8 bg-white/3 p-4 text-left hover:border-white/15 transition">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-violet-300/70">💬 Traumbegleiter</span>
+                    <span className="text-xs text-white/40">{new Date(session.last_message_at).toLocaleDateString("de-CH", { day: "numeric", month: "short" })}</span>
+                  </div>
+                  {session.compressed_summary
+                    ? <p className="text-sm text-white/60 leading-6 line-clamp-2">{session.compressed_summary}</p>
+                    : session.messages?.length > 0
+                    ? <p className="text-sm text-white/60 leading-6 line-clamp-2">{session.messages[session.messages.length - 1]?.content}</p>
+                    : <p className="text-sm text-white/40">{session.message_count ?? 0} Nachrichten</p>
+                  }
+                </button>
+              ))}
+            </div>
+          )}
+
+        </div>
         )}
 
         {/* ── Chat ── */}
@@ -937,51 +1014,13 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 {analyzing ? <span className="flex items-center justify-center gap-2"><span className="animate-spin">✦</span> Analysiere…</span> : "Analysieren"}
               </button>
             </div>
-            {currentAnalysis && <div ref={analysisResultRef}><AnalysisCard analysis={currentAnalysis} mode={currentAnalysisMode} onSave={saveAnalysis} saving={savingAnalysis} accent={accent} /></div>}
-            {savedAnalyses.length > 0 && (
-              <div className="space-y-4">
-                <p className="text-sm uppercase tracking-[0.15em] text-white/60">Gespeicherte Analysen</p>
-                {savedAnalyses.map((a) => (
-                  <div key={a.id} className="rounded-3xl border border-white/8 bg-white/3 p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="text-xl">{modeEmoji(a.mode)}</span>
-                      <div>
-                        <p className="font-medium text-white text-sm">{modeLabel2(a.mode)}</p>
-                        <p className="text-xs text-white/50">{new Date(a.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric" })}</p>
-                      </div>
-                    </div>
-                    <p className="leading-7 text-white/65 text-sm">{a.summary}</p>
-                    {a.themes?.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-4">
-                        {a.themes.map((t: string) => <span key={t} className="rounded-full border border-white/8 bg-white/3 px-3 py-1 text-xs text-white/75">{t}</span>)}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            {currentAnalysis && <div ref={analysisResultRef}><AnalysisCard analysis={currentAnalysis} mode={currentAnalysisMode} accent={accent} /></div>}
           </div>
         )}
 
         {/* ── Bild-Panel ── */}
         {!isEditing && showImagePanel && (
           <div className="space-y-6">
-
-            {/* Vorhandene Thumbnails */}
-            {existingImages.length > 0 && (
-              <div>
-                <p className="text-xs uppercase tracking-[0.15em] text-white/45 mb-3">Generierte Bilder</p>
-                <div className="flex gap-3 flex-wrap">
-                  {existingImages.map((img) => (
-                    <button key={img.id} type="button" onClick={() => setLightboxImage(img.image_url)}
-                      className="relative rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition group w-[72px] h-[72px]">
-                      <img src={img.image_url} alt="" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-sm">🔍</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             <div className="rounded-3xl border border-cyan-300/10 bg-cyan-300/3 p-6 space-y-5">
               <div>
