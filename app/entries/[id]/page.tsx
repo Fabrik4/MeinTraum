@@ -234,7 +234,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [cardTitle, setCardTitle] = useState<string>("")
   const [remainingToday, setRemainingToday] = useState<number | null>(null)
-  const [existingImages, setExistingImages] = useState<{ id: number; image_url: string; format: string; created_at: string }[]>([])
+  const [existingImages, setExistingImages] = useState<{ id: number; image_url: string; format: string; card_title: string | null; created_at: string }[]>([])
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -314,7 +314,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
           .eq("dream_entry_id", resolvedId).order("created_at", { ascending: false }),
         supabase.from("dream_revisions").select("id, text, expanded, created_at")
           .eq("dream_entry_id", resolvedId).order("created_at", { ascending: true }),
-        supabase.from("dream_images").select("id, image_url, format, created_at")
+        supabase.from("dream_images").select("id, image_url, format, card_title, created_at")
           .eq("dream_entry_id", resolvedId).order("created_at", { ascending: false }),
         supabase.from("chat_sessions").select("id, message_count, last_message_at, compressed_summary, messages")
           .eq("linked_dream_id", resolvedId).order("last_message_at", { ascending: false }),
@@ -341,7 +341,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
           .eq("journal_entry_id", resolvedId),
         supabase.from("journal_analysis").select("id,mode,summary,themes,created_at")
           .eq("journal_entry_id", resolvedId).order("created_at", { ascending: false }),
-        supabase.from("dream_images").select("id, image_url, format, created_at")
+        supabase.from("dream_images").select("id, image_url, format, card_title, created_at")
           .eq("journal_entry_id", resolvedId).order("created_at", { ascending: false }),
         supabase.from("dream_revisions").select("id, text, expanded, created_at")
           .eq("journal_entry_id", resolvedId).order("created_at", { ascending: true }),
@@ -950,7 +950,13 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               <p className="text-xs uppercase tracking-[0.15em] text-white/45">Traumbilder</p>
               <div className="flex gap-3 flex-wrap">
                 {existingImages.map((img) => (
-                  <button key={img.id} type="button" onClick={() => setLightboxImage(img.image_url)}
+                  <button key={img.id} type="button" onClick={() => {
+                    setShowImagePanel(true); setShowAnalysisPanel(false); setShowChat(false)
+                    setGeneratedImage(img.image_url)
+                    setCardTitle(img.card_title ?? "")
+                    setImageFormat(img.format as "stories" | "square" | "pinterest")
+                    setTimeout(() => renderCanvas(img.image_url, img.card_title ?? "", img.format), 100)
+                  }}
                     className="relative rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition group w-[72px] h-[72px]">
                     <img src={img.image_url} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-sm">🔍</div>
