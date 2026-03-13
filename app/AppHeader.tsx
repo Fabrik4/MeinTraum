@@ -228,6 +228,10 @@ export default function AppHeader() {
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
                           🎨 Traumbilder
                         </Link>
+                        <Link href="/analyses" onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
+                          🧠 Analysen
+                        </Link>
                         <div className="border-t border-white/5 my-1" />
                         <Link href="/unterstuetzen" onClick={() => setMenuOpen(false)}
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
