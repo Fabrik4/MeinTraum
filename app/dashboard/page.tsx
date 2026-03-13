@@ -15,6 +15,14 @@ type Stats = {
   lastJournal: { id: number; text: string; mood_score: number | null; created_at: string } | null
 }
 
+type WeeklyStats = {
+  dream_count: number
+  journal_count: number
+  checkin_count: number
+  mood_avg: number | null
+  mood_avg_prev: number | null
+}
+
 type MoodPoint = { date: string; score: number }
 type MoodData = {
   points: MoodPoint[]
@@ -48,6 +56,7 @@ export default function DashboardPage() {
   const [checkinDone, setCheckinDone] = useState(false)
   const [checkinLoading, setCheckinLoading] = useState<string | null>(null)
   const [moodData, setMoodData] = useState<MoodData | null>(null)
+  const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null)
   const { streak, reload: reloadStreak } = useStreak(user?.id ?? null)
 
   useEffect(() => {
@@ -67,6 +76,7 @@ export default function DashboardPage() {
       profileRes,
       todayDreamRes, todayJournalRes,
       moodRes,
+      weeklyRes,
     ] = await Promise.all([
       supabase.from("dream_entries").select("id, raw_input_text, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1),
       supabase.from("journal_entries").select("id, body_text, mood_score, created_at").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(1),
@@ -83,6 +93,7 @@ export default function DashboardPage() {
         .gte("created_at", twoMonthAgo)
         .not("mood_score", "is", null)
         .order("entry_date", { ascending: true }),
+      supabase.rpc("get_weekly_review", { p_user_id: user!.id }),
     ])
 
     setHasTodayEntry((todayDreamRes.count ?? 0) + (todayJournalRes.count ?? 0) > 0)
@@ -115,6 +126,7 @@ export default function DashboardPage() {
     }
 
     setMoodData({ points: points.slice(-30), avg7d, avg30d, trend })
+    if (weeklyRes.data) setWeeklyStats(weeklyRes.data as WeeklyStats)
 
     setStats({
       totalDreams:    totalDreamsRes.count  ?? 0,
@@ -218,6 +230,30 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+        )}
+
+        {/* Wochenrückblick Card */}
+        {!loading && weeklyStats !== null && (
+          <Link href="/weekly"
+            className="group flex items-center justify-between gap-4 rounded-2xl border border-white/8 bg-white/4 px-5 py-4 transition hover:border-white/15 hover:bg-white/6">
+            <div className="space-y-1 min-w-0">
+              <p className="text-sm font-medium text-white/80">Deine Woche</p>
+              <p className="text-xs text-white/50">
+                {weeklyStats.dream_count} {weeklyStats.dream_count === 1 ? "Traum" : "Träume"}
+                {" · "}{weeklyStats.journal_count} Journal
+                {weeklyStats.checkin_count > 0 && ` · ${weeklyStats.checkin_count} Check-ins`}
+              </p>
+              {weeklyStats.mood_avg && weeklyStats.mood_avg_prev && (() => {
+                const diff = weeklyStats.mood_avg - weeklyStats.mood_avg_prev
+                if (diff > 0.5) return <span className="text-xs text-emerald-300">↗ Stimmung steigend</span>
+                if (diff < -0.5) return <span className="text-xs text-rose-300">↘ Stimmung sinkend</span>
+                return <span className="text-xs text-amber-300">→ Stimmung stabil</span>
+              })()}
+            </div>
+            <span className="shrink-0 text-xs text-white/40 group-hover:text-white/70 transition whitespace-nowrap">
+              Rückblick →
+            </span>
+          </Link>
         )}
 
         {/* Quick-Add */}
