@@ -96,7 +96,7 @@ export default function FeedbackModal({ onClose, userEmail }: Props) {
               className={`rounded-full border px-4 py-2 text-sm transition-all ${
                 data.gefallt.includes(o)
                   ? "border-cyan-300/35 bg-cyan-300/15 text-cyan-100"
-                  : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white"
+                  : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
               }`}>
               {o}
             </button>
@@ -114,7 +114,7 @@ export default function FeedbackModal({ onClose, userEmail }: Props) {
               className={`rounded-full border px-4 py-2 text-sm transition-all ${
                 data.fehlt.includes(o)
                   ? "border-amber-300/35 bg-amber-300/15 text-amber-100"
-                  : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white"
+                  : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
               }`}>
               {o}
             </button>
@@ -132,7 +132,7 @@ export default function FeedbackModal({ onClose, userEmail }: Props) {
               className={`rounded-full border px-4 py-2 text-sm transition-all ${
                 data.gefunden === o
                   ? "border-violet-300/35 bg-violet-300/15 text-violet-100"
-                  : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white"
+                  : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
               }`}>
               {o}
             </button>
@@ -150,7 +150,7 @@ export default function FeedbackModal({ onClose, userEmail }: Props) {
               className={`rounded-full border px-4 py-2 text-sm transition-all ${
                 data.weiterempfehlen === o
                   ? "border-emerald-300/35 bg-emerald-300/15 text-emerald-100"
-                  : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white"
+                  : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
               }`}>
               {o}
             </button>
@@ -167,7 +167,7 @@ export default function FeedbackModal({ onClose, userEmail }: Props) {
           onChange={(e) => setData((p) => ({ ...p, freitext: e.target.value }))}
           placeholder="Ideen, Wünsche, Kritik – alles willkommen…"
           rows={4}
-          className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white placeholder:text-white/20 focus:border-white/25 focus:outline-none resize-none transition"
+          className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white placeholder:text-white/60 focus:border-white/25 focus:outline-none resize-none transition"
         />
       ),
     },
@@ -182,7 +182,7 @@ export default function FeedbackModal({ onClose, userEmail }: Props) {
         <div className="text-center space-y-4 py-4">
           <p className="text-4xl">🙏</p>
           <p className="text-lg font-semibold">Danke für dein Feedback!</p>
-          <p className="text-sm text-white/45 leading-6">
+          <p className="text-sm text-white/70 leading-6">
             Jede Rückmeldung hilft MeinTraum besser zu machen.
           </p>
           <button onClick={onClose}
@@ -209,7 +209,7 @@ export default function FeedbackModal({ onClose, userEmail }: Props) {
       <div className="space-y-5">
         <div>
           <p className="font-semibold text-white">{currentStep.title}</p>
-          <p className="text-xs text-white/30 mt-1">{currentStep.subtitle}</p>
+          <p className="text-xs text-white/50 mt-1">{currentStep.subtitle}</p>
         </div>
         {currentStep.content}
       </div>
@@ -218,7 +218,7 @@ export default function FeedbackModal({ onClose, userEmail }: Props) {
       <div className="flex items-center justify-between mt-8">
         <button
           onClick={() => step > 0 ? setStep(step - 1) : onClose()}
-          className="text-sm text-white/30 hover:text-white/60 transition">
+          className="text-sm text-white/50 hover:text-white/80 transition">
           {step === 0 ? "Abbrechen" : "← Zurück"}
         </button>
         <button
@@ -241,7 +241,7 @@ function ModalShell({ children, onClose }: { children: React.ReactNode; onClose:
       {/* Modal */}
       <div className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-[#0c1220] p-6 shadow-2xl shadow-black/60 sm:p-8">
         <button onClick={onClose}
-          className="absolute right-5 top-5 text-white/25 hover:text-white/60 transition text-lg">
+          className="absolute right-5 top-5 text-white/45 hover:text-white/80 transition text-lg">
           ✕
         </button>
         {children}

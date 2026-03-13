@@ -160,7 +160,7 @@ export default function DashboardPage() {
       <div className="text-center space-y-6 max-w-sm">
         <div className="text-5xl">🌙</div>
         <p className="text-2xl font-semibold">Willkommen bei MeinTraum</p>
-        <p className="text-white/45 text-sm leading-7">Dein persönliches Traumtagebuch und Stimmungsarchiv.</p>
+        <p className="text-white/70 text-sm leading-7">Dein persönliches Traumtagebuch und Stimmungsarchiv.</p>
         <Link href="/login" className="inline-block rounded-2xl bg-white px-8 py-3.5 font-medium text-[#070b14] transition hover:scale-[1.02]">
           Anmelden / Registrieren
         </Link>
@@ -177,10 +177,10 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-3xl font-semibold">{greeting()}</h1>
             <div className="mt-1.5 flex items-center gap-3 flex-wrap">
-              <p className="text-sm text-white/35">
+              <p className="text-sm text-white/60">
                 {loading ? "Wird geladen…" : `${(stats?.totalDreams ?? 0) + (stats?.totalJournal ?? 0)} Einträge in deinem Archiv`}
               </p>
-              <span className="inline-flex items-center gap-1.5 rounded-2xl border border-white/6 bg-white/3 px-3 py-1 text-xs text-white/40">
+              <span className="inline-flex items-center gap-1.5 rounded-2xl border border-white/6 bg-white/3 px-3 py-1 text-xs text-white/65">
                 {todayMoon.emoji} {todayMoon.name} · {todayMoon.illumination}%
               </span>
             </div>
@@ -209,12 +209,12 @@ export default function DashboardPage() {
               <button onClick={() => handleCheckin("no_memory")} disabled={checkinLoading !== null}
                 className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-4 text-center transition hover:bg-white/8 active:scale-[0.98] disabled:opacity-50">
                 <span className="text-xl">{checkinLoading === "no_memory" ? "⏳" : "😶"}</span>
-                <span className="text-xs font-medium text-white/60">Nichts erinnert</span>
+                <span className="text-xs font-medium text-white/80">Nichts erinnert</span>
               </button>
               <button onClick={() => handleCheckin("no_sleep")} disabled={checkinLoading !== null}
                 className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-4 text-center transition hover:bg-white/8 active:scale-[0.98] disabled:opacity-50">
                 <span className="text-xl">{checkinLoading === "no_sleep" ? "⏳" : "💤"}</span>
-                <span className="text-xs font-medium text-white/60">Nicht geschlafen</span>
+                <span className="text-xs font-medium text-white/80">Nicht geschlafen</span>
               </button>
             </div>
           </div>
@@ -227,18 +227,18 @@ export default function DashboardPage() {
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-300/12 text-xl transition group-hover:bg-cyan-300/20">🌙</div>
             <div>
               <p className="font-semibold text-white">Traum erfassen</p>
-              <p className="text-sm text-white/40">Solange er noch frisch ist</p>
+              <p className="text-sm text-white/65">Solange er noch frisch ist</p>
             </div>
-            <span className="ml-auto text-lg text-white/20 transition group-hover:text-white/50 group-hover:translate-x-0.5">→</span>
+            <span className="ml-auto text-lg text-white/20 transition group-hover:text-white/70 group-hover:translate-x-0.5">→</span>
           </Link>
           <Link href="/journal/new"
             className="group flex items-center gap-4 rounded-3xl border border-amber-300/15 bg-amber-300/5 px-6 py-5 transition hover:border-amber-300/25 hover:bg-amber-300/8 active:scale-[0.99]">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-300/12 text-xl transition group-hover:bg-amber-300/20">📓</div>
             <div>
               <p className="font-semibold text-white">Journal-Eintrag</p>
-              <p className="text-sm text-white/40">Wie geht es dir heute?</p>
+              <p className="text-sm text-white/65">Wie geht es dir heute?</p>
             </div>
-            <span className="ml-auto text-lg text-white/20 transition group-hover:text-white/50 group-hover:translate-x-0.5">→</span>
+            <span className="ml-auto text-lg text-white/20 transition group-hover:text-white/70 group-hover:translate-x-0.5">→</span>
           </Link>
         </div>
 
@@ -246,34 +246,34 @@ export default function DashboardPage() {
         {!loading && moodData && moodData.points.length >= 3 && (
           <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.2em] text-white/25">Stimmungsmonitor</p>
-              <Link href="/patterns" className="text-xs text-white/30 hover:text-white/60 transition">Muster-Analyse →</Link>
+              <p className="text-xs uppercase tracking-[0.2em] text-white/45">Stimmungsmonitor</p>
+              <Link href="/patterns" className="text-xs text-white/50 hover:text-white/80 transition">Muster-Analyse →</Link>
             </div>
 
             {/* Kennzahlen */}
             <div className="grid grid-cols-3 gap-3">
               {moodData.avg7d && (
                 <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-3">
-                  <p className="text-xs text-white/35 mb-1">7 Tage</p>
+                  <p className="text-xs text-white/60 mb-1">7 Tage</p>
                   <p className={`text-xl font-semibold ${MOOD_COLOR(moodData.avg7d)}`}>
-                    {moodData.avg7d}<span className="text-xs font-normal text-white/25 ml-0.5">/10</span>
+                    {moodData.avg7d}<span className="text-xs font-normal text-white/45 ml-0.5">/10</span>
                   </p>
                 </div>
               )}
               {moodData.avg30d && (
                 <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-3">
-                  <p className="text-xs text-white/35 mb-1">30 Tage</p>
+                  <p className="text-xs text-white/60 mb-1">30 Tage</p>
                   <p className={`text-xl font-semibold ${MOOD_COLOR(moodData.avg30d)}`}>
-                    {moodData.avg30d}<span className="text-xs font-normal text-white/25 ml-0.5">/10</span>
+                    {moodData.avg30d}<span className="text-xs font-normal text-white/45 ml-0.5">/10</span>
                   </p>
                 </div>
               )}
               {moodData.trend && (
                 <div className="rounded-2xl border border-white/6 bg-white/3 px-4 py-3">
-                  <p className="text-xs text-white/35 mb-1">Trend</p>
-                  <p className={`text-xl font-semibold ${moodData.trend === "rising" ? "text-emerald-300" : moodData.trend === "falling" ? "text-red-300" : "text-white/50"}`}>
+                  <p className="text-xs text-white/60 mb-1">Trend</p>
+                  <p className={`text-xl font-semibold ${moodData.trend === "rising" ? "text-emerald-300" : moodData.trend === "falling" ? "text-red-300" : "text-white/70"}`}>
                     {moodData.trend === "rising" ? "↗" : moodData.trend === "falling" ? "↘" : "→"}
-                    <span className="text-xs font-normal ml-1.5 text-white/40">
+                    <span className="text-xs font-normal ml-1.5 text-white/65">
                       {moodData.trend === "rising" ? "Steigend" : moodData.trend === "falling" ? "Fallend" : "Stabil"}
                     </span>
                   </p>
@@ -289,7 +289,7 @@ export default function DashboardPage() {
         {/* Statistiken */}
         {!loading && stats && (
           <div>
-            <p className="mb-4 text-xs uppercase tracking-[0.2em] text-white/25">Deine Zahlen</p>
+            <p className="mb-4 text-xs uppercase tracking-[0.2em] text-white/45">Deine Zahlen</p>
             <div className="grid grid-cols-3 gap-3">
               <StatCard label="Träume" value={stats.totalDreams} accent="cyan" />
               <StatCard label="Journal" value={stats.totalJournal} accent="amber" />
@@ -301,13 +301,13 @@ export default function DashboardPage() {
         {/* Letzte Einträge */}
         {!loading && (stats?.lastDream || stats?.lastJournal) && (
           <div>
-            <p className="mb-4 text-xs uppercase tracking-[0.2em] text-white/25">Zuletzt</p>
+            <p className="mb-4 text-xs uppercase tracking-[0.2em] text-white/45">Zuletzt</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {stats?.lastDream && (
                 <Link href={`/entries/${stats.lastDream.id}?type=dream`}
                   className="group rounded-3xl border border-white/8 bg-white/3 p-5 transition hover:border-cyan-300/20 hover:bg-cyan-300/5">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-cyan-300/55">🌙 Traum</span>
+                    <span className="text-xs font-medium uppercase tracking-wider text-cyan-300/75">🌙 Traum</span>
                     <span className="ml-auto text-xs text-white/22">{timeAgo(stats.lastDream.created_at)}</span>
                   </div>
                   <p className="text-sm leading-6 text-white/65 group-hover:text-white/80 transition">{truncate(stats.lastDream.text)}</p>
@@ -337,14 +337,14 @@ export default function DashboardPage() {
           <div className="rounded-3xl border border-white/8 bg-white/3 p-10 text-center">
             <p className="text-4xl mb-4">🌙</p>
             <p className="font-medium text-white mb-2">Noch keine Einträge</p>
-            <p className="text-sm text-white/40">Erfasse deinen ersten Traum oder Stimmungseintrag.</p>
+            <p className="text-sm text-white/65">Erfasse deinen ersten Traum oder Stimmungseintrag.</p>
           </div>
         )}
 
         {/* Archiv Link */}
         <div className="flex justify-center">
           <Link href="/timeline"
-            className="flex items-center gap-2 rounded-2xl border border-white/8 bg-white/3 px-5 py-3 text-sm text-white/40 transition hover:border-white/15 hover:text-white/65">
+            className="flex items-center gap-2 rounded-2xl border border-white/8 bg-white/3 px-5 py-3 text-sm text-white/65 transition hover:border-white/15 hover:text-white/65">
             Alle Einträge im Archiv →
           </Link>
         </div>
@@ -438,7 +438,7 @@ function StatCard({ label, value, suffix, accent, customColor }: {
   }
   return (
     <div className={`rounded-3xl border p-5 ${borders[accent]}`}>
-      <p className="text-xs text-white/30 mb-3 leading-5">{label}</p>
+      <p className="text-xs text-white/50 mb-3 leading-5">{label}</p>
       <p className={`text-2xl font-semibold ${customColor ?? valueColors[accent]}`}>
         {value}
         {suffix && <span className="text-sm font-normal opacity-55 ml-1">{suffix}</span>}

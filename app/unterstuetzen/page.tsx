@@ -11,7 +11,7 @@ export default function UnterstuetzenPage() {
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/60 mb-4">Support</p>
           <h1 className="text-3xl font-semibold">MeinTraum unterstützen</h1>
-          <p className="mt-4 text-sm leading-7 text-white/45 max-w-lg">
+          <p className="mt-4 text-sm leading-7 text-white/70 max-w-lg">
             MeinTraum ist aktuell in der Beta – kostenlos.
             Dein Support hilft die App weiterzuentwickeln.
             Early Supporter erhalten später exklusiven Zugang
@@ -24,7 +24,7 @@ export default function UnterstuetzenPage() {
           <p className="text-2xl">☕</p>
           <div>
             <p className="font-semibold text-white">Kaffee ausgeben</p>
-            <p className="text-sm text-white/40 mt-1 leading-6">
+            <p className="text-sm text-white/65 mt-1 leading-6">
               Einmalig oder regelmässig – du entscheidest.
             </p>
           </div>
@@ -45,7 +45,7 @@ export default function UnterstuetzenPage() {
         {/* Back */}
         <div className="flex justify-center">
           <Link href="/dashboard"
-            className="text-xs text-white/25 hover:text-white/50 transition">
+            className="text-xs text-white/45 hover:text-white/70 transition">
             ← Zurück zum Dashboard
           </Link>
         </div>

@@ -68,7 +68,7 @@ export default function FeedbackButton() {
                 Gerne 💬
               </button>
               <button onClick={dismiss}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/35 transition hover:text-white/60">
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/60 transition hover:text-white/80">
                 Später
               </button>
             </div>

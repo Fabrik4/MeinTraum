@@ -77,7 +77,7 @@ export default function SaveDraftPage() {
     <main className="min-h-screen bg-[#070b14] flex items-center justify-center text-white">
       <div className="text-center space-y-4">
         <p className="text-3xl animate-pulse">🌙</p>
-        <p className="text-white/60 text-sm">
+        <p className="text-white/80 text-sm">
           {status === "saving" ? "Dein Traum wird gespeichert…" : "Einen Moment…"}
         </p>
       </div>

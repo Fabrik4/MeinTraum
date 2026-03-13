@@ -87,7 +87,7 @@ export default function OnboardingPage() {
             <div className="text-center space-y-3">
               <p className="text-4xl">🌙</p>
               <h1 className="text-3xl font-semibold">Willkommen bei MeinTraum</h1>
-              <p className="text-white/45 text-sm leading-7 max-w-sm mx-auto">
+              <p className="text-white/70 text-sm leading-7 max-w-sm mx-auto">
                 Dein persönliches Traumarchiv. Wie dürfen wir dich nennen?
               </p>
             </div>
@@ -100,7 +100,7 @@ export default function OnboardingPage() {
                 onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) handleStep1() }}
                 placeholder="Dein Name oder Spitzname"
                 autoFocus
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/20 focus:border-cyan-300/30 focus:outline-none transition text-center text-lg"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/60 focus:border-cyan-300/30 focus:outline-none transition text-center text-lg"
               />
               <button
                 onClick={handleStep1}
@@ -121,21 +121,21 @@ export default function OnboardingPage() {
           <div className="space-y-8 animate-in fade-in duration-500">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-semibold">Hey {displayName} 👋</h2>
-              <p className="text-white/40 text-sm">
+              <p className="text-white/65 text-sm">
                 Ein paar optionale Angaben.
               </p>
             </div>
 
             {/* Altersgruppe */}
             <div className="space-y-3">
-              <p className="text-sm text-white/55">Altersgruppe <span className="text-white/25">(optional)</span></p>
+              <p className="text-sm text-white/75">Altersgruppe <span className="text-white/45">(optional)</span></p>
               <div className="flex flex-wrap gap-2">
                 {AGE_RANGES.map((a) => (
                   <button key={a} type="button" onClick={() => setAgeRange(ageRange === a ? "" : a)}
                     className={`rounded-full border px-4 py-2 text-sm transition-all ${
                       ageRange === a
                         ? "border-cyan-300/35 bg-cyan-300/15 text-cyan-100"
-                        : "border-white/10 bg-white/5 text-white/45 hover:text-white hover:border-white/20"
+                        : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20"
                     }`}>
                     {a}
                   </button>
@@ -145,14 +145,14 @@ export default function OnboardingPage() {
 
             {/* Ziele */}
             <div className="space-y-3">
-              <p className="text-sm text-white/55">Wofür möchtest du MeinTraum nutzen? <span className="text-white/25">(optional)</span></p>
+              <p className="text-sm text-white/75">Wofür möchtest du MeinTraum nutzen? <span className="text-white/45">(optional)</span></p>
               <div className="flex flex-wrap gap-2">
                 {GOALS.map((g) => (
                   <button key={g.value} type="button" onClick={() => toggleGoal(g.value)}
                     className={`rounded-full border px-4 py-2 text-sm transition-all flex items-center gap-1.5 ${
                       selectedGoals.includes(g.value)
                         ? "border-cyan-300/35 bg-cyan-300/15 text-cyan-100"
-                        : "border-white/10 bg-white/5 text-white/45 hover:text-white hover:border-white/20"
+                        : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20"
                     }`}>
                     <span>{g.emoji}</span> {g.value}
                   </button>
@@ -162,7 +162,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3">
               <button onClick={() => handleStep2(true)}
-                className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white/40 transition hover:text-white/70 hover:bg-white/8">
+                className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm text-white/65 transition hover:text-white/70 hover:bg-white/8">
                 Später einrichten
               </button>
               <button onClick={() => handleStep2(false)} disabled={saving}
@@ -179,7 +179,7 @@ export default function OnboardingPage() {
             <div className="text-center space-y-2">
               <p className="text-3xl">✓</p>
               <h2 className="text-2xl font-semibold">Alles bereit, {displayName}!</h2>
-              <p className="text-white/40 text-sm">Womit möchtest du beginnen?</p>
+              <p className="text-white/65 text-sm">Womit möchtest du beginnen?</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -188,7 +188,7 @@ export default function OnboardingPage() {
                 <span className="text-2xl">🌙</span>
                 <div>
                   <p className="font-medium text-white text-sm">Traum erfassen</p>
-                  <p className="text-xs text-white/35 mt-0.5 leading-5">Direkt loslegen</p>
+                  <p className="text-xs text-white/60 mt-0.5 leading-5">Direkt loslegen</p>
                 </div>
               </button>
 
@@ -197,7 +197,7 @@ export default function OnboardingPage() {
                 <span className="text-2xl">📓</span>
                 <div>
                   <p className="font-medium text-white text-sm">Journal schreiben</p>
-                  <p className="text-xs text-white/35 mt-0.5 leading-5">Stimmung festhalten</p>
+                  <p className="text-xs text-white/60 mt-0.5 leading-5">Stimmung festhalten</p>
                 </div>
               </button>
 
@@ -206,7 +206,7 @@ export default function OnboardingPage() {
                 <span className="text-2xl">🪞</span>
                 <div>
                   <p className="font-medium text-white text-sm">Profil einrichten</p>
-                  <p className="text-xs text-white/35 mt-0.5 leading-5">KI-Kontext ergänzen</p>
+                  <p className="text-xs text-white/60 mt-0.5 leading-5">KI-Kontext ergänzen</p>
                 </div>
               </button>
 
@@ -215,7 +215,7 @@ export default function OnboardingPage() {
                 <span className="text-2xl">✦</span>
                 <div>
                   <p className="font-medium text-white text-sm">Dashboard</p>
-                  <p className="text-xs text-white/35 mt-0.5 leading-5">Übersicht ansehen</p>
+                  <p className="text-xs text-white/60 mt-0.5 leading-5">Übersicht ansehen</p>
                 </div>
               </button>
             </div>

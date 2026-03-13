@@ -81,7 +81,7 @@ export default function LoginPage() {
             {mode === "register" && "Konto erstellen"}
             {mode === "forgot" && "Passwort vergessen"}
           </h1>
-          <p className="text-sm text-white/40">
+          <p className="text-sm text-white/65">
             {mode === "login" && "Melde dich an um dein Traumarchiv zu öffnen"}
             {mode === "register" && "Kostenlos starten – keine Kreditkarte"}
             {mode === "forgot" && "Wir schicken dir einen Reset-Link"}
@@ -91,9 +91,9 @@ export default function LoginPage() {
         {success ? (
           <div className="rounded-3xl border border-cyan-300/15 bg-cyan-300/5 p-8 text-center space-y-4">
             <p className="text-3xl">✉️</p>
-            <p className="text-sm text-white/60 leading-7">{success}</p>
+            <p className="text-sm text-white/80 leading-7">{success}</p>
             <button onClick={() => { setSuccess(null); setMode("login") }}
-              className="text-xs text-white/30 hover:text-white/60 transition underline underline-offset-2">
+              className="text-xs text-white/50 hover:text-white/80 transition underline underline-offset-2">
               Zurück zur Anmeldung
             </button>
           </div>
@@ -110,7 +110,7 @@ export default function LoginPage() {
 
                 <div className="flex items-center gap-4">
                   <div className="flex-1 h-px bg-white/8" />
-                  <span className="text-xs text-white/25">oder per E-Mail</span>
+                  <span className="text-xs text-white/45">oder per E-Mail</span>
                   <div className="flex-1 h-px bg-white/8" />
                 </div>
               </>
@@ -124,7 +124,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="E-Mail-Adresse"
                 required
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm text-white placeholder:text-white/25 focus:border-cyan-300/30 focus:outline-none transition"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm text-white placeholder:text-white/65 focus:border-cyan-300/30 focus:outline-none transition"
               />
 
               {mode !== "forgot" && (
@@ -135,7 +135,7 @@ export default function LoginPage() {
                   placeholder="Passwort"
                   required
                   minLength={6}
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm text-white placeholder:text-white/25 focus:border-cyan-300/30 focus:outline-none transition"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm text-white placeholder:text-white/65 focus:border-cyan-300/30 focus:outline-none transition"
                 />
               )}
 
@@ -158,24 +158,24 @@ export default function LoginPage() {
               {mode === "login" && (
                 <>
                   <button onClick={() => { setMode("register"); setError(null) }}
-                    className="block w-full text-xs text-white/30 hover:text-white/60 transition">
+                    className="block w-full text-xs text-white/50 hover:text-white/80 transition">
                     Noch kein Konto? <span className="underline underline-offset-2">Jetzt registrieren</span>
                   </button>
                   <button onClick={() => { setMode("forgot"); setError(null) }}
-                    className="block w-full text-xs text-white/25 hover:text-white/50 transition">
+                    className="block w-full text-xs text-white/45 hover:text-white/70 transition">
                     Passwort vergessen?
                   </button>
                 </>
               )}
               {mode === "register" && (
                 <button onClick={() => { setMode("login"); setError(null) }}
-                  className="text-xs text-white/30 hover:text-white/60 transition">
+                  className="text-xs text-white/50 hover:text-white/80 transition">
                   Bereits ein Konto? <span className="underline underline-offset-2">Anmelden</span>
                 </button>
               )}
               {mode === "forgot" && (
                 <button onClick={() => { setMode("login"); setError(null) }}
-                  className="text-xs text-white/30 hover:text-white/60 transition">
+                  className="text-xs text-white/50 hover:text-white/80 transition">
                   ← Zurück zur Anmeldung
                 </button>
               )}
@@ -186,7 +186,7 @@ export default function LoginPage() {
         {/* Datenschutz */}
         <p className="text-center text-xs text-white/20 leading-6">
           Mit der Anmeldung stimmst du unserer{" "}
-          <Link href="/datenschutz" className="underline underline-offset-2 hover:text-white/50 transition">
+          <Link href="/datenschutz" className="underline underline-offset-2 hover:text-white/70 transition">
             Datenschutzerklärung
           </Link>{" "}
           zu.

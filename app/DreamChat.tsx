@@ -158,7 +158,7 @@ export default function DreamChat({ context, onClose }: {
           </div>
         </div>
         <button onClick={onClose}
-          className="rounded-xl border border-white/8 bg-white/3 px-3 py-1.5 text-xs text-white/45 transition hover:bg-white/8 hover:text-white">
+          className="rounded-xl border border-white/8 bg-white/3 px-3 py-1.5 text-xs text-white/70 transition hover:bg-white/8 hover:text-white">
           Schliessen ✕
         </button>
       </div>

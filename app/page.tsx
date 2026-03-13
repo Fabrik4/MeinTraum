@@ -98,10 +98,10 @@ function DemoSection() {
   return (
     <section id="demo" className="mx-auto max-w-6xl px-6 py-16 md:px-10">
       <div className="mb-10">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/55 mb-4">Live-Vorschau</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/75 mb-4">Live-Vorschau</p>
         <h2 className="text-3xl font-semibold max-w-lg leading-snug">
           So sieht MeinTraum aus.<br />
-          <span className="text-white/35">Lenas Traumarchiv als Beispiel.</span>
+          <span className="text-white/60">Lenas Traumarchiv als Beispiel.</span>
         </h2>
       </div>
 
@@ -112,7 +112,7 @@ function DemoSection() {
             className={`rounded-xl px-4 py-2 text-sm transition-all capitalize ${
               tab === t
                 ? "bg-white/10 text-white border border-white/15"
-                : "text-white/35 hover:text-white/60"
+                : "text-white/60 hover:text-white/80"
             }`}>
             {t === "träume" ? "🌙 Träume" : t === "journal" ? "📓 Journal" : "✦ Muster"}
           </button>
@@ -132,9 +132,9 @@ function DemoSection() {
                       <span className={`text-xs rounded-full px-2.5 py-0.5 border ${
                         d.tone === "pleasant" ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200" :
                         d.tone === "nightmare" ? "border-red-300/20 bg-red-300/10 text-red-200" :
-                        "border-white/10 bg-white/5 text-white/40"
+                        "border-white/10 bg-white/5 text-white/65"
                       }`}>{d.tone === "pleasant" ? "Schöner Traum" : d.tone === "nightmare" ? "Albtraum" : "Neutral"}</span>
-                      <span className="text-xs text-white/25">{d.date}</span>
+                      <span className="text-xs text-white/45">{d.date}</span>
                     </div>
                     <p className="text-sm text-white/65 leading-6 line-clamp-2">{d.text}</p>
                     {d.persons.length > 0 && (
@@ -151,14 +151,14 @@ function DemoSection() {
               {/* Analyse aufklappen */}
               {openDream === d.id && (
                 <div className="mx-2 rounded-b-3xl border border-t-0 border-cyan-300/12 bg-cyan-300/4 p-5 space-y-4">
-                  <p className="text-xs uppercase tracking-[0.15em] text-cyan-300/50">KI-Analyse</p>
+                  <p className="text-xs uppercase tracking-[0.15em] text-cyan-300/70">KI-Analyse</p>
                   <p className="text-sm leading-7 text-white/65">{d.analysis.summary}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {d.analysis.themes.map((t) => <span key={t} className="text-xs rounded-full border border-cyan-300/15 bg-cyan-300/8 px-2.5 py-1 text-cyan-200">{t}</span>)}
                   </div>
                   <div className="rounded-2xl border border-white/8 bg-white/4 px-4 py-3">
-                    <p className="text-xs text-white/30 mb-1">Reflexionsfrage</p>
-                    <p className="text-sm text-white/60 italic">"{d.analysis.question}"</p>
+                    <p className="text-xs text-white/50 mb-1">Reflexionsfrage</p>
+                    <p className="text-sm text-white/80 italic">"{d.analysis.question}"</p>
                   </div>
                 </div>
               )}
@@ -173,14 +173,14 @@ function DemoSection() {
           {DEMO_JOURNALS.map((j) => (
             <div key={j.id} className="rounded-3xl border border-amber-300/10 bg-amber-300/4 p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-white/30">{j.date}</span>
+                <span className="text-xs text-white/50">{j.date}</span>
                 <span className={`text-sm font-medium ${j.mood >= 7 ? "text-emerald-300" : j.mood >= 5 ? "text-amber-300" : "text-rose-300"}`}>
                   {j.mood}/10 · {j.moodLabel}
                 </span>
               </div>
               <p className="text-sm text-white/65 leading-7">{j.text}</p>
               <div className="flex gap-1.5 flex-wrap">
-                {j.tags.map((t) => <span key={t} className="text-xs rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-white/40">{t}</span>)}
+                {j.tags.map((t) => <span key={t} className="text-xs rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-white/65">{t}</span>)}
                 <span className="text-xs text-white/20 ml-1">· {"⚡".repeat(j.energy)} Energie</span>
               </div>
             </div>
@@ -191,28 +191,28 @@ function DemoSection() {
       {/* Muster Tab */}
       {tab === "muster" && (
         <div className="rounded-3xl border border-violet-300/15 bg-violet-300/4 p-6 space-y-6">
-          <p className="text-xs uppercase tracking-[0.15em] text-violet-300/50">KI-Musteranalyse · Lena, 30 Tage</p>
+          <p className="text-xs uppercase tracking-[0.15em] text-violet-300/70">KI-Musteranalyse · Lena, 30 Tage</p>
           <p className="text-sm leading-7 text-white/65">
             In Lenas Träumen taucht Wasser regelmässig als Symbol auf – oft in Verbindung mit Momenten des Übergangs.
             Der Jobwechsel scheint sich deutlich ins Traumleben zu übertragen. Die Stimmung steigt über 30 Tage trotz Stress.
           </p>
           <div className="grid gap-4 sm:grid-cols-3 text-xs">
             <div>
-              <p className="text-white/30 mb-2">Häufige Emotionen</p>
+              <p className="text-white/50 mb-2">Häufige Emotionen</p>
               <div className="flex flex-wrap gap-1.5">
                 {["Neugier", "Angst", "Freude"].map((e) => <span key={e} className="rounded-full border border-cyan-300/15 bg-cyan-300/8 px-2.5 py-1 text-cyan-200">{e}</span>)}
               </div>
             </div>
             <div>
-              <p className="text-white/30 mb-2">Personen</p>
+              <p className="text-white/50 mb-2">Personen</p>
               <div className="flex flex-wrap gap-1.5">
                 {["Alte Chefin", "Bruder"].map((p) => <span key={p} className="rounded-full border border-violet-300/15 bg-violet-300/8 px-2.5 py-1 text-violet-200">👤 {p}</span>)}
               </div>
             </div>
             <div>
-              <p className="text-white/30 mb-2">Stimmungstrend</p>
+              <p className="text-white/50 mb-2">Stimmungstrend</p>
               <p className="text-emerald-300 font-medium">↗ Steigend</p>
-              <p className="text-white/30 mt-1">Ø 6.5 / 10 (30 Tage)</p>
+              <p className="text-white/50 mt-1">Ø 6.5 / 10 (30 Tage)</p>
             </div>
           </div>
         </div>
@@ -224,7 +224,7 @@ function DemoSection() {
           className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm font-medium text-[#070b14] transition hover:scale-[1.02]">
           🌙 Deinen Traum analysieren
         </Link>
-        <p className="text-xs text-white/25">Kostenlos · Keine Anmeldung nötig</p>
+        <p className="text-xs text-white/45">Kostenlos · Keine Anmeldung nötig</p>
       </div>
     </section>
   )
@@ -257,7 +257,7 @@ export default function Home() {
           <span className="text-lg font-semibold tracking-tight">MeinTraum</span>
           <div className="flex items-center gap-3">
             <a href="#demo"
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 transition hover:bg-white/10 hover:text-white">
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10 hover:text-white">
               Demo ansehen
             </a>
             <Link href="/login"
@@ -274,14 +274,14 @@ export default function Home() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-cyan-400/5 blur-[120px] pointer-events-none" />
 
         <div className="relative mx-auto max-w-6xl px-6 pt-32 pb-24 md:px-10">
-          <div ref={badge} className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-white/55 backdrop-blur">
+          <div ref={badge} className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-white/75 backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
             Beta · Jetzt kostenlos testen
           </div>
 
           <div ref={hero}>
             <h1 className="text-6xl font-semibold tracking-tight text-white md:text-8xl leading-[0.95]">
-              Mein<span className="text-white/35">Traum</span>
+              Mein<span className="text-white/60">Traum</span>
             </h1>
             <p className="mt-6 text-xl font-medium text-white/80 md:text-2xl max-w-xl leading-snug">
               Verstehe deine Träume.<br />
@@ -290,11 +290,11 @@ export default function Home() {
           </div>
 
           <div ref={sub} className="mt-5 max-w-lg space-y-4">
-            <p className="text-lg font-medium text-white/55 leading-snug">
+            <p className="text-lg font-medium text-white/75 leading-snug">
               Nicht ein Traum.<br />
               <span className="text-white/80">Alle deine Träume zusammen.</span>
             </p>
-            <p className="text-sm leading-7 text-white/35">
+            <p className="text-sm leading-7 text-white/60">
               KI erkennt wiederkehrende Personen, Orte und Emotionen über Wochen –
               und zeigt dir Muster die du alleine nicht siehst.
             </p>
@@ -312,7 +312,7 @@ export default function Home() {
             </a>
           </div>
 
-          <p className="mt-5 text-xs text-white/25">Kostenlos · Keine Kreditkarte · Keine Anmeldung nötig</p>
+          <p className="mt-5 text-xs text-white/45">Kostenlos · Keine Kreditkarte · Keine Anmeldung nötig</p>
         </div>
 
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-20">
@@ -324,14 +324,14 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-6 py-20 md:px-10">
         <div className="grid gap-px overflow-hidden rounded-3xl border border-white/6 md:grid-cols-2">
           <div className="bg-white/3 p-8 md:p-10">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/30 mb-4">Das Problem</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-white/50 mb-4">Das Problem</p>
             <h2 className="text-xl font-semibold text-white/75 leading-snug">
               Träume zerfallen in Minuten.<br />
               Klassische Apps liefern generische Symboldeutungen.
             </h2>
           </div>
           <div className="bg-cyan-400/5 p-8 md:p-10">
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/55 mb-4">MeinTraum</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/75 mb-4">MeinTraum</p>
             <h2 className="text-xl font-semibold leading-snug">
               Persönliche Mustererkennung<br />
               über Wochen und Monate.
@@ -345,11 +345,11 @@ export default function Home() {
         <div className="rounded-3xl border border-cyan-300/12 bg-cyan-300/4 p-8 md:p-10">
           <div className="grid gap-8 md:grid-cols-2 items-center">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/55 mb-4">Der Kernunterschied</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/75 mb-4">Der Kernunterschied</p>
               <h2 className="text-2xl font-semibold leading-snug mb-4">
                 Nicht ein Traum.<br />Alle deine Träume.
               </h2>
-              <p className="text-sm leading-8 text-white/50">
+              <p className="text-sm leading-8 text-white/70">
                 MeinTraum verbindet Träume, Stimmungen und Ereignisse über Zeit.
                 Welche Personen tauchen immer wieder auf? Wann träumst du von bestimmten Orten?
                 Was passiert in deinem Leben, wenn die Albträume kommen?
@@ -361,13 +361,13 @@ export default function Home() {
             </div>
             <div className="space-y-3">
               {[
-                { label: "Wiederkehrende Personen", value: "Mutter, Jonas, Unbekannte Frau", color: "text-white/60" },
-                { label: "Häufigste Orte",          value: "Alte Schule, See, Elternhaus",  color: "text-white/60" },
+                { label: "Wiederkehrende Personen", value: "Mutter, Jonas, Unbekannte Frau", color: "text-white/80" },
+                { label: "Häufigste Orte",          value: "Alte Schule, See, Elternhaus",  color: "text-white/80" },
                 { label: "Emotionsmuster",           value: "Neugier ↑  ·  Angst stabil  ·  Freude ↑↑", color: "text-cyan-300/70" },
                 { label: "Stimmungstrend",           value: "↗ Steigend über 30 Tage",      color: "text-cyan-200/80" },
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between rounded-2xl border border-white/6 bg-white/3 px-4 py-3">
-                  <span className="text-xs text-white/30">{row.label}</span>
+                  <span className="text-xs text-white/50">{row.label}</span>
                   <span className={`text-xs font-medium ${row.color}`}>{row.value}</span>
                 </div>
               ))}
@@ -382,7 +382,7 @@ export default function Home() {
       {/* Features */}
       <section id="features" className="mx-auto max-w-6xl px-6 py-16 md:px-10">
         <div className="mb-12">
-          <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/55 mb-4">Funktionen</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/75 mb-4">Funktionen</p>
           <h2 className="text-3xl font-semibold max-w-lg leading-snug">
             Schnell erfassen.<br />Tiefer verstehen.
           </h2>
@@ -400,9 +400,9 @@ export default function Home() {
                 </div>
                 <h3 className="font-semibold text-white/85 flex items-center gap-2">
                   {item.title}
-                  {item.soon && <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-white/30">bald</span>}
+                  {item.soon && <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-white/50">bald</span>}
                 </h3>
-                <p className="mt-3 text-sm leading-7 text-white/45">{item.text}</p>
+                <p className="mt-3 text-sm leading-7 text-white/70">{item.text}</p>
               </div>
             )
           })}
@@ -412,7 +412,7 @@ export default function Home() {
       {/* So funktioniert's */}
       <section className="mx-auto max-w-6xl px-6 py-12 md:px-10">
         <div className="mb-12">
-          <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/55 mb-4">So funktioniert's</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/75 mb-4">So funktioniert's</p>
           <h2 className="text-3xl font-semibold">Drei Schritte. Kein Aufwand.</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
@@ -424,7 +424,7 @@ export default function Home() {
             <div key={step.n} className="rounded-3xl border border-white/8 bg-white/4 p-6">
               <span className="text-4xl font-semibold text-white/6 select-none">{step.n}</span>
               <h3 className="mt-2 font-semibold text-white/85">{step.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-white/45">{step.text}</p>
+              <p className="mt-3 text-sm leading-7 text-white/70">{step.text}</p>
             </div>
           ))}
         </div>
@@ -434,7 +434,7 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-6 py-12 md:px-10">
         <div className="rounded-3xl border border-white/8 bg-white/3 p-8 md:p-10">
           <div className="mb-10">
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/55 mb-4">Unsere Haltung</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/75 mb-4">Unsere Haltung</p>
             <h2 className="text-2xl font-semibold max-w-lg">
               Kein esoterischer Kitsch. Kein Datenhandel. Kein Lärm.
             </h2>
@@ -445,11 +445,11 @@ export default function Home() {
               return (
                 <div key={p.title} className="flex gap-4">
                   <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/8 bg-white/4">
-                    <Icon className="h-4 w-4 text-white/45" />
+                    <Icon className="h-4 w-4 text-white/70" />
                   </div>
                   <div>
                     <p className="font-medium text-white/80">{p.title}</p>
-                    <p className="mt-2 text-sm leading-7 text-white/40">{p.text}</p>
+                    <p className="mt-2 text-sm leading-7 text-white/65">{p.text}</p>
                   </div>
                 </div>
               )
@@ -463,9 +463,9 @@ export default function Home() {
         <div className="relative rounded-3xl border border-white/10 bg-white/4 p-8 text-center overflow-hidden md:p-12">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,200,180,0.07),transparent_70%)] pointer-events-none" />
           <div className="relative space-y-6">
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/55">Jetzt starten</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300/75">Jetzt starten</p>
             <h2 className="text-3xl font-semibold">Was träumst du heute Nacht?</h2>
-            <p className="mx-auto max-w-md text-sm leading-8 text-white/45">
+            <p className="mx-auto max-w-md text-sm leading-8 text-white/70">
               Gib deinen letzten Traum ein – sofort, ohne Anmeldung, kostenlos.
               Die KI analysiert ihn in Sekunden.
             </p>
@@ -475,7 +475,7 @@ export default function Home() {
                 🌙 Traum jetzt eingeben
               </Link>
               <a href="#demo"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/12 bg-white/5 px-8 py-3.5 text-sm text-white/55 transition hover:bg-white/10 hover:text-white">
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/12 bg-white/5 px-8 py-3.5 text-sm text-white/75 transition hover:bg-white/10 hover:text-white">
                 Erst Demo anschauen
               </a>
             </div>
@@ -489,9 +489,9 @@ export default function Home() {
         <div className="flex flex-col gap-4 border-t border-white/6 pt-6 md:flex-row md:items-center md:justify-between">
           <p className="text-xs text-white/20">MeinTraum · Ein Projekt aus der Schweiz von Fabrik4.</p>
           <div className="flex gap-6 text-xs text-white/20">
-            <a href="#demo" className="hover:text-white/50 transition">Demo</a>
-            <Link href="/datenschutz" className="hover:text-white/50 transition">Datenschutz</Link>
-            <Link href="/impressum" className="hover:text-white/50 transition">Impressum</Link>
+            <a href="#demo" className="hover:text-white/70 transition">Demo</a>
+            <Link href="/datenschutz" className="hover:text-white/70 transition">Datenschutz</Link>
+            <Link href="/impressum" className="hover:text-white/70 transition">Impressum</Link>
           </div>
         </div>
       </footer>

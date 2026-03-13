@@ -88,11 +88,11 @@ export default function ChatPage() {
           <div className="h-2 w-2 rounded-full bg-violet-300 animate-pulse" />
           <div>
             <p className="text-sm font-medium text-white">Traumbegleiter AI</p>
-            <p className="text-xs text-white/30">Dein persönlicher Gesprächsbegleiter</p>
+            <p className="text-xs text-white/50">Dein persönlicher Gesprächsbegleiter</p>
           </div>
           {messages.length > 1 && (
             <button onClick={resetChat}
-              className="ml-auto rounded-xl border border-white/8 bg-white/3 px-3 py-1.5 text-xs text-white/40 transition hover:bg-white/8 hover:text-white/65">
+              className="ml-auto rounded-xl border border-white/8 bg-white/3 px-3 py-1.5 text-xs text-white/65 transition hover:bg-white/8 hover:text-white/65">
               Neues Gespräch
             </button>
           )}
@@ -151,7 +151,7 @@ export default function ChatPage() {
                   ? "border-violet-300/20 bg-violet-300/8 text-violet-300/60 cursor-wait"
                   : recState === "error"
                   ? "border-red-300/20 bg-red-300/8 text-red-300/60"
-                  : "border-white/10 bg-white/5 text-white/40 hover:border-violet-300/30 hover:text-violet-300/70"
+                  : "border-white/10 bg-white/5 text-white/65 hover:border-violet-300/30 hover:text-violet-300/70"
               } disabled:opacity-40`}>
               {recState === "recording" ? "⏹" : recState === "transcribing" ? <span className="animate-spin inline-block">✦</span> : "🎤"}
             </button>
@@ -165,7 +165,7 @@ export default function ChatPage() {
               placeholder={recState === "recording" ? "Aufnahme läuft…" : recState === "transcribing" ? "Wird transkribiert…" : "Schreib etwas…"}
               rows={1}
               disabled={recState === "recording" || recState === "transcribing"}
-              className="flex-1 resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/25 focus:border-violet-300/25 focus:outline-none transition disabled:opacity-50"
+              className="flex-1 resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/65 focus:border-violet-300/25 focus:outline-none transition disabled:opacity-50"
               style={{ maxHeight: "120px" }}
               onInput={(e) => {
                 const el = e.currentTarget

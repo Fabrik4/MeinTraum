@@ -108,16 +108,16 @@ export default function ProfilePage() {
       <div className="mx-auto max-w-2xl space-y-8">
 
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-white/30 mb-4">Einstellungen</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-white/50 mb-4">Einstellungen</p>
           <h1 className="text-3xl font-semibold">Profil</h1>
         </div>
 
         {/* Account */}
         <div className="rounded-3xl border border-white/8 bg-white/3 p-6">
-          <p className="text-xs uppercase tracking-[0.15em] text-white/30 mb-4">Account</p>
+          <p className="text-xs uppercase tracking-[0.15em] text-white/50 mb-4">Account</p>
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-sm text-white/40">Angemeldet als</p>
+              <p className="text-sm text-white/65">Angemeldet als</p>
               <p className="font-medium mt-0.5">{user?.email}</p>
             </div>
             <button onClick={handleSignOut}
@@ -130,35 +130,35 @@ export default function ProfilePage() {
         {/* Profil */}
         <form onSubmit={handleSaveProfile} className="space-y-5">
           <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
-            <p className="text-xs uppercase tracking-[0.15em] text-white/30">Persönliches</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-white/50">Persönliches</p>
             <div>
-              <label className="mb-2 block text-sm font-medium text-white/60">Wie soll ich dich nennen?</label>
+              <label className="mb-2 block text-sm font-medium text-white/80">Wie soll ich dich nennen?</label>
               <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="z.B. Lena"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-white/25 focus:outline-none transition" />
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/60 focus:border-white/25 focus:outline-none transition" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-white/60">Alter <span className="font-normal text-white/30">(optional)</span></label>
+              <label className="mb-2 block text-sm font-medium text-white/80">Alter <span className="font-normal text-white/50">(optional)</span></label>
               <input type="number" min={10} max={120} value={age} onChange={(e) => setAge(e.target.value)} placeholder="z.B. 32"
-                className="w-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-white/25 focus:outline-none transition" />
+                className="w-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/60 focus:border-white/25 focus:outline-none transition" />
             </div>
           </div>
 
           <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
             <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-white/30 mb-1">KI-Kontext</p>
-              <p className="text-xs text-white/30 leading-6">Diese Infos helfen der KI dir persönlichere Antworten zu geben.</p>
+              <p className="text-xs uppercase tracking-[0.15em] text-white/50 mb-1">KI-Kontext</p>
+              <p className="text-xs text-white/50 leading-6">Diese Infos helfen der KI dir persönlichere Antworten zu geben.</p>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-white/60">Über dich</label>
+              <label className="mb-2 block text-sm font-medium text-white/80">Über dich</label>
               <textarea value={interests} onChange={(e) => setInterests(e.target.value)} rows={3}
                 placeholder="z.B. Ich arbeite als Lehrerin, habe zwei Kinder, interessiere mich für Psychologie…"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-white/25 focus:outline-none transition resize-none" />
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/60 focus:border-white/25 focus:outline-none transition resize-none" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-white/60">Was soll die KI wissen? <span className="font-normal text-white/30">(optional)</span></label>
+              <label className="mb-2 block text-sm font-medium text-white/80">Was soll die KI wissen? <span className="font-normal text-white/50">(optional)</span></label>
               <textarea value={kiContext} onChange={(e) => setKiContext(e.target.value)} rows={3}
                 placeholder="z.B. Ich mag keine direkten Ratschläge. Ich träume oft von Wasser…"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/20 focus:border-white/25 focus:outline-none transition resize-none" />
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/60 focus:border-white/25 focus:outline-none transition resize-none" />
             </div>
           </div>
 
@@ -173,11 +173,11 @@ export default function ProfilePage() {
         <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-white/30 mb-1">Schlüsselereignisse</p>
-              <p className="text-xs text-white/30 leading-5">Wichtige Momente die die KI in Gesprächen kennen soll.</p>
+              <p className="text-xs uppercase tracking-[0.15em] text-white/50 mb-1">Schlüsselereignisse</p>
+              <p className="text-xs text-white/50 leading-5">Wichtige Momente die die KI in Gesprächen kennen soll.</p>
             </div>
             <button onClick={() => setShowAddEvent(!showAddEvent)}
-              className="shrink-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/55 transition hover:bg-white/8 hover:text-white">
+              className="shrink-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/75 transition hover:bg-white/8 hover:text-white">
               + Hinzufügen
             </button>
           </div>
@@ -194,10 +194,10 @@ export default function ProfilePage() {
               </div>
               <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="Ereignis (z.B. Neuer Job, Umzug, Trennung…)"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/20 focus:border-white/25 focus:outline-none transition" />
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/60 focus:border-white/25 focus:outline-none transition" />
               <input value={newDesc} onChange={(e) => setNewDesc(e.target.value)}
                 placeholder="Details (optional)"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/20 focus:border-white/25 focus:outline-none transition" />
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/60 focus:border-white/25 focus:outline-none transition" />
               <div className="flex gap-3 flex-wrap">
                 <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)}
                   className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-white/25 focus:outline-none transition" />
@@ -206,7 +206,7 @@ export default function ProfilePage() {
                   {addingEvent ? "Speichert…" : "Speichern"}
                 </button>
                 <button onClick={() => setShowAddEvent(false)}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/45 transition hover:bg-white/8">
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/70 transition hover:bg-white/8">
                   Abbrechen
                 </button>
               </div>
@@ -223,7 +223,7 @@ export default function ProfilePage() {
                 <span className="text-xl mt-0.5 shrink-0">{ev.emoji}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{ev.title}</p>
-                  {ev.description && <p className="text-xs text-white/35 mt-0.5">{ev.description}</p>}
+                  {ev.description && <p className="text-xs text-white/60 mt-0.5">{ev.description}</p>}
                   <p className="text-xs text-white/22 mt-1">
                     {new Date(ev.event_date).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
                   </p>
@@ -238,8 +238,8 @@ export default function ProfilePage() {
         {/* KI-Gedächtnis */}
         <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.15em] text-white/30 mb-1">KI-Gedächtnis</p>
-            <p className="text-xs text-white/30 leading-6">
+            <p className="text-xs uppercase tracking-[0.15em] text-white/50 mb-1">KI-Gedächtnis</p>
+            <p className="text-xs text-white/50 leading-6">
               Analysiert alle Einträge und erstellt eine Zusammenfassung, die die KI in jedem Gespräch nutzt.
               {lastSummaryDate && <span className="block mt-1 text-white/18">Zuletzt: {lastSummaryDate}</span>}
             </p>
@@ -262,20 +262,20 @@ export default function ProfilePage() {
         {/* Support-Banner */}
         <div className="rounded-2xl border border-white/8 bg-white/3 px-5 py-4 flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-white/55">☕ MeinTraum gefällt dir?</p>
-            <p className="text-xs text-white/40 mt-0.5">Unterstütze die Entwicklung mit einem Kaffee.</p>
+            <p className="text-sm text-white/75">☕ MeinTraum gefällt dir?</p>
+            <p className="text-xs text-white/65 mt-0.5">Unterstütze die Entwicklung mit einem Kaffee.</p>
           </div>
           <a href="/unterstuetzen"
-            className="shrink-0 text-xs text-white/40 hover:text-white/70 transition">
+            className="shrink-0 text-xs text-white/65 hover:text-white/70 transition">
             Unterstützen →
           </a>
         </div>
 
         {/* Footer */}
         <div className="border-t border-white/5 pt-6 flex gap-4 text-xs text-white/18">
-          <a href="/datenschutz" className="hover:text-white/40 transition">Datenschutz</a>
-          <a href="/impressum" className="hover:text-white/40 transition">Impressum</a>
-          <a href="/" className="hover:text-white/40 transition ml-auto">Zur Landingpage</a>
+          <a href="/datenschutz" className="hover:text-white/65 transition">Datenschutz</a>
+          <a href="/impressum" className="hover:text-white/65 transition">Impressum</a>
+          <a href="/" className="hover:text-white/65 transition ml-auto">Zur Landingpage</a>
         </div>
 
       </div>

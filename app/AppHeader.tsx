@@ -139,7 +139,7 @@ export default function AppHeader() {
               return (
                 <Link key={item.href} href={item.href}
                   className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm transition-all duration-200 ${
-                    active ? "bg-white/10 text-white" : "text-white/45 hover:text-white hover:bg-white/5"
+                    active ? "bg-white/10 text-white" : "text-white/70 hover:text-white hover:bg-white/5"
                   }`}>
                   <item.Icon size={14} />
                   {item.label}
@@ -149,7 +149,7 @@ export default function AppHeader() {
             {/* Chat Link */}
             <Link href="/chat"
               className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm transition-all duration-200 ${
-                pathname === "/chat" ? "bg-white/10 text-white" : "text-white/45 hover:text-white hover:bg-white/5"
+                pathname === "/chat" ? "bg-white/10 text-white" : "text-white/70 hover:text-white hover:bg-white/5"
               }`}>
               <ChatIcon size={14} />
               Chat
@@ -182,7 +182,7 @@ export default function AppHeader() {
                       {/* Dropdown */}
                       <div className="absolute right-0 top-11 z-50 w-56 rounded-2xl border border-white/10 bg-[#0c1220] p-1.5 shadow-2xl shadow-black/50">
                         <div className="px-3 py-2 mb-1">
-                          <p className="text-xs text-white/30 truncate">{user.email}</p>
+                          <p className="text-xs text-white/50 truncate">{user.email}</p>
                         </div>
                         <div className="border-t border-white/5 my-1" />
                         <Link href="/profile" onClick={() => setMenuOpen(false)}
@@ -220,7 +220,7 @@ export default function AppHeader() {
                 </div>
               ) : (
                 <Link href="/login"
-                  className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/10 hover:text-white">
+                  className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs text-white/80 transition hover:bg-white/10 hover:text-white">
                   Anmelden
                 </Link>
               )
@@ -250,7 +250,7 @@ export default function AppHeader() {
                     }`}>
                       <item.Icon size={23} color="#070b14" />
                     </div>
-                    <span className={`text-[9px] font-medium tracking-wide transition ${active ? "text-cyan-300" : "text-white/35"}`}>
+                    <span className={`text-[9px] font-medium tracking-wide transition ${active ? "text-cyan-300" : "text-white/60"}`}>
                       {item.label}
                     </span>
                   </Link>

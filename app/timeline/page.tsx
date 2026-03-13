@@ -28,7 +28,7 @@ type TimelineEntry = DreamEntry | JournalEntry
 const MOOD_LABELS: Record<number, { label: string; color: string }> = {
   1:{ label:"Sehr schlecht", color:"text-red-300" }, 2:{ label:"Schlecht", color:"text-red-200" },
   3:{ label:"Mies", color:"text-orange-300" }, 4:{ label:"Eher schlecht", color:"text-orange-200" },
-  5:{ label:"Neutral", color:"text-white/60" }, 6:{ label:"Okay", color:"text-yellow-200" },
+  5:{ label:"Neutral", color:"text-white/80" }, 6:{ label:"Okay", color:"text-yellow-200" },
   7:{ label:"Gut", color:"text-emerald-300" }, 8:{ label:"Sehr gut", color:"text-emerald-200" },
   9:{ label:"Grossartig", color:"text-cyan-300" }, 10:{ label:"Ausgezeichnet", color:"text-cyan-200" },
 }
@@ -137,9 +137,9 @@ export default function TimelinePage() {
         {/* Header */}
         <div className="mb-12 flex flex-wrap items-start justify-between gap-6">
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-white/40">Dein Leben</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-white/65">Dein Leben</p>
             <h1 className="mt-4 text-4xl font-semibold">Timeline</h1>
-            <p className="mt-3 text-sm leading-7 text-white/50">Träume und Stimmungen im Verlauf – dein inneres Archiv.</p>
+            <p className="mt-3 text-sm leading-7 text-white/70">Träume und Stimmungen im Verlauf – dein inneres Archiv.</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/patterns"
@@ -161,17 +161,17 @@ export default function TimelinePage() {
         <div className="mb-10 flex gap-2 flex-wrap">
           {[{ value:"all", label:"Alles" }, { value:"dream", label:"🌙 Träume" }, { value:"journal", label:"📓 Journal" }].map((f) => (
             <button key={f.value} onClick={() => setFilter(f.value as Filter)}
-              className={`rounded-full border px-4 py-2 text-sm transition-all ${filter === f.value ? "border-white/30 bg-white/10 text-white" : "border-white/10 bg-white/5 text-white/50 hover:text-white hover:border-white/20"}`}>
+              className={`rounded-full border px-4 py-2 text-sm transition-all ${filter === f.value ? "border-white/30 bg-white/10 text-white" : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20"}`}>
               {f.label}
             </button>
           ))}
-          <span className="ml-auto text-sm text-white/30 self-center">{allEntries.length} Einträge</span>
+          <span className="ml-auto text-sm text-white/50 self-center">{allEntries.length} Einträge</span>
         </div>
 
-        {loading && <p className="text-white/50">Wird geladen…</p>}
+        {loading && <p className="text-white/70">Wird geladen…</p>}
 
         {!loading && allEntries.length === 0 && (
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-white/50">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-white/70">
             <p className="text-lg mb-2">Noch keine Einträge.</p>
             <p className="text-sm">Erfasse deinen ersten Traum oder Stimmungseintrag.</p>
           </div>
@@ -180,7 +180,7 @@ export default function TimelinePage() {
         {/* Timeline */}
         {!loading && Object.entries(grouped).map(([month, entries]) => (
           <section key={month} className="mb-14">
-            <h2 className="mb-8 text-base font-medium uppercase tracking-[0.15em] text-white/40">{month}</h2>
+            <h2 className="mb-8 text-base font-medium uppercase tracking-[0.15em] text-white/65">{month}</h2>
             <div className="relative space-y-5">
               <div className="absolute bottom-0 left-[17px] top-0 w-px bg-white/8" />
               {entries.map((entry) => {
@@ -220,13 +220,13 @@ function DreamCard({ dream, onPin, pinning }: { dream: DreamEntry; onPin: () => 
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-base">🌙</span>
-            <span className="text-sm text-white/35">{formatDate(dream.dreamed_at || dream.created_at)}</span>
+            <span className="text-sm text-white/60">{formatDate(dream.dreamed_at || dream.created_at)}</span>
             {dream.moon_phase_name && (
-              <span className="text-xs text-white/25" title={dream.moon_phase_name}>
+              <span className="text-xs text-white/45" title={dream.moon_phase_name}>
                 {moonNameToEmoji(dream.moon_phase_name)}
               </span>
             )}
-            {dream.dream_clarity && <span className="text-xs text-white/30">✨ {dream.dream_clarity}</span>}
+            {dream.dream_clarity && <span className="text-xs text-white/50">✨ {dream.dream_clarity}</span>}
             {dream.is_key_event && <span className="text-xs text-amber-300/70">📌 Keyevent</span>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -234,12 +234,12 @@ function DreamCard({ dream, onPin, pinning }: { dream: DreamEntry; onPin: () => 
             <button onClick={onPin} disabled={pinning} title={dream.is_key_event ? "Entpinnen" : "Als Keyevent pinnen"}
               className={`rounded-xl border px-2.5 py-1.5 text-sm transition ${dream.is_key_event
                 ? "border-amber-300/30 bg-amber-300/12 text-amber-300 hover:bg-amber-300/20"
-                : "border-white/10 bg-white/5 text-white/25 hover:border-amber-300/25 hover:bg-amber-300/8 hover:text-amber-300/70"
+                : "border-white/10 bg-white/5 text-white/45 hover:border-amber-300/25 hover:bg-amber-300/8 hover:text-amber-300/70"
               } disabled:opacity-40`}>
               {pinning ? <span className="animate-spin inline-block">✦</span> : "📌"}
             </button>
             <Link href={`/entries/${dream.id}?type=dream`}
-              className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10 hover:text-white">
+              className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/80 transition hover:bg-white/10 hover:text-white">
               Ansehen
             </Link>
           </div>
@@ -275,7 +275,7 @@ function JournalCard({ journal, onPin, pinning }: { journal: JournalEntry; onPin
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-base">📓</span>
-            <span className="text-sm text-white/35">{formatDate(journal.entry_date || journal.created_at)}</span>
+            <span className="text-sm text-white/60">{formatDate(journal.entry_date || journal.created_at)}</span>
             {moodInfo && <span className={`text-xs font-medium ${moodInfo.color}`}>{journal.mood_score}/10 {moodInfo.label}</span>}
             {journal.is_key_event && <span className="text-xs text-amber-300/70">📌 Keyevent</span>}
           </div>
@@ -283,12 +283,12 @@ function JournalCard({ journal, onPin, pinning }: { journal: JournalEntry; onPin
             <button onClick={onPin} disabled={pinning} title={journal.is_key_event ? "Entpinnen" : "Als Keyevent pinnen"}
               className={`rounded-xl border px-2.5 py-1.5 text-sm transition ${journal.is_key_event
                 ? "border-amber-300/30 bg-amber-300/12 text-amber-300 hover:bg-amber-300/20"
-                : "border-white/10 bg-white/5 text-white/25 hover:border-amber-300/25 hover:bg-amber-300/8 hover:text-amber-300/70"
+                : "border-white/10 bg-white/5 text-white/45 hover:border-amber-300/25 hover:bg-amber-300/8 hover:text-amber-300/70"
               } disabled:opacity-40`}>
               {pinning ? <span className="animate-spin inline-block">✦</span> : "📌"}
             </button>
             <Link href={`/entries/${journal.id}?type=journal`}
-              className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10 hover:text-white">
+              className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/80 transition hover:bg-white/10 hover:text-white">
               Ansehen
             </Link>
           </div>
@@ -298,7 +298,7 @@ function JournalCard({ journal, onPin, pinning }: { journal: JournalEntry; onPin
 
         <div className="flex flex-wrap gap-2">
           {journal.energy_level && <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs text-amber-100">⚡ {ENERGY_LABELS[journal.energy_level]}</span>}
-          {journal.sleep_hours  && <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/55">💤 {journal.sleep_hours}h</span>}
+          {journal.sleep_hours  && <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/75">💤 {journal.sleep_hours}h</span>}
           {journal.tags?.map((tag) => <span key={tag} className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs text-amber-100">{tag}</span>)}
         </div>
       </div>

@@ -12,7 +12,7 @@ const MOOD_LABELS: Record<number, { label: string; color: string }> = {
   2:  { label: "Schlecht",       color: "text-red-200" },
   3:  { label: "Mies",           color: "text-orange-300" },
   4:  { label: "Eher schlecht",  color: "text-orange-200" },
-  5:  { label: "Neutral",        color: "text-white/60" },
+  5:  { label: "Neutral",        color: "text-white/80" },
   6:  { label: "Okay",           color: "text-yellow-200" },
   7:  { label: "Gut",            color: "text-emerald-300" },
   8:  { label: "Sehr gut",       color: "text-emerald-200" },
@@ -110,7 +110,7 @@ export default function JournalNewPage() {
               📓
             </div>
             <h1 className="text-3xl font-semibold">Eintrag gespeichert.</h1>
-            <p className="mt-3 text-white/50">Möchtest du noch etwas ergänzen?</p>
+            <p className="mt-3 text-white/70">Möchtest du noch etwas ergänzen?</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -118,13 +118,13 @@ export default function JournalNewPage() {
               className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10 hover:border-white/20">
               <span className="text-2xl">✏️</span>
               <span className="font-medium text-white">Details ergänzen</span>
-              <span className="text-sm text-white/50">Eintrag bearbeiten oder KI-Reflexion starten.</span>
+              <span className="text-sm text-white/70">Eintrag bearbeiten oder KI-Reflexion starten.</span>
             </button>
             <button onClick={() => router.push("/timeline")}
               className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10 hover:border-white/20">
               <span className="text-2xl">✓</span>
               <span className="font-medium text-white">Fertig</span>
-              <span className="text-sm text-white/50">Zurück zur Timeline.</span>
+              <span className="text-sm text-white/70">Zurück zur Timeline.</span>
             </button>
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function JournalNewPage() {
         <div className="mx-auto max-w-2xl">
           <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Neuer Eintrag</p>
           <h1 className="mt-4 text-4xl font-semibold">Wie geht es dir?</h1>
-          <p className="mt-3 text-sm leading-7 text-white/50">
+          <p className="mt-3 text-sm leading-7 text-white/70">
             Halte fest wie du dich fühlst – kurz oder ausführlich.
           </p>
 
@@ -154,7 +154,7 @@ export default function JournalNewPage() {
               <textarea value={bodyText} onChange={(e) => setBodyText(e.target.value)}
                 placeholder="Stichworte reichen – z.B. «langer Tag, Gespräch mit Jonas, müde aber zufrieden»"
                 required rows={5}
-                className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/30 focus:border-amber-300/40 focus:outline-none transition resize-none" />
+                className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/50 focus:border-amber-300/40 focus:outline-none transition resize-none" />
 
               {/* Mikrofon-Button */}
               <div className="mt-3 flex items-center gap-3">
@@ -168,7 +168,7 @@ export default function JournalNewPage() {
                       ? "border-amber-300/20 bg-amber-300/8 text-amber-300/60 cursor-wait"
                       : recState === "error"
                       ? "border-red-300/20 bg-red-300/8 text-red-300/60"
-                      : "border-white/10 bg-white/5 text-white/45 hover:border-white/20 hover:text-white/70"
+                      : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white/70"
                   }`}>
                   {recState === "recording" ? (
                     <><span className="h-2 w-2 rounded-full bg-red-400 animate-pulse" /> Aufnahme stoppen</>
@@ -194,7 +194,7 @@ export default function JournalNewPage() {
                     <button type="button" onClick={() => { setBodyText(expandedPreview); setExpandedPreview(null) }}
                       className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14]">Übernehmen</button>
                     <button type="button" onClick={() => setExpandedPreview(null)}
-                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/55">Verwerfen</button>
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75">Verwerfen</button>
                   </div>
                 </div>
               )}
@@ -216,8 +216,8 @@ export default function JournalNewPage() {
                 </span>
               </div>
               <div className="flex justify-between mb-2">
-                <span className="text-xs text-white/35">Sehr schlecht</span>
-                <span className="text-xs text-white/35">Ausgezeichnet</span>
+                <span className="text-xs text-white/60">Sehr schlecht</span>
+                <span className="text-xs text-white/60">Ausgezeichnet</span>
               </div>
               <input type="range" min={1} max={10} step={1} value={moodScore}
                 onChange={(e) => setMoodScore(Number(e.target.value))}
@@ -237,7 +237,7 @@ export default function JournalNewPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-medium text-white/80">Energie</p>
-                <span className="text-sm text-white/60">{ENERGY_LABELS[energyLevel]}</span>
+                <span className="text-sm text-white/80">{ENERGY_LABELS[energyLevel]}</span>
               </div>
               <div className="flex gap-2">
                 {[1,2,3,4,5].map((n) => (
@@ -245,7 +245,7 @@ export default function JournalNewPage() {
                     className={`flex-1 rounded-2xl border py-3 text-sm transition-all ${
                       energyLevel >= n
                         ? "border-amber-300/30 bg-amber-300/20 text-amber-100"
-                        : "border-white/10 bg-white/5 text-white/30 hover:bg-white/10"
+                        : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10"
                     }`}>
                     {"⚡".repeat(n)}
                   </button>
@@ -257,7 +257,7 @@ export default function JournalNewPage() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <label className="text-sm font-medium text-white/80">
-                  Schlafstunden <span className="font-normal text-white/35">(optional)</span>
+                  Schlafstunden <span className="font-normal text-white/60">(optional)</span>
                 </label>
                 {sleepHours && (
                   <span className="text-sm font-semibold text-amber-200">{sleepHours} h</span>
@@ -269,7 +269,7 @@ export default function JournalNewPage() {
             {/* Tags */}
             <div>
               <p className="mb-3 text-sm font-medium text-white/80">
-                Themen <span className="font-normal text-white/35">(optional)</span>
+                Themen <span className="font-normal text-white/60">(optional)</span>
               </p>
               <div className="flex flex-wrap gap-2 mb-3">
                 {PRESET_TAGS.map((tag) => {
@@ -279,7 +279,7 @@ export default function JournalNewPage() {
                       className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${
                         active
                           ? "border-amber-300/40 bg-amber-300/20 text-amber-100 scale-[1.04]"
-                          : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:bg-white/10 hover:text-white"
+                          : "border-white/10 bg-white/5 text-white/80 hover:border-white/25 hover:bg-white/10 hover:text-white"
                       }`}>
                       {tag}
                     </button>
@@ -290,9 +290,9 @@ export default function JournalNewPage() {
                 <input value={customTag} onChange={(e) => setCustomTag(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomTag() } }}
                   placeholder="Eigenes Thema…"
-                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:border-amber-300/40 focus:outline-none transition" />
+                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/50 focus:border-amber-300/40 focus:outline-none transition" />
                 <button type="button" onClick={addCustomTag}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white transition">
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10 hover:text-white transition">
                   + Hinzufügen
                 </button>
               </div>
@@ -376,7 +376,7 @@ function SleepWheelPicker({ value, onChange }: { value: string; onChange: (v: st
         {SLEEP_VALUES.map((v, i) => (
           <div key={i} style={{ height: ITEM_H, scrollSnapAlign: "center" }} className="flex items-center justify-center">
             <span className={`font-medium transition-all duration-150 select-none ${
-              activeIdx === i ? "text-amber-200 text-xl" : "text-white/30 text-sm"
+              activeIdx === i ? "text-amber-200 text-xl" : "text-white/50 text-sm"
             }`}>
               {v === "" ? "–" : `${v} h`}
             </span>

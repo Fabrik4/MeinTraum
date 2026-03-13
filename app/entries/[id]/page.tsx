@@ -165,21 +165,21 @@ function AnalysisCard({ analysis, mode, onSave, saving, accent }: {
       <p className="leading-8 text-white/80">{analysis.summary}</p>
       {analysis.themes?.length > 0 && (
         <div>
-          <p className="mb-2 text-xs uppercase tracking-[0.15em] text-white/35">Themen</p>
+          <p className="mb-2 text-xs uppercase tracking-[0.15em] text-white/60">Themen</p>
           <div className="flex flex-wrap gap-2">
             {analysis.themes.map((t: string) => <span key={t} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/65">{t}</span>)}
           </div>
         </div>
       )}
       <div>
-        <p className="mb-2 text-xs uppercase tracking-[0.15em] text-white/35">Reflexion</p>
+        <p className="mb-2 text-xs uppercase tracking-[0.15em] text-white/60">Reflexion</p>
         <p className="leading-8 text-white/70">{analysis.reflection}</p>
       </div>
       <div className="rounded-2xl border border-white/8 bg-white/3 px-5 py-4">
-        <p className="text-xs text-white/40 mb-1">Frage für dich</p>
+        <p className="text-xs text-white/65 mb-1">Frage für dich</p>
         <p className="text-white/80 leading-7 italic">"{analysis.question}"</p>
       </div>
-      <p className="text-xs text-white/25 border-t border-white/5 pt-4">{analysis.caution}</p>
+      <p className="text-xs text-white/45 border-t border-white/5 pt-4">{analysis.caution}</p>
     </div>
   )
 }
@@ -455,12 +455,12 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
 
   if (loading) return (
     <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
-      <div className="mx-auto max-w-3xl"><p className="text-white/50">Wird geladen…</p></div>
+      <div className="mx-auto max-w-3xl"><p className="text-white/70">Wird geladen…</p></div>
     </main>
   )
   if (!dreamEntry && !journalEntry) return (
     <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
-      <div className="mx-auto max-w-3xl"><p className="text-white/50">Eintrag nicht gefunden.</p></div>
+      <div className="mx-auto max-w-3xl"><p className="text-white/70">Eintrag nicht gefunden.</p></div>
     </main>
   )
 
@@ -476,13 +476,13 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
           {!isEditing && (
             <div className="flex gap-2 flex-wrap justify-end">
               <button onClick={() => { setShowChat(!showChat); setShowAnalysisPanel(false) }}
-                className={`rounded-xl border px-4 py-2 text-sm transition ${showChat ? "border-violet-300/30 bg-violet-300/10 text-violet-100" : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"}`}>
+                className={`rounded-xl border px-4 py-2 text-sm transition ${showChat ? "border-violet-300/30 bg-violet-300/10 text-violet-100" : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"}`}>
                 💬 Gespräch
               </button>
               <button onClick={() => { setShowAnalysisPanel(!showAnalysisPanel); setShowChat(false) }}
                 className={`rounded-xl border px-4 py-2 text-sm transition ${showAnalysisPanel
                   ? accent === "amber" ? "border-amber-300/30 bg-amber-300/10 text-amber-100" : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
-                  : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"}`}>
+                  : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"}`}>
                 🧠 Analyse
               </button>
               <button onClick={() => setIsEditing(true)}
@@ -500,7 +500,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               <span className="text-xs font-medium uppercase tracking-wider" style={{ color: accent === "amber" ? "rgb(252 211 77 / 0.7)" : "rgb(165 243 252 / 0.7)" }}>
                 {isDream ? "🌙 Traum" : "📓 Journal"}
               </span>
-              <span className="text-sm text-white/35">
+              <span className="text-sm text-white/60">
                 {isDream
                   ? new Date(dreamEntry?.dreamed_at || dreamEntry?.created_at || "").toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
                   : new Date(journalEntry?.entry_date || "").toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })
@@ -517,7 +517,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 </span>
               )}
               {isDream && dreamEntry?.dream_clarity && (
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/55">✨ {dreamEntry.dream_clarity}</span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/75">✨ {dreamEntry.dream_clarity}</span>
               )}
               {!isDream && journalEntry?.mood_score && (
                 <span className={`rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium ${moodColor(journalEntry.mood_score)}`}>
@@ -530,7 +530,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 </span>
               )}
               {!isDream && journalEntry?.sleep_hours && (
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/50">
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">
                   💤 {journalEntry.sleep_hours}h
                 </span>
               )}
@@ -574,7 +574,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                       <span className="text-xl">{mode.emoji}</span>
                       <span className="font-medium text-white text-sm">{mode.label}</span>
                     </div>
-                    <p className="text-xs text-white/40 ml-8">{mode.desc}</p>
+                    <p className="text-xs text-white/65 ml-8">{mode.desc}</p>
                   </button>
                 ))}
               </div>
@@ -586,20 +586,20 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
             {currentAnalysis && <AnalysisCard analysis={currentAnalysis} mode={currentAnalysisMode} onSave={saveAnalysis} saving={savingAnalysis} accent={accent} />}
             {savedAnalyses.length > 0 && (
               <div className="space-y-4">
-                <p className="text-sm uppercase tracking-[0.15em] text-white/35">Gespeicherte Analysen</p>
+                <p className="text-sm uppercase tracking-[0.15em] text-white/60">Gespeicherte Analysen</p>
                 {savedAnalyses.map((a) => (
                   <div key={a.id} className="rounded-3xl border border-white/8 bg-white/3 p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <span className="text-xl">{modeEmoji(a.mode)}</span>
                       <div>
                         <p className="font-medium text-white text-sm">{modeLabel2(a.mode)}</p>
-                        <p className="text-xs text-white/30">{new Date(a.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric" })}</p>
+                        <p className="text-xs text-white/50">{new Date(a.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric" })}</p>
                       </div>
                     </div>
                     <p className="leading-7 text-white/65 text-sm">{a.summary}</p>
                     {a.themes?.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-4">
-                        {a.themes.map((t: string) => <span key={t} className="rounded-full border border-white/8 bg-white/3 px-3 py-1 text-xs text-white/55">{t}</span>)}
+                        {a.themes.map((t: string) => <span key={t} className="rounded-full border border-white/8 bg-white/3 px-3 py-1 text-xs text-white/75">{t}</span>)}
                       </div>
                     )}
                   </div>
@@ -631,7 +631,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                     <button type="button" onClick={() => { isDream ? setRawText(expandedPreview) : setBodyText(expandedPreview); setExpandedPreview(null) }}
                       className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] transition hover:scale-[1.02]">Übernehmen</button>
                     <button type="button" onClick={() => setExpandedPreview(null)}
-                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60 transition hover:bg-white/10">Verwerfen</button>
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:bg-white/10">Verwerfen</button>
                   </div>
                 </div>
               )}
@@ -648,7 +648,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             <div>
-              <p className="mb-3 text-sm font-medium text-white/80">Emotionen <span className="font-normal text-white/35">(mehrere möglich)</span></p>
+              <p className="mb-3 text-sm font-medium text-white/80">Emotionen <span className="font-normal text-white/60">(mehrere möglich)</span></p>
               <div className="flex flex-wrap gap-2">
                 {EMOTIONS.map((em) => {
                   const active = selectedEmotions.includes(em)
@@ -656,7 +656,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                     <button key={em} type="button" onClick={() => toggleEmotion(em)}
                       className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${active
                         ? accent === "amber" ? "border-amber-300/35 bg-amber-300/15 text-amber-100 scale-[1.04]" : "border-cyan-300/35 bg-cyan-300/15 text-cyan-100 scale-[1.04]"
-                        : "border-white/10 bg-white/5 text-white/55 hover:border-white/20 hover:bg-white/8 hover:text-white"}`}>
+                        : "border-white/10 bg-white/5 text-white/75 hover:border-white/20 hover:bg-white/8 hover:text-white"}`}>
                       {em}
                     </button>
                   )
@@ -671,7 +671,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="flex justify-between mb-2">
                     {TONE_OPTIONS.map((o, i) => (
                       <span key={o.value} onClick={() => setDreamTone(i)}
-                        className={`text-xs cursor-pointer select-none transition ${dreamTone === i ? "text-cyan-200 font-medium" : "text-white/30 hover:text-white/60"}`}
+                        className={`text-xs cursor-pointer select-none transition ${dreamTone === i ? "text-cyan-200 font-medium" : "text-white/50 hover:text-white/80"}`}
                         style={{ width: "33.33%", textAlign: i === 0 ? "left" : i === 2 ? "right" : "center" }}>{o.label}</span>
                     ))}
                   </div>
@@ -682,7 +682,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="flex justify-between mb-2">
                     {CLARITY_OPTIONS.map((label, i) => (
                       <span key={label} onClick={() => setDreamClarity(i)}
-                        className={`text-xs cursor-pointer select-none transition ${dreamClarity === i ? "text-cyan-200 font-medium" : "text-white/30 hover:text-white/60"}`}
+                        className={`text-xs cursor-pointer select-none transition ${dreamClarity === i ? "text-cyan-200 font-medium" : "text-white/50 hover:text-white/80"}`}
                         style={{ width: "33.33%", textAlign: i === 0 ? "left" : i === 2 ? "right" : "center" }}>{label}</span>
                     ))}
                   </div>
@@ -710,12 +710,12 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-sm font-medium text-white/80">Energie</p>
-                    <span className="text-sm text-white/50">{ENERGY_LABELS[energyLevel]}</span>
+                    <span className="text-sm text-white/70">{ENERGY_LABELS[energyLevel]}</span>
                   </div>
                   <div className="flex gap-2">
                     {[1,2,3,4,5].map((n) => (
                       <button key={n} type="button" onClick={() => setEnergyLevel(n)}
-                        className={`flex-1 rounded-2xl border py-3 text-sm transition-all ${energyLevel >= n ? "border-amber-300/25 bg-amber-300/12 text-amber-200" : "border-white/8 bg-white/3 text-white/25 hover:bg-white/8"}`}>
+                        className={`flex-1 rounded-2xl border py-3 text-sm transition-all ${energyLevel >= n ? "border-amber-300/25 bg-amber-300/12 text-amber-200" : "border-white/8 bg-white/3 text-white/45 hover:bg-white/8"}`}>
                         {"⚡".repeat(n)}
                       </button>
                     ))}
@@ -726,8 +726,8 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="flex items-center gap-3">
                     <input type="number" min={0} max={24} step={0.5} value={sleepHours} onChange={(e) => setSleepHours(e.target.value)}
                       placeholder="z.B. 7.5"
-                      className="w-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/25 focus:border-amber-300/30 focus:outline-none transition" />
-                    <span className="text-sm text-white/35">Stunden</span>
+                      className="w-32 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/65 focus:border-amber-300/30 focus:outline-none transition" />
+                    <span className="text-sm text-white/60">Stunden</span>
                   </div>
                 </div>
                 <div>
@@ -737,7 +737,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                       const active = tags.includes(tag)
                       return (
                         <button key={tag} type="button" onClick={() => toggleTag(tag)}
-                          className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${active ? "border-amber-300/35 bg-amber-300/15 text-amber-100 scale-[1.04]" : "border-white/10 bg-white/5 text-white/55 hover:border-white/20 hover:bg-white/8 hover:text-white"}`}>
+                          className={`rounded-full border px-4 py-2 text-sm transition-all duration-150 ${active ? "border-amber-300/35 bg-amber-300/15 text-amber-100 scale-[1.04]" : "border-white/10 bg-white/5 text-white/75 hover:border-white/20 hover:bg-white/8 hover:text-white"}`}>
                           {tag}
                         </button>
                       )
@@ -747,9 +747,9 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                     <input value={customTag} onChange={(e) => setCustomTag(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); toggleTag(customTag); setCustomTag("") } }}
                       placeholder="Eigenes Thema…"
-                      className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/25 focus:border-amber-300/30 focus:outline-none transition" />
+                      className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/65 focus:border-amber-300/30 focus:outline-none transition" />
                     <button type="button" onClick={() => { toggleTag(customTag); setCustomTag("") }}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/55 hover:bg-white/10 hover:text-white transition">
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 hover:bg-white/10 hover:text-white transition">
                       + Hinzufügen
                     </button>
                   </div>
@@ -759,7 +759,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
 
             <div>
               <p className="mb-1 text-sm font-medium text-white/80">Personen</p>
-              <p className="mb-4 text-xs text-white/30">Tag anklicken zum Umbenennen (z.B. "Kind" → "Sofia")</p>
+              <p className="mb-4 text-xs text-white/50">Tag anklicken zum Umbenennen (z.B. "Kind" → "Sofia")</p>
               {linkedPersons.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {linkedPersons.map((e) => <EntityTag key={e.id} entity={e} color="violet" onDelete={() => removeLinkedEntity(e.id)} onRename={(l) => renameLinkedEntity(e.id, l)} />)}
@@ -770,7 +770,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   if (linkedPersons.some((e) => e.entity_label === p.label)) return null
                   return (
                     <button key={p.label} type="button" onClick={() => addPreset("person", p)}
-                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/55 hover:border-violet-300/25 hover:bg-violet-300/8 hover:text-violet-200 transition-all">
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 hover:border-violet-300/25 hover:bg-violet-300/8 hover:text-violet-200 transition-all">
                       + {p.label}
                     </button>
                   )
@@ -780,15 +780,15 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 <input value={customPersonInput} onChange={(e) => setCustomPersonInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomEntity("person", customPersonInput); setCustomPersonInput("") } }}
                   placeholder="z.B. Bruder Max, Kollegin Anna …"
-                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/25 focus:border-violet-300/25 focus:outline-none transition" />
+                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/65 focus:border-violet-300/25 focus:outline-none transition" />
                 <button type="button" onClick={() => { addCustomEntity("person", customPersonInput); setCustomPersonInput("") }}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/55 hover:bg-white/10 hover:text-white transition">+ Hinzufügen</button>
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 hover:bg-white/10 hover:text-white transition">+ Hinzufügen</button>
               </div>
             </div>
 
             <div>
               <p className="mb-1 text-sm font-medium text-white/80">Orte</p>
-              <p className="mb-4 text-xs text-white/30">Tag anklicken zum Umbenennen</p>
+              <p className="mb-4 text-xs text-white/50">Tag anklicken zum Umbenennen</p>
               {linkedPlaces.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {linkedPlaces.map((e) => <EntityTag key={e.id} entity={e} color="amber" onDelete={() => removeLinkedEntity(e.id)} onRename={(l) => renameLinkedEntity(e.id, l)} />)}
@@ -799,7 +799,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   if (linkedPlaces.some((e) => e.entity_label === p.label)) return null
                   return (
                     <button key={p.label} type="button" onClick={() => addPreset("place", p)}
-                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/55 hover:border-amber-300/25 hover:bg-amber-300/8 hover:text-amber-200 transition-all">
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 hover:border-amber-300/25 hover:bg-amber-300/8 hover:text-amber-200 transition-all">
                       + {p.label}
                     </button>
                   )
@@ -809,9 +809,9 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 <input value={customPlaceInput} onChange={(e) => setCustomPlaceInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomEntity("place", customPlaceInput); setCustomPlaceInput("") } }}
                   placeholder="z.B. Grossmutters Küche …"
-                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/25 focus:border-amber-300/25 focus:outline-none transition" />
+                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/65 focus:border-amber-300/25 focus:outline-none transition" />
                 <button type="button" onClick={() => { addCustomEntity("place", customPlaceInput); setCustomPlaceInput("") }}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/55 hover:bg-white/10 hover:text-white transition">+ Hinzufügen</button>
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 hover:bg-white/10 hover:text-white transition">+ Hinzufügen</button>
               </div>
             </div>
 
@@ -821,7 +821,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 {saving ? "Speichert..." : "Änderungen speichern"}
               </button>
               <button type="button" onClick={() => { setIsEditing(false); fetchAll(entryType) }}
-                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white/60 transition hover:bg-white/10 hover:text-white">
+                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white/80 transition hover:bg-white/10 hover:text-white">
                 Abbrechen
               </button>
             </div>
@@ -840,7 +840,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                         {deleting ? "Wird gelöscht…" : "Ja, löschen"}
                       </button>
                       <button type="button" onClick={() => setShowDeleteConfirm(false)}
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/55 transition hover:bg-white/10">Abbrechen</button>
+                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 transition hover:bg-white/10">Abbrechen</button>
                     </div>
                   </div>
                 )

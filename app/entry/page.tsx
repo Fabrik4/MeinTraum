@@ -153,14 +153,14 @@ export default function DreamEntryPage() {
           <div className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-6 text-center space-y-4">
             <p className="text-2xl">✓</p>
             <p className="font-semibold text-white">Willkommen! Du bist jetzt angemeldet.</p>
-            <p className="text-sm text-white/50">Möchtest du deinen Traum in deinem Archiv speichern?</p>
+            <p className="text-sm text-white/70">Möchtest du deinen Traum in deinem Archiv speichern?</p>
             <div className="flex gap-3 justify-center">
               <button onClick={saveGuestDreamToAccount} disabled={savingToAccount}
                 className="rounded-2xl bg-white px-6 py-3 font-medium text-[#070b14] transition hover:scale-[1.02] disabled:opacity-60">
                 {savingToAccount ? "Speichert…" : "🌙 Traum speichern"}
               </button>
               <Link href="/dashboard"
-                className="rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm text-white/60 transition hover:bg-white/10">
+                className="rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm text-white/80 transition hover:bg-white/10">
                 Zum Dashboard
               </Link>
             </div>
@@ -178,7 +178,7 @@ export default function DreamEntryPage() {
 
           {/* Traum */}
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-white/30 mb-4">Dein Traum</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-white/50 mb-4">Dein Traum</p>
             <div className="rounded-3xl border border-cyan-300/15 bg-cyan-300/4 p-6">
               <p className="leading-8 text-white/80">{guestDreamText}</p>
               <div className="flex flex-wrap gap-2 mt-4">
@@ -207,7 +207,7 @@ export default function DreamEntryPage() {
             {guestAnalysis.themes?.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {guestAnalysis.themes.map((t) => (
-                  <span key={t} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/60">{t}</span>
+                  <span key={t} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80">{t}</span>
                 ))}
               </div>
             )}
@@ -215,16 +215,16 @@ export default function DreamEntryPage() {
               <p className="text-sm leading-7 text-white/65">{guestAnalysis.reflection}</p>
             )}
             <div className="rounded-2xl border border-white/8 bg-white/3 px-5 py-4">
-              <p className="text-xs text-white/35 mb-1">Frage für dich</p>
+              <p className="text-xs text-white/60 mb-1">Frage für dich</p>
               <p className="text-white/75 leading-7 italic">"{guestAnalysis.question}"</p>
             </div>
-            <p className="text-xs text-white/25 border-t border-white/5 pt-4">{guestAnalysis.caution}</p>
+            <p className="text-xs text-white/45 border-t border-white/5 pt-4">{guestAnalysis.caution}</p>
           </div>
 
           {/* CTA – Anmelden zum Speichern */}
           <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-300/5 to-violet-300/5 p-8 text-center space-y-5">
             <p className="text-xl font-semibold">Diesen Traum für immer behalten?</p>
-            <p className="text-sm text-white/45 leading-7 max-w-sm mx-auto">
+            <p className="text-sm text-white/70 leading-7 max-w-sm mx-auto">
               Erstelle jetzt ein kostenloses Konto – dein Traum und die Analyse werden automatisch gespeichert.
               Mit der Zeit erkennst du Muster die dein Unterbewusstsein dir zeigt.
             </p>
@@ -246,7 +246,7 @@ export default function DreamEntryPage() {
                 Kostenlos registrieren →
               </Link>
               <button onClick={() => setGuestAnalysis(null)}
-                className="rounded-2xl border border-white/12 bg-white/5 px-6 py-3.5 text-sm text-white/50 transition hover:bg-white/8 hover:text-white">
+                className="rounded-2xl border border-white/12 bg-white/5 px-6 py-3.5 text-sm text-white/70 transition hover:bg-white/8 hover:text-white">
                 Neuen Traum eingeben
               </button>
             </div>
@@ -255,8 +255,8 @@ export default function DreamEntryPage() {
 
           {/* Teaser: Was noch möglich wäre */}
           <div className="rounded-3xl border border-white/6 bg-white/2 p-6 space-y-4">
-            <p className="text-xs uppercase tracking-[0.15em] text-white/25">Mit eigenem Konto auch möglich</p>
-            <div className="grid gap-3 sm:grid-cols-3 text-center text-xs text-white/35">
+            <p className="text-xs uppercase tracking-[0.15em] text-white/45">Mit eigenem Konto auch möglich</p>
+            <div className="grid gap-3 sm:grid-cols-3 text-center text-xs text-white/60">
               <div className="space-y-1.5">
                 <p className="text-xl">💬</p>
                 <p>Mit dem Traumbegleiter über diesen Traum sprechen</p>
@@ -284,14 +284,14 @@ export default function DreamEntryPage() {
 
         {/* Header */}
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-white/35 mb-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-white/60 mb-4">
             {user ? "Neuer Eintrag" : "Traumanalyse · Kostenlos · Keine Anmeldung"}
           </p>
           <h1 className="text-3xl font-semibold">
             {user ? "Traum erfassen" : "Deinen Traum analysieren"}
           </h1>
           {!user && (
-            <p className="mt-2 text-sm text-white/40 leading-6">
+            <p className="mt-2 text-sm text-white/65 leading-6">
               Gib deinen Traum ein – die KI analysiert ihn sofort.
             </p>
           )}
@@ -303,12 +303,12 @@ export default function DreamEntryPage() {
           <div>
             <label className="block mb-3 text-sm font-medium text-white/70">
               Was hast du geträumt?
-              {user && <span className="ml-2 font-normal text-white/30">(optional)</span>}
+              {user && <span className="ml-2 font-normal text-white/50">(optional)</span>}
             </label>
             <textarea value={rawInputText} onChange={(e) => setRawInputText(e.target.value)}
               placeholder="Stichworte reichen – z.B. «Brücke, alte Chefin, konnte nicht weglaufen»"
               rows={6} required={!user}
-              className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/20 focus:border-cyan-300/30 focus:outline-none transition resize-none" />
+              className="w-full rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder:text-white/60 focus:border-cyan-300/30 focus:outline-none transition resize-none" />
 
             {/* Mikrofon-Button */}
             <div className="mt-3 flex items-center gap-3">
@@ -322,7 +322,7 @@ export default function DreamEntryPage() {
                     ? "border-cyan-300/20 bg-cyan-300/8 text-cyan-300/60 cursor-wait"
                     : recState === "error"
                     ? "border-red-300/20 bg-red-300/8 text-red-300/60"
-                    : "border-white/10 bg-white/5 text-white/45 hover:border-white/20 hover:text-white/70"
+                    : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white/70"
                 }`}>
                 {recState === "recording" ? (
                   <><span className="h-2 w-2 rounded-full bg-red-400 animate-pulse" /> Aufnahme stoppen</>
@@ -348,7 +348,7 @@ export default function DreamEntryPage() {
                   <button type="button" onClick={() => { setRawInputText(expandedPreview); setExpandedPreview(null) }}
                     className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14]">Übernehmen</button>
                   <button type="button" onClick={() => setExpandedPreview(null)}
-                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/55">Verwerfen</button>
+                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75">Verwerfen</button>
                 </div>
               </div>
             )}
@@ -356,14 +356,14 @@ export default function DreamEntryPage() {
 
           {/* Emotionen */}
           <div>
-            <p className="mb-3 text-sm font-medium text-white/70">Wie hast du dich gefühlt? <span className="font-normal text-white/30">(optional)</span></p>
+            <p className="mb-3 text-sm font-medium text-white/70">Wie hast du dich gefühlt? <span className="font-normal text-white/50">(optional)</span></p>
             <div className="flex flex-wrap gap-2">
               {EMOTIONS.map((em) => (
                 <button key={em} type="button" onClick={() => toggleEmotion(em)}
                   className={`rounded-full border px-4 py-2 text-sm transition-all ${
                     selectedEmotions.includes(em)
                       ? "border-cyan-300/35 bg-cyan-300/15 text-cyan-100 scale-[1.04]"
-                      : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white"
+                      : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
                   }`}>
                   {em}
                 </button>
@@ -373,11 +373,11 @@ export default function DreamEntryPage() {
 
           {/* Stimmung */}
           <div>
-            <p className="mb-4 text-sm font-medium text-white/70">Stimmung des Traums <span className="font-normal text-white/30">(optional)</span></p>
+            <p className="mb-4 text-sm font-medium text-white/70">Stimmung des Traums <span className="font-normal text-white/50">(optional)</span></p>
             <div className="flex justify-between mb-2">
               {TONE_OPTIONS.map((o, i) => (
                 <span key={o.value} onClick={() => setDreamTone(i)}
-                  className={`text-xs cursor-pointer select-none transition ${dreamTone === i ? "text-cyan-200 font-medium" : "text-white/30 hover:text-white/60"}`}
+                  className={`text-xs cursor-pointer select-none transition ${dreamTone === i ? "text-cyan-200 font-medium" : "text-white/50 hover:text-white/80"}`}
                   style={{ width: "33.33%", textAlign: i === 0 ? "left" : i === 2 ? "right" : "center" }}>
                   {o.label}
                 </span>
@@ -389,11 +389,11 @@ export default function DreamEntryPage() {
 
           {/* Klarheit */}
           <div>
-            <p className="mb-4 text-sm font-medium text-white/70">Klarheit <span className="font-normal text-white/30">(optional)</span></p>
+            <p className="mb-4 text-sm font-medium text-white/70">Klarheit <span className="font-normal text-white/50">(optional)</span></p>
             <div className="flex justify-between mb-2">
               {CLARITY_OPTIONS.map((label, i) => (
                 <span key={label} onClick={() => setDreamClarity(i)}
-                  className={`text-xs cursor-pointer select-none transition ${dreamClarity === i ? "text-cyan-200 font-medium" : "text-white/30 hover:text-white/60"}`}
+                  className={`text-xs cursor-pointer select-none transition ${dreamClarity === i ? "text-cyan-200 font-medium" : "text-white/50 hover:text-white/80"}`}
                   style={{ width: "33.33%", textAlign: i === 0 ? "left" : i === 2 ? "right" : "center" }}>
                   {label}
                 </span>
@@ -418,12 +418,12 @@ export default function DreamEntryPage() {
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={familiarPersonFlag} onChange={(e) => setFamiliarPersonFlag(e.target.checked)}
                   className="h-4 w-4 rounded accent-cyan-300" />
-                <span className="text-sm text-white/60">Bekannte Person</span>
+                <span className="text-sm text-white/80">Bekannte Person</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={familiarPlaceFlag} onChange={(e) => setFamiliarPlaceFlag(e.target.checked)}
                   className="h-4 w-4 rounded accent-cyan-300" />
-                <span className="text-sm text-white/60">Bekannter Ort</span>
+                <span className="text-sm text-white/80">Bekannter Ort</span>
               </label>
             </div>
           )}
@@ -457,9 +457,9 @@ export default function DreamEntryPage() {
             {!user && !authLoading && (
               <p className="text-center text-xs text-white/20">
                 Schon neugierig auf die volle App?{" "}
-                <Link href="/demo" className="text-white/38 hover:text-white/60 underline underline-offset-2 transition">Demo</Link>
+                <Link href="/demo" className="text-white/38 hover:text-white/80 underline underline-offset-2 transition">Demo</Link>
                 {" "}·{" "}
-                <Link href="/login" className="text-white/38 hover:text-white/60 underline underline-offset-2 transition">Anmelden</Link>
+                <Link href="/login" className="text-white/38 hover:text-white/80 underline underline-offset-2 transition">Anmelden</Link>
               </p>
             )}
           </div>

@@ -212,7 +212,7 @@ export default function PatternsPage() {
   }
 
   const moodTrendIcon = data?.moodTrend === "rising" ? "↗" : data?.moodTrend === "falling" ? "↘" : "→"
-  const moodTrendColor = data?.moodTrend === "rising" ? "text-emerald-300" : data?.moodTrend === "falling" ? "text-red-300" : "text-white/50"
+  const moodTrendColor = data?.moodTrend === "rising" ? "text-emerald-300" : data?.moodTrend === "falling" ? "text-red-300" : "text-white/70"
 
   if (authLoading || loading) return (
     <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
@@ -232,14 +232,14 @@ export default function PatternsPage() {
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-white/35">Deine Muster</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-white/60">Deine Muster</p>
             <h1 className="mt-4 text-4xl font-semibold">Muster-Analyse</h1>
-            <p className="mt-3 text-sm leading-7 text-white/45">Was dein Unterbewusstsein dir zeigt.</p>
+            <p className="mt-3 text-sm leading-7 text-white/70">Was dein Unterbewusstsein dir zeigt.</p>
           </div>
           <div className="flex gap-2">
             {([30, 90, 365] as const).map((t) => (
               <button key={t} onClick={() => setTimeRange(t)}
-                className={`rounded-full border px-4 py-2 text-sm transition ${timeRange === t ? "border-white/30 bg-white/10 text-white" : "border-white/10 bg-white/5 text-white/45 hover:text-white"}`}>
+                className={`rounded-full border px-4 py-2 text-sm transition ${timeRange === t ? "border-white/30 bg-white/10 text-white" : "border-white/10 bg-white/5 text-white/70 hover:text-white"}`}>
                 {t === 365 ? "1 Jahr" : `${t} Tage`}
               </button>
             ))}
@@ -257,25 +257,25 @@ export default function PatternsPage() {
         {/* Stimmung */}
         {(data?.moodAvg30d || data?.moodAvg7d) && (
           <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
-            <p className="text-xs uppercase tracking-[0.15em] text-white/30">Stimmungsverlauf</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-white/50">Stimmungsverlauf</p>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {data?.moodAvg7d && (
                 <div>
-                  <p className="text-xs text-white/35 mb-1">Letzte 7 Tage</p>
-                  <p className={`text-2xl font-semibold ${moodScoreColor(data.moodAvg7d)}`}>{data.moodAvg7d}<span className="text-sm font-normal text-white/30">/10</span></p>
+                  <p className="text-xs text-white/60 mb-1">Letzte 7 Tage</p>
+                  <p className={`text-2xl font-semibold ${moodScoreColor(data.moodAvg7d)}`}>{data.moodAvg7d}<span className="text-sm font-normal text-white/50">/10</span></p>
                 </div>
               )}
               {data?.moodAvg30d && (
                 <div>
-                  <p className="text-xs text-white/35 mb-1">Letzte 30 Tage</p>
-                  <p className={`text-2xl font-semibold ${moodScoreColor(data.moodAvg30d)}`}>{data.moodAvg30d}<span className="text-sm font-normal text-white/30">/10</span></p>
+                  <p className="text-xs text-white/60 mb-1">Letzte 30 Tage</p>
+                  <p className={`text-2xl font-semibold ${moodScoreColor(data.moodAvg30d)}`}>{data.moodAvg30d}<span className="text-sm font-normal text-white/50">/10</span></p>
                 </div>
               )}
               {data?.moodTrend && (
                 <div>
-                  <p className="text-xs text-white/35 mb-1">Trend</p>
+                  <p className="text-xs text-white/60 mb-1">Trend</p>
                   <p className={`text-2xl font-semibold ${moodTrendColor}`}>{moodTrendIcon}
-                    <span className="text-sm font-normal ml-2 text-white/45">
+                    <span className="text-sm font-normal ml-2 text-white/70">
                       {data.moodTrend === "rising" ? "Steigend" : data.moodTrend === "falling" ? "Fallend" : "Stabil"}
                     </span>
                   </p>
@@ -292,14 +292,14 @@ export default function PatternsPage() {
         {/* Traumstimmungen */}
         {data && data.totalDreams > 0 && (
           <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
-            <p className="text-xs uppercase tracking-[0.15em] text-white/30">Traumstimmungen</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-white/50">Traumstimmungen</p>
             <div className="grid grid-cols-3 gap-3">
               <ToneBar label="Albtraum" count={data.dreamTones.nightmare} total={data.totalDreams} color="red" emoji="😰" />
               <ToneBar label="Neutral" count={data.dreamTones.neutral} total={data.totalDreams} color="white" emoji="😐" />
               <ToneBar label="Schön" count={data.dreamTones.pleasant} total={data.totalDreams} color="emerald" emoji="✨" />
             </div>
             {data.avgDreamClarity && (
-              <p className="text-sm text-white/40">Durchschnittliche Klarheit: <span className="text-white/65">{data.avgDreamClarity}</span></p>
+              <p className="text-sm text-white/65">Durchschnittliche Klarheit: <span className="text-white/65">{data.avgDreamClarity}</span></p>
             )}
           </div>
         )}
@@ -307,7 +307,7 @@ export default function PatternsPage() {
         {/* Emotionen */}
         {data && data.topEmotions.length > 0 && (
           <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
-            <p className="text-xs uppercase tracking-[0.15em] text-white/30">Häufigste Emotionen</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-white/50">Häufigste Emotionen</p>
             <div className="space-y-3">
               {data.topEmotions.map((em, i) => {
                 const max = data.topEmotions[0].count
@@ -320,7 +320,7 @@ export default function PatternsPage() {
                     <div className="flex-1 h-2 rounded-full bg-white/8 overflow-hidden">
                       <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-xs text-white/30 w-6 text-right shrink-0">{em.count}×</span>
+                    <span className="text-xs text-white/50 w-6 text-right shrink-0">{em.count}×</span>
                     <span className="text-xs shrink-0">{badge}</span>
                   </div>
                 )
@@ -334,14 +334,14 @@ export default function PatternsPage() {
         <div className="grid gap-5 sm:grid-cols-2">
           {data && data.topPersons.length > 0 && (
             <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-4">
-              <p className="text-xs uppercase tracking-[0.15em] text-white/30">Personen</p>
+              <p className="text-xs uppercase tracking-[0.15em] text-white/50">Personen</p>
               <div className="space-y-2.5">
                 {data.topPersons.map((p) => (
                   <div key={p.label} className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-sm text-white/70">
                       <span className="text-violet-300/60">👤</span>{p.label}
                     </span>
-                    <span className="text-xs text-white/25">{p.count}×</span>
+                    <span className="text-xs text-white/45">{p.count}×</span>
                   </div>
                 ))}
               </div>
@@ -349,14 +349,14 @@ export default function PatternsPage() {
           )}
           {data && data.topPlaces.length > 0 && (
             <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-4">
-              <p className="text-xs uppercase tracking-[0.15em] text-white/30">Orte</p>
+              <p className="text-xs uppercase tracking-[0.15em] text-white/50">Orte</p>
               <div className="space-y-2.5">
                 {data.topPlaces.map((p) => (
                   <div key={p.label} className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-sm text-white/70">
                       <span className="text-amber-300/60">📍</span>{p.label}
                     </span>
-                    <span className="text-xs text-white/25">{p.count}×</span>
+                    <span className="text-xs text-white/45">{p.count}×</span>
                   </div>
                 ))}
               </div>
@@ -367,11 +367,11 @@ export default function PatternsPage() {
         {/* Mond & Träume */}
         <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.15em] text-white/30 mb-1">Mond & Träume</p>
-            <p className="text-xs text-white/25 leading-5">Korrelation zwischen Mondphase und deinen Träumen.</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-white/50 mb-1">Mond & Träume</p>
+            <p className="text-xs text-white/45 leading-5">Korrelation zwischen Mondphase und deinen Träumen.</p>
           </div>
           {data && data.moonStats.length === 0 ? (
-            <p className="text-sm text-white/25 text-center py-4">
+            <p className="text-sm text-white/45 text-center py-4">
               Sammle mehr Träume um Mondmuster zu entdecken 🌙
             </p>
           ) : (
@@ -381,7 +381,7 @@ export default function PatternsPage() {
                   className="rounded-2xl border border-amber-300/10 bg-amber-300/4 p-4 space-y-2 text-center">
                   <p className="text-2xl">{moonNameToEmoji(m.phase_name)}</p>
                   <p className="text-xs font-medium text-white/65 leading-4">{m.phase_name}</p>
-                  <p className="text-xs text-white/35">{m.dream_count} {m.dream_count === 1 ? "Traum" : "Träume"}</p>
+                  <p className="text-xs text-white/60">{m.dream_count} {m.dream_count === 1 ? "Traum" : "Träume"}</p>
                   {m.nightmare_count > 0 && (
                     <p className="text-xs text-red-300/45">{m.nightmare_count} Albtraum{m.nightmare_count > 1 ? "e" : ""}</p>
                   )}
@@ -394,8 +394,8 @@ export default function PatternsPage() {
         {/* KI-Musteranalyse */}
         <div className="rounded-3xl border border-violet-300/15 bg-violet-300/4 p-6 space-y-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.15em] text-violet-300/50 mb-1">Traumbegleiter AI</p>
-            <p className="text-sm text-white/45 leading-6">
+            <p className="text-xs uppercase tracking-[0.15em] text-violet-300/70 mb-1">Traumbegleiter AI</p>
+            <p className="text-sm text-white/70 leading-6">
               Lass die KI deine Muster analysieren und Zusammenhänge aufzeigen die du vielleicht noch nicht gesehen hast.
             </p>
           </div>
@@ -435,7 +435,7 @@ export default function PatternsPage() {
           <div className="rounded-3xl border border-white/8 bg-white/3 p-10 text-center">
             <p className="text-4xl mb-4">🌙</p>
             <p className="font-medium mb-2">Noch keine Daten für diesen Zeitraum</p>
-            <p className="text-sm text-white/40 mb-6">Erfasse Träume und Stimmungseinträge um Muster zu entdecken.</p>
+            <p className="text-sm text-white/65 mb-6">Erfasse Träume und Stimmungseinträge um Muster zu entdecken.</p>
             <div className="flex gap-3 justify-center">
               <Link href="/entry" className="rounded-2xl border border-cyan-300/20 bg-cyan-300/8 px-5 py-2.5 text-sm text-cyan-100 hover:bg-cyan-300/15 transition">🌙 Traum erfassen</Link>
               <Link href="/journal/new" className="rounded-2xl border border-amber-300/20 bg-amber-300/8 px-5 py-2.5 text-sm text-amber-100 hover:bg-amber-300/15 transition">📓 Journal-Eintrag</Link>
@@ -464,9 +464,9 @@ function StatCard({ label, value, suffix, accent }: { label: string; value: numb
   }
   return (
     <div className={`rounded-3xl border p-5 ${styles[accent]}`}>
-      <p className="text-xs text-white/30 mb-3">{label}</p>
+      <p className="text-xs text-white/50 mb-3">{label}</p>
       <p className={`text-2xl font-semibold ${styles[accent].split(" ").slice(-1)[0]}`}>
-        {value}{suffix && <span className="text-sm font-normal text-white/30 ml-1">{suffix}</span>}
+        {value}{suffix && <span className="text-sm font-normal text-white/50 ml-1">{suffix}</span>}
       </p>
     </div>
   )
@@ -479,7 +479,7 @@ function ToneBar({ label, count, total, color, emoji }: { label: string; count: 
     <div className="text-center space-y-2">
       <p className="text-2xl">{emoji}</p>
       <p className="text-xl font-semibold text-white">{pct}%</p>
-      <p className="text-xs text-white/35">{label}</p>
+      <p className="text-xs text-white/60">{label}</p>
       <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
         <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
       </div>
