@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/useAuth"
+import { useSpeechRecorder } from "@/lib/useSpeechRecorder"
 
 type KeyEvent = {
   id: number; title: string; description: string | null
@@ -21,6 +22,16 @@ export default function ProfilePage() {
   const [kiContext, setKiContext] = useState("")
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
+
+  const onInterestsTranscript = useCallback((text: string) => {
+    setInterests((prev) => prev ? prev + " " + text : text)
+  }, [])
+  const { state: recInterests, start: startInterests, stop: stopInterests } = useSpeechRecorder(onInterestsTranscript)
+
+  const onKiContextTranscript = useCallback((text: string) => {
+    setKiContext((prev) => prev ? prev + " " + text : text)
+  }, [])
+  const { state: recKiContext, start: startKiContext, stop: stopKiContext } = useSpeechRecorder(onKiContextTranscript)
   const [loading, setLoading] = useState(true)
   const [keyEvents, setKeyEvents] = useState<KeyEvent[]>([])
   const [showAddEvent, setShowAddEvent] = useState(false)
@@ -153,12 +164,14 @@ export default function ProfilePage() {
               <textarea value={interests} onChange={(e) => setInterests(e.target.value)} rows={3}
                 placeholder="z.B. Ich arbeite als Lehrerin, habe zwei Kinder, interessiere mich für Psychologie…"
                 className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/60 focus:border-white/25 focus:outline-none transition resize-none" />
+              <MicButton state={recInterests} onStart={startInterests} onStop={stopInterests} />
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-white/80">Was soll die KI wissen? <span className="font-normal text-white/50">(optional)</span></label>
               <textarea value={kiContext} onChange={(e) => setKiContext(e.target.value)} rows={3}
                 placeholder="z.B. Ich mag keine direkten Ratschläge. Ich träume oft von Wasser…"
                 className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/60 focus:border-white/25 focus:outline-none transition resize-none" />
+              <MicButton state={recKiContext} onStart={startKiContext} onStop={stopKiContext} />
             </div>
           </div>
 
@@ -280,5 +293,36 @@ export default function ProfilePage() {
 
       </div>
     </main>
+  )
+}
+
+type RecState = "idle" | "recording" | "transcribing" | "error"
+
+function MicButton({ state, onStart, onStop }: {
+  state: RecState
+  onStart: () => void
+  onStop: () => void
+}) {
+  return (
+    <div className="mt-2">
+      <button type="button"
+        onClick={state === "recording" ? onStop : onStart}
+        disabled={state === "transcribing"}
+        className={`flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm transition-all ${
+          state === "recording"
+            ? "border-red-400/40 bg-red-400/15 text-red-200 animate-pulse"
+            : state === "transcribing"
+            ? "border-white/10 bg-white/5 text-white/40 cursor-wait"
+            : "border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:text-white/80"
+        }`}>
+        {state === "recording" ? (
+          <><span className="h-2 w-2 rounded-full bg-red-400 animate-pulse" /> Stoppen</>
+        ) : state === "transcribing" ? (
+          <><span className="animate-spin">✦</span> Transkribiert…</>
+        ) : (
+          <>🎤 Einsprechen</>
+        )}
+      </button>
+    </div>
   )
 }
