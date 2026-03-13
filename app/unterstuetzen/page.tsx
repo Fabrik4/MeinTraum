@@ -19,45 +19,22 @@ export default function UnterstuetzenPage() {
           </p>
         </div>
 
-        {/* Cards */}
-        <div className="grid gap-5 sm:grid-cols-2">
-
-          {/* Ko-fi */}
-          <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-4 flex flex-col">
-            <p className="text-2xl">☕</p>
-            <div>
-              <p className="font-semibold text-white">Kaffee ausgeben</p>
-              <p className="text-sm text-white/40 mt-1 leading-6">
-                Einmalig oder regelmässig – du entscheidest.
-              </p>
-            </div>
-            <a
-              href="https://ko-fi.com/meintraum"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-auto inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-300/8 px-5 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-300/15 active:scale-[0.99]">
-              Auf Ko-fi unterstützen →
-            </a>
+        {/* Ko-fi Card */}
+        <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-4">
+          <p className="text-2xl">☕</p>
+          <div>
+            <p className="font-semibold text-white">Kaffee ausgeben</p>
+            <p className="text-sm text-white/40 mt-1 leading-6">
+              Einmalig oder regelmässig – du entscheidest.
+            </p>
           </div>
-
-          {/* Twint */}
-          <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-4 flex flex-col">
-            <p className="text-2xl">🇨🇭</p>
-            <div>
-              <p className="font-semibold text-white">Per Twint zahlen</p>
-              <p className="text-sm text-white/40 mt-1 leading-6">
-                Direkt und unkompliziert – typisch Schweiz.
-              </p>
-            </div>
-            <div className="mt-auto">
-              <img
-                src="/twint-qr.png"
-                alt="Twint QR-Code"
-                className="w-36 h-36 rounded-2xl border border-white/8 object-contain bg-white p-2"
-              />
-            </div>
-          </div>
-
+          <a
+            href="https://ko-fi.com/meintraum"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-300/8 px-5 py-3 text-sm font-medium text-cyan-100 transition hover:bg-cyan-300/15 active:scale-[0.99]">
+            Auf Ko-fi unterstützen →
+          </a>
         </div>
 
         {/* Beta-Hinweis */}
