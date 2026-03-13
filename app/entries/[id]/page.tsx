@@ -219,7 +219,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   // Image generation state
   const [showImagePanel, setShowImagePanel] = useState(false)
   const [imageFormat, setImageFormat] = useState<"stories" | "square" | "pinterest">("square")
-  const [imageStyle, setImageStyle] = useState<"surreal" | "illustration" | "cinematic">("surreal")
+  const [imageStyle, setImageStyle] = useState<"surreal" | "comic" | "photo">("surreal")
   const [generatingImage, setGeneratingImage] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [cardTitle, setCardTitle] = useState<string>("")
@@ -400,7 +400,20 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   async function generateImage() {
-    const entryText = isDream ? (dreamEntry?.raw_input_text ?? "") : (journalEntry?.body_text ?? "")
+    let entryText = ""
+    if (isDream) {
+      const parts: string[] = []
+      if (dreamEntry?.raw_input_text) parts.push(dreamEntry.raw_input_text)
+      if (revisions.length > 0) {
+        revisions.forEach((r) => {
+          if (r.expanded) parts.push(r.expanded)
+          else if (r.text) parts.push(r.text)
+        })
+      }
+      entryText = parts.join(" – ")
+    } else {
+      entryText = journalEntry?.body_text ?? ""
+    }
     if (!entryText) return
     setGeneratingImage(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -488,23 +501,39 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
     ctx.fillStyle = "rgba(255,255,255,0.85)"
     ctx.fillText(brandText, rx + px, ry + py + bFontSize * 0.82)
 
-    // Card title bottom
+    // Card title bottom – korrekte Positionierung
     const titleFontSize = (fmt === "stories" ? 22 : 18) * s
+    const urlFontSize = 11 * s
+    const bottomPad = 32 * s
+    const urlY = dims.h - bottomPad
+    const titleY = urlY - urlFontSize * 1.8 - titleFontSize * 0.3
+
+    // Titel mit Umbruch
     ctx.font = `600 ${titleFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
     ctx.fillStyle = "white"
     ctx.textAlign = "center"
-    ctx.shadowColor = "rgba(0,0,0,0.55)"
-    ctx.shadowBlur = 6 * s
-    const titlePadBottom = 24 * s
-    const titleY = dims.h - titlePadBottom - titleFontSize * 0.25
-    ctx.fillText(title, dims.w / 2, titleY)
+    ctx.shadowColor = "rgba(0,0,0,0.8)"
+    ctx.shadowBlur = 10 * s
+    const maxWidth = dims.w - 48 * s
+    const words = title.split(" ")
+    let line = ""
+    const lines: string[] = []
+    for (const word of words) {
+      const test = line ? line + " " + word : word
+      if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = word }
+      else line = test
+    }
+    if (line) lines.push(line)
+    const lineH = titleFontSize * 1.25
+    const totalH = lines.length * lineH
+    let ty = titleY - totalH + lineH
+    for (const l of lines) { ctx.fillText(l, dims.w / 2, ty); ty += lineH }
 
-    // URL
+    // URL darunter
     ctx.shadowBlur = 0
-    const urlFontSize = 11 * s
     ctx.font = `${urlFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
     ctx.fillStyle = "rgba(255,255,255,0.45)"
-    ctx.fillText("meintraum.app", dims.w / 2, titleY + titleFontSize * 0.35 + urlFontSize * 1.6)
+    ctx.fillText("meintraum.app", dims.w / 2, urlY)
   }
 
   function downloadCard() {
@@ -959,9 +988,9 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               {/* Stil-Auswahl */}
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  { key: "surreal",      emoji: "🌌", label: "Surreal" },
-                  { key: "illustration", emoji: "🎨", label: "Illustration" },
-                  { key: "cinematic",    emoji: "⚡", label: "Cinematic" },
+                  { key: "surreal", emoji: "🌌", label: "Surreal" },
+                  { key: "comic",   emoji: "💥", label: "Comic" },
+                  { key: "photo",   emoji: "📷", label: "Photo" },
                 ] as const).map((s) => (
                   <button key={s.key} type="button"
                     onClick={() => { setImageStyle(s.key); if (generatedImage && cardTitle) setTimeout(() => renderCanvas(generatedImage, cardTitle, imageFormat), 10) }}
