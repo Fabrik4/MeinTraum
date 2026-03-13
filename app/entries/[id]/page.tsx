@@ -229,6 +229,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const analysisResultRef = useRef<HTMLDivElement>(null)
+  const inlineAddRef = useRef<HTMLDivElement>(null)
 
   // Revision state
   const [revisions, setRevisions] = useState<Revision[]>([])
@@ -238,12 +239,19 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   const [inlineExpandedPreview, setInlineExpandedPreview] = useState<string | null>(null)
   const [savingRevision, setSavingRevision] = useState(false)
   const [expandingInline, setExpandingInline] = useState(false)
+  const [inlineError, setInlineError] = useState("")
 
   useEffect(() => {
     if (showChat || showAnalysisPanel || showImagePanel) {
       setTimeout(() => panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
     }
   }, [showChat, showAnalysisPanel, showImagePanel])
+
+  useEffect(() => {
+    if (showInlineAdd) {
+      setTimeout(() => inlineAddRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
+    }
+  }, [showInlineAdd])
 
   const onInlineTranscript = useCallback((text: string) => {
     setInlineText((prev) => prev ? prev + " " + text : text)
@@ -312,7 +320,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
       if (!revisionsRes.error && revisionsRes.data) setRevisions(revisionsRes.data)
       if (!imagesRes.error && imagesRes.data) setExistingImages(imagesRes.data)
     } else {
-      const [journalRes, entitiesRes, analysisRes, imagesRes] = await Promise.all([
+      const [journalRes, entitiesRes, analysisRes, imagesRes, revisionsRes] = await Promise.all([
         supabase.from("journal_entries").select("*").eq("id", resolvedId).single(),
         supabase.from("journal_entry_entities")
           .select("id, user_entity_id, user_entities(entity_type, entity_category, entity_label)")
@@ -321,6 +329,8 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
           .eq("journal_entry_id", resolvedId).order("created_at", { ascending: false }),
         supabase.from("dream_images").select("id, image_url, format, created_at")
           .eq("journal_entry_id", resolvedId).order("created_at", { ascending: false }),
+        supabase.from("dream_revisions").select("id, text, expanded, created_at")
+          .eq("journal_entry_id", resolvedId).order("created_at", { ascending: true }),
       ])
       if (!journalRes.error && journalRes.data) {
         const j = journalRes.data
@@ -336,6 +346,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
       if (!entitiesRes.error && entitiesRes.data) mapEntities(entitiesRes.data)
       if (!analysisRes.error && analysisRes.data) setSavedAnalyses(analysisRes.data)
       if (!imagesRes.error && imagesRes.data) setExistingImages(imagesRes.data)
+      if (!revisionsRes.error && revisionsRes.data) setRevisions(revisionsRes.data)
     }
     setLoading(false)
   }
@@ -583,20 +594,27 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   async function handleSaveRevision() {
     if (!inlineText.trim()) return
     setSavingRevision(true)
+    setInlineError("")
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSavingRevision(false); return }
     const submitText = inlineExpanded ?? inlineText
-    const res = await fetch("/api/add-revision", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ entry_id: Number(resolvedId), user_id: user.id, text: submitText, expanded: inlineExpanded ?? undefined }),
-    })
-    const data = await res.json()
-    if (data.revision) {
-      setRevisions((prev) => [...prev, data.revision])
-      setShowInlineAdd(false)
-      setInlineText("")
-      setInlineExpanded(null)
-      setInlineExpandedPreview(null)
+    try {
+      const res = await fetch("/api/add-revision", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entry_id: Number(resolvedId), entry_type: entryType, user_id: user.id, text: submitText, expanded: inlineExpanded ?? undefined }),
+      })
+      const data = await res.json()
+      if (data.revision) {
+        setRevisions((prev) => [...prev, data.revision])
+        setShowInlineAdd(false)
+        setInlineText("")
+        setInlineExpanded(null)
+        setInlineExpandedPreview(null)
+      } else {
+        setInlineError(data.error ?? "Speichern fehlgeschlagen")
+      }
+    } catch {
+      setInlineError("Netzwerkfehler beim Speichern")
     }
     setSavingRevision(false)
   }
@@ -810,75 +828,78 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             {/* ── Revisions Timeline ── */}
-            {isDream && (
-              <div className="space-y-4 border-t border-white/5 pt-6">
-                {revisions.length > 0 && (
-                  <div className="relative pl-5">
-                    <div className="absolute left-1.5 top-2 bottom-2 w-px bg-white/10" />
-                    <div className="space-y-6">
-                      {revisions.map((rev) => (
-                        <div key={rev.id} className="relative">
-                          <div className="absolute -left-[15px] top-2 w-2 h-2 rounded-full bg-cyan-300/40 border border-cyan-300/20" />
-                          <p className="text-xs text-white/35 mb-1.5">
-                            {new Date(rev.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                          <p className="text-white/75 leading-7 text-sm">{rev.expanded ?? rev.text}</p>
-                        </div>
-                      ))}
-                    </div>
+            <div className="space-y-4 border-t border-white/5 pt-6">
+              {revisions.length > 0 && (
+                <div className="relative pl-5">
+                  <div className="absolute left-1.5 top-2 bottom-2 w-px bg-white/10" />
+                  <div className="space-y-6">
+                    {revisions.map((rev) => (
+                      <div key={rev.id} className="relative">
+                        <div className={`absolute -left-[15px] top-2 w-2 h-2 rounded-full border ${accent === "amber" ? "bg-amber-300/40 border-amber-300/20" : "bg-cyan-300/40 border-cyan-300/20"}`} />
+                        <p className="text-xs text-white/35 mb-1.5">
+                          {new Date(rev.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                        <p className="text-white/75 leading-7 text-sm">{rev.expanded ?? rev.text}</p>
+                      </div>
+                    ))}
                   </div>
-                )}
-                {!showInlineAdd
-                  ? <button type="button" onClick={() => setShowInlineAdd(true)}
-                      className="flex items-center gap-2 text-sm text-white/35 hover:text-white/65 transition">
-                      <span className="text-base leading-none">＋</span> Erinnerung ergänzen
-                    </button>
-                  : <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/3 p-5 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs uppercase tracking-[0.15em] text-cyan-300/60">Ergänzung hinzufügen</p>
-                        <button type="button" onClick={() => { setShowInlineAdd(false); setInlineText(""); setInlineExpanded(null); setInlineExpandedPreview(null) }}
-                          className="text-xs text-white/40 hover:text-white/70 transition">Abbrechen</button>
-                      </div>
-                      <div className="relative">
-                        <textarea value={inlineText} onChange={(e) => setInlineText(e.target.value)} rows={3}
-                          placeholder="Was erinnerst du dich noch…"
-                          className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 pr-12 text-white placeholder:text-white/35 focus:border-cyan-300/30 focus:outline-none resize-none transition" />
-                        <button type="button"
-                          onPointerDown={() => recInline === "idle" ? startInline() : stopInline()}
-                          className={`absolute right-3 bottom-3 rounded-xl p-2 transition ${recInline === "recording" ? "text-red-400 animate-pulse" : recInline === "transcribing" ? "text-cyan-300 animate-pulse" : "text-white/30 hover:text-white/60"}`}>
-                          🎤
-                        </button>
-                      </div>
+                </div>
+              )}
+              {!showInlineAdd
+                ? <button type="button" onClick={() => setShowInlineAdd(true)}
+                    className="flex items-center gap-2 text-sm text-white/35 hover:text-white/65 transition">
+                    <span className="text-base leading-none">＋</span> {isDream ? "Erinnerung ergänzen" : "Notiz ergänzen"}
+                  </button>
+                : <div ref={inlineAddRef} className={`rounded-2xl border p-5 space-y-4 ${accent === "amber" ? "border-amber-300/15 bg-amber-300/3" : "border-cyan-300/15 bg-cyan-300/3"}`}>
+                    <div className="flex items-center justify-between">
+                      <p className={`text-xs uppercase tracking-[0.15em] ${accent === "amber" ? "text-amber-300/60" : "text-cyan-300/60"}`}>Ergänzung hinzufügen</p>
+                      <button type="button" onClick={() => { setShowInlineAdd(false); setInlineText(""); setInlineExpanded(null); setInlineExpandedPreview(null); setInlineError("") }}
+                        className="text-xs text-white/40 hover:text-white/70 transition">Abbrechen</button>
+                    </div>
+                    <div className="relative">
+                      <textarea value={inlineText} onChange={(e) => setInlineText(e.target.value)} rows={3}
+                        placeholder={isDream ? "Was erinnerst du dich noch…" : "Was möchtest du ergänzen…"}
+                        className={`w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 pr-12 text-white placeholder:text-white/35 focus:outline-none resize-none transition ${accent === "amber" ? "focus:border-amber-300/30" : "focus:border-cyan-300/30"}`} />
+                      <button type="button"
+                        onClick={() => recInline === "idle" ? startInline() : stopInline()}
+                        className={`absolute right-3 bottom-3 rounded-xl p-2 transition ${recInline === "recording" ? "text-red-400 animate-pulse" : recInline === "transcribing" ? "text-cyan-300 animate-pulse" : "text-white/30 hover:text-white/60"}`}>
+                        🎤
+                      </button>
+                    </div>
+                    {isDream && (
                       <button type="button" onClick={expandInlineText} disabled={expandingInline || !inlineText.trim()}
                         className="flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-300/5 px-3 py-2 text-xs text-cyan-200 transition hover:opacity-80 disabled:opacity-40">
                         {expandingInline ? <><span className="animate-spin inline-block">✦</span> Generiere…</> : <>✨ Ausformulieren</>}
                       </button>
-                      {inlineExpandedPreview && (
-                        <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-4">
-                          <p className="text-xs uppercase tracking-[0.15em] text-cyan-300/60 mb-3">KI-Vorschlag</p>
-                          <p className="text-white/80 text-sm leading-7 mb-4">{inlineExpandedPreview}</p>
-                          <div className="flex gap-3">
-                            <button type="button" onClick={() => { setInlineExpanded(inlineExpandedPreview); setInlineExpandedPreview(null) }}
-                              className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] hover:scale-[1.02] transition">Übernehmen</button>
-                            <button type="button" onClick={() => setInlineExpandedPreview(null)}
-                              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10 transition">Verwerfen</button>
-                          </div>
+                    )}
+                    {inlineExpandedPreview && (
+                      <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-4">
+                        <p className="text-xs uppercase tracking-[0.15em] text-cyan-300/60 mb-3">KI-Vorschlag</p>
+                        <p className="text-white/80 text-sm leading-7 mb-4">{inlineExpandedPreview}</p>
+                        <div className="flex gap-3">
+                          <button type="button" onClick={() => { setInlineExpanded(inlineExpandedPreview); setInlineExpandedPreview(null) }}
+                            className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] hover:scale-[1.02] transition">Übernehmen</button>
+                          <button type="button" onClick={() => setInlineExpandedPreview(null)}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10 transition">Verwerfen</button>
                         </div>
-                      )}
-                      {inlineExpanded && !inlineExpandedPreview && (
-                        <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/8 px-4 py-3">
-                          <p className="text-xs text-cyan-300/50 mb-1">Ausformuliert</p>
-                          <p className="text-white/80 text-sm leading-7">{inlineExpanded}</p>
-                        </div>
-                      )}
-                      <button type="button" onClick={handleSaveRevision} disabled={savingRevision || !inlineText.trim()}
-                        className="w-full rounded-2xl bg-white px-6 py-3 font-medium text-sm text-[#070b14] transition hover:scale-[1.01] disabled:opacity-60">
-                        {savingRevision ? "Speichert…" : "Ergänzung speichern"}
-                      </button>
-                    </div>
-                }
-              </div>
-            )}
+                      </div>
+                    )}
+                    {inlineExpanded && !inlineExpandedPreview && (
+                      <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/8 px-4 py-3">
+                        <p className="text-xs text-cyan-300/50 mb-1">Ausformuliert</p>
+                        <p className="text-white/80 text-sm leading-7">{inlineExpanded}</p>
+                      </div>
+                    )}
+                    {inlineError && (
+                      <p className="text-sm text-red-300/80">{inlineError}</p>
+                    )}
+                    <button type="button" onClick={handleSaveRevision} disabled={savingRevision || !inlineText.trim()}
+                      className="w-full rounded-2xl bg-white px-6 py-3 font-medium text-sm text-[#070b14] transition hover:scale-[1.01] disabled:opacity-60">
+                      {savingRevision ? "Speichert…" : "Ergänzung speichern"}
+                    </button>
+                  </div>
+              }
+            </div>
           </div>
         )}
 
