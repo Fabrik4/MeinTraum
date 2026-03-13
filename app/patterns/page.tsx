@@ -254,6 +254,45 @@ export default function PatternsPage() {
           <StatCard label="Längste Serie" value={data?.longestStreak ?? 0} suffix="Tage" accent="emerald" />
         </div>
 
+        {/* KI-Musteranalyse */}
+        <div className="rounded-3xl border border-violet-300/15 bg-violet-300/4 p-6 space-y-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.15em] text-violet-300/70 mb-1">Traumbegleiter AI</p>
+            <p className="text-sm text-white/70 leading-6">
+              Lass die KI deine Muster analysieren und Zusammenhänge aufzeigen die du vielleicht noch nicht gesehen hast.
+            </p>
+          </div>
+
+          {!aiInsight ? (
+            <button onClick={generateInsight} disabled={generatingInsight}
+              className="w-full rounded-2xl border border-violet-300/20 bg-violet-300/8 px-6 py-4 text-sm font-medium text-violet-100 transition hover:bg-violet-300/15 disabled:opacity-50">
+              {generatingInsight
+                ? <span className="flex items-center justify-center gap-2"><span className="animate-spin">✦</span> Analysiere Muster…</span>
+                : "✦ KI-Musteranalyse starten"
+              }
+            </button>
+          ) : (
+            <div className="space-y-5">
+              <div>
+                <p className="text-xs text-violet-300/45 mb-2 uppercase tracking-wider">Erkannte Muster</p>
+                <p className="text-sm leading-7 text-white/75">{aiInsight.patterns}</p>
+              </div>
+              <div>
+                <p className="text-xs text-violet-300/45 mb-2 uppercase tracking-wider">Verbindungen</p>
+                <p className="text-sm leading-7 text-white/75">{aiInsight.connections}</p>
+              </div>
+              <div className="rounded-2xl border border-violet-300/12 bg-violet-300/5 px-5 py-4">
+                <p className="text-xs text-violet-300/45 mb-1">Frage für dich</p>
+                <p className="text-sm leading-7 text-white/75 italic">"{aiInsight.question}"</p>
+              </div>
+              <button onClick={generateInsight} disabled={generatingInsight}
+                className="text-xs text-violet-300/35 hover:text-violet-300/60 transition">
+                {generatingInsight ? "Analysiere…" : "Neu analysieren →"}
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Stimmung */}
         {(data?.moodAvg30d || data?.moodAvg7d) && (
           <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
@@ -387,45 +426,6 @@ export default function PatternsPage() {
                   )}
                 </div>
               ))}
-            </div>
-          )}
-        </div>
-
-        {/* KI-Musteranalyse */}
-        <div className="rounded-3xl border border-violet-300/15 bg-violet-300/4 p-6 space-y-5">
-          <div>
-            <p className="text-xs uppercase tracking-[0.15em] text-violet-300/70 mb-1">Traumbegleiter AI</p>
-            <p className="text-sm text-white/70 leading-6">
-              Lass die KI deine Muster analysieren und Zusammenhänge aufzeigen die du vielleicht noch nicht gesehen hast.
-            </p>
-          </div>
-
-          {!aiInsight ? (
-            <button onClick={generateInsight} disabled={generatingInsight}
-              className="w-full rounded-2xl border border-violet-300/20 bg-violet-300/8 px-6 py-4 text-sm font-medium text-violet-100 transition hover:bg-violet-300/15 disabled:opacity-50">
-              {generatingInsight
-                ? <span className="flex items-center justify-center gap-2"><span className="animate-spin">✦</span> Analysiere Muster…</span>
-                : "✦ KI-Musteranalyse starten"
-              }
-            </button>
-          ) : (
-            <div className="space-y-5">
-              <div>
-                <p className="text-xs text-violet-300/45 mb-2 uppercase tracking-wider">Erkannte Muster</p>
-                <p className="text-sm leading-7 text-white/75">{aiInsight.patterns}</p>
-              </div>
-              <div>
-                <p className="text-xs text-violet-300/45 mb-2 uppercase tracking-wider">Verbindungen</p>
-                <p className="text-sm leading-7 text-white/75">{aiInsight.connections}</p>
-              </div>
-              <div className="rounded-2xl border border-violet-300/12 bg-violet-300/5 px-5 py-4">
-                <p className="text-xs text-violet-300/45 mb-1">Frage für dich</p>
-                <p className="text-sm leading-7 text-white/75 italic">"{aiInsight.question}"</p>
-              </div>
-              <button onClick={generateInsight} disabled={generatingInsight}
-                className="text-xs text-violet-300/35 hover:text-violet-300/60 transition">
-                {generatingInsight ? "Analysiere…" : "Neu analysieren →"}
-              </button>
             </div>
           )}
         </div>
