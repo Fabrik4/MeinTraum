@@ -39,13 +39,13 @@ export default function AnalysesPage() {
     const [dreamRes, journalRes] = await Promise.all([
       supabase
         .from("dream_analysis")
-        .select("id, mode, summary, themes, created_at, dream_entry_id, dream_entries(raw_input_text)")
-        .eq("user_id", user!.id)
+        .select("id, mode, summary, themes, created_at, dream_entry_id, dream_entries!inner(raw_input_text, user_id)")
+        .eq("dream_entries.user_id", user!.id)
         .order("created_at", { ascending: false }),
       supabase
         .from("journal_analysis")
-        .select("id, mode, summary, themes, created_at, journal_entry_id, journal_entries(body_text)")
-        .eq("user_id", user!.id)
+        .select("id, mode, summary, themes, created_at, journal_entry_id, journal_entries!inner(body_text, user_id)")
+        .eq("journal_entries.user_id", user!.id)
         .order("created_at", { ascending: false }),
     ])
 
