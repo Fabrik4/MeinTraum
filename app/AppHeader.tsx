@@ -208,35 +208,32 @@ export default function AppHeader() {
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
                           <ProfileIcon size={15} /> Profil & Einstellungen
                         </Link>
-                        <Link href="/chat" onClick={() => setMenuOpen(false)}
+                        <div className="border-t border-white/5 my-1" />
+                        <Link href="/analyses" onClick={() => setMenuOpen(false)}
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
-                          💬 Traumbegleiter
+                          🧠 Analysen
                         </Link>
-
-                        <div className="border-t border-white/5 my-1" />
-                        <button onClick={() => { setMenuOpen(false); window.dispatchEvent(new Event("meintraum:feedback")) }}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
-                          📝 Feedback senden
-                        </button>
-                        <div className="border-t border-white/5 my-1" />
-                        <a href="/" target="_blank"
-                          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
-                          <GlobeIcon size={15} /> Zur Landingpage
-                        </a>
-                        <div className="border-t border-white/5 my-1" />
                         <Link href="/gallery" onClick={() => setMenuOpen(false)}
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
                           🎨 Traumbilder
                         </Link>
-                        <Link href="/analyses" onClick={() => setMenuOpen(false)}
+                        <Link href="/chat" onClick={() => setMenuOpen(false)}
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
-                          🧠 Analysen
+                          💬 Traumbegleiter
                         </Link>
                         <div className="border-t border-white/5 my-1" />
                         <Link href="/unterstuetzen" onClick={() => setMenuOpen(false)}
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
                           ☕ MeinTraum unterstützen
                         </Link>
+                        <button onClick={() => { setMenuOpen(false); window.dispatchEvent(new Event("meintraum:feedback")) }}
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
+                          📝 Feedback senden
+                        </button>
+                        <a href="/" target="_blank"
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
+                          <GlobeIcon size={15} /> Projektinfos
+                        </a>
                         <div className="border-t border-white/5 my-1" />
                         <button onClick={handleSignOut}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-red-300/60 transition hover:bg-red-300/6 hover:text-red-200">
