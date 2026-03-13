@@ -219,11 +219,14 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   // Image generation state
   const [showImagePanel, setShowImagePanel] = useState(false)
   const [imageFormat, setImageFormat] = useState<"stories" | "square" | "pinterest">("square")
+  const [imageStyle, setImageStyle] = useState<"surreal" | "illustration" | "cinematic">("surreal")
   const [generatingImage, setGeneratingImage] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
+  const [cardTitle, setCardTitle] = useState<string>("")
   const [remainingToday, setRemainingToday] = useState<number | null>(null)
   const [existingImages, setExistingImages] = useState<{ id: number; image_url: string; format: string; created_at: string }[]>([])
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Revision state
   const [revisions, setRevisions] = useState<Revision[]>([])
@@ -301,12 +304,14 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
       if (!revisionsRes.error && revisionsRes.data) setRevisions(revisionsRes.data)
       if (!imagesRes.error && imagesRes.data) setExistingImages(imagesRes.data)
     } else {
-      const [journalRes, entitiesRes, analysisRes] = await Promise.all([
+      const [journalRes, entitiesRes, analysisRes, imagesRes] = await Promise.all([
         supabase.from("journal_entries").select("*").eq("id", resolvedId).single(),
         supabase.from("journal_entry_entities")
           .select("id, user_entity_id, user_entities(entity_type, entity_category, entity_label)")
           .eq("journal_entry_id", resolvedId),
         supabase.from("journal_analysis").select("id,mode,summary,themes,created_at")
+          .eq("journal_entry_id", resolvedId).order("created_at", { ascending: false }),
+        supabase.from("dream_images").select("id, image_url, format, created_at")
           .eq("journal_entry_id", resolvedId).order("created_at", { ascending: false }),
       ])
       if (!journalRes.error && journalRes.data) {
@@ -322,6 +327,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
       }
       if (!entitiesRes.error && entitiesRes.data) mapEntities(entitiesRes.data)
       if (!analysisRes.error && analysisRes.data) setSavedAnalyses(analysisRes.data)
+      if (!imagesRes.error && imagesRes.data) setExistingImages(imagesRes.data)
     }
     setLoading(false)
   }
@@ -386,26 +392,34 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   async function generateImage() {
-    if (!dreamEntry) return
+    const entryText = isDream ? (dreamEntry?.raw_input_text ?? "") : (journalEntry?.body_text ?? "")
+    if (!entryText) return
     setGeneratingImage(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setGeneratingImage(false); return }
     try {
+      const body: Record<string, unknown> = {
+        user_id: user.id,
+        dream_text: entryText,
+        format: imageFormat,
+        style: imageStyle,
+      }
+      if (isDream) body.dream_entry_id = Number(resolvedId)
+      else body.journal_entry_id = Number(resolvedId)
+
       const res = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          dream_entry_id: Number(resolvedId),
-          user_id: user.id,
-          dream_text: dreamEntry.raw_input_text,
-          format: imageFormat,
-        }),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (data.image) {
         setGeneratedImage(data.image.image_url)
+        setCardTitle(data.card_title ?? "")
         setExistingImages((prev) => [data.image, ...prev])
         if (data.remaining_today !== undefined) setRemainingToday(data.remaining_today)
+        // Render canvas after state updates
+        setTimeout(() => renderCanvas(data.image.image_url, data.card_title ?? "", imageFormat), 50)
       } else {
         setMessage(data.error ?? "Bildgenerierung fehlgeschlagen.")
       }
@@ -415,67 +429,106 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
     setGeneratingImage(false)
   }
 
-  async function downloadShareCard(imgUrl: string) {
-    const canvas = document.createElement("canvas")
+  async function renderCanvas(imgUrl: string, title: string, fmt: string) {
+    const canvas = canvasRef.current
+    if (!canvas) return
     const dims =
-      imageFormat === "stories" ? { w: 1080, h: 1920 } :
-      imageFormat === "pinterest" ? { w: 1080, h: 1350 } :
+      fmt === "stories" ? { w: 1080, h: 1920 } :
+      fmt === "pinterest" ? { w: 1080, h: 1350 } :
       { w: 1080, h: 1080 }
     canvas.width = dims.w
     canvas.height = dims.h
     const ctx = canvas.getContext("2d")!
+
+    // Load + cover-fit image
     const img = new Image()
     img.crossOrigin = "anonymous"
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve()
-      img.onerror = () => reject()
-      img.src = imgUrl
-    })
-    ctx.drawImage(img, 0, 0, dims.w, dims.h)
-    const gradH = imageFormat === "stories" ? dims.h * 0.35 : imageFormat === "square" ? dims.h * 0.28 : dims.h * 0.22
-    const grad = ctx.createLinearGradient(0, dims.h - gradH, 0, dims.h)
-    grad.addColorStop(0, "transparent")
-    grad.addColorStop(1, "#070b14")
+    await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); img.src = imgUrl })
+    const scale = Math.max(dims.w / img.width, dims.h / img.height)
+    const sw = img.width * scale, sh = img.height * scale
+    ctx.drawImage(img, (dims.w - sw) / 2, (dims.h - sh) / 2, sw, sh)
+
+    // Gradient overlay
+    const grad = ctx.createLinearGradient(0, 0, 0, dims.h)
+    grad.addColorStop(0, "rgba(7,11,20,0.45)")
+    grad.addColorStop(0.35, "transparent")
+    grad.addColorStop(0.60, "transparent")
+    grad.addColorStop(1, "rgba(7,11,20,0.75)")
     ctx.fillStyle = grad
-    ctx.fillRect(0, dims.h - gradH, dims.w, gradH)
-    const text = mainText.slice(0, 80) + (mainText.length > 80 ? "…" : "")
-    const fontSize = Math.round(dims.w * 0.032)
-    ctx.font = `italic ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
-    ctx.fillStyle = "rgba(255,255,255,0.82)"
+    ctx.fillRect(0, 0, dims.w, dims.h)
+
+    // Scale factor (canvas coords are full-res, scale from design @400px)
+    const s = dims.w / 400
+    const pad = 18 * s
+
+    // Branding pill top-left
+    const brandText = "🌙 MeinTraum"
+    const bFontSize = 13 * s
+    ctx.font = `500 ${bFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
+    const bw = ctx.measureText(brandText).width
+    const px = 10 * s, py = 6 * s
+    ctx.fillStyle = "rgba(0,0,0,0.28)"
+    const rx = pad, ry = pad, rw = bw + px * 2, rh = bFontSize + py * 2, rr = rh / 2
+    ctx.beginPath()
+    ctx.moveTo(rx + rr, ry)
+    ctx.lineTo(rx + rw - rr, ry); ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr)
+    ctx.lineTo(rx + rw, ry + rh - rr); ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh)
+    ctx.lineTo(rx + rr, ry + rh); ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr)
+    ctx.lineTo(rx, ry + rr); ctx.quadraticCurveTo(rx, ry, rx + rr, ry)
+    ctx.closePath()
+    ctx.fill()
+    ctx.fillStyle = "rgba(255,255,255,0.85)"
+    ctx.fillText(brandText, rx + px, ry + py + bFontSize * 0.82)
+
+    // Card title bottom
+    const titleFontSize = (fmt === "stories" ? 22 : 18) * s
+    ctx.font = `600 ${titleFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
+    ctx.fillStyle = "white"
     ctx.textAlign = "center"
-    const maxW = dims.w - 100
-    const words = text.split(" ")
-    const lines: string[] = []
-    let line = ""
-    for (const w of words) {
-      const test = line ? line + " " + w : w
-      if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w }
-      else line = test
-    }
-    if (line) lines.push(line)
-    const lh = Math.round(dims.w * 0.044)
-    const ty = dims.h - Math.round(dims.h * 0.08) - lines.length * lh
-    lines.forEach((l, i) => ctx.fillText(l, dims.w / 2, ty + i * lh))
-    ctx.font = `${Math.round(dims.w * 0.022)}px -apple-system, BlinkMacSystemFont, sans-serif`
-    ctx.fillStyle = "rgba(255,255,255,0.38)"
-    ctx.fillText("🌙 MeinTraum · meintraum.app", dims.w / 2, dims.h - Math.round(dims.h * 0.03))
-    const link = document.createElement("a")
-    link.download = `traumkarte_${new Date().toISOString().slice(0, 10)}.png`
-    link.href = canvas.toDataURL("image/png")
-    link.click()
+    ctx.shadowColor = "rgba(0,0,0,0.55)"
+    ctx.shadowBlur = 6 * s
+    const titlePadBottom = 24 * s
+    const titleY = dims.h - titlePadBottom - titleFontSize * 0.25
+    ctx.fillText(title, dims.w / 2, titleY)
+
+    // URL
+    ctx.shadowBlur = 0
+    const urlFontSize = 11 * s
+    ctx.font = `${urlFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
+    ctx.fillStyle = "rgba(255,255,255,0.45)"
+    ctx.fillText("meintraum.app", dims.w / 2, titleY + titleFontSize * 0.35 + urlFontSize * 1.6)
   }
 
-  async function shareImage(imgUrl: string) {
+  function downloadCard() {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const safe = (cardTitle || "traum").replace(/[^a-z0-9äöü]/gi, "-").toLowerCase().slice(0, 40)
+    const date = new Date().toISOString().slice(0, 10)
+    canvas.toBlob((blob) => {
+      if (!blob) return
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `traumbild_${safe}_${date}.png`
+      a.click()
+      URL.revokeObjectURL(url)
+    }, "image/png")
+  }
+
+  async function shareCard() {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        const blob = await (await fetch(imgUrl)).blob()
-        const file = new File([blob], "traumkarte.webp", { type: "image/webp" })
-        await navigator.share({ title: "Mein Traum", text: mainText.slice(0, 80), files: [file] })
+        await navigator.share({
+          title: cardTitle || "Mein Traum",
+          text: "Mein Traum auf MeinTraum",
+          url: "https://meintraum.app",
+        })
         return
-      } catch { /* fall through to download */ }
+      } catch { /* fall through */ }
     }
-    await downloadShareCard(imgUrl)
+    downloadCard()
   }
+
 
   async function expandInlineText() {
     setExpandingInline(true); setInlineExpandedPreview(null)
@@ -646,14 +699,12 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"}`}>
                 🧠 Analyse
               </button>
-              {isDream && (
-                <button onClick={() => { setShowImagePanel(!showImagePanel); setShowChat(false); setShowAnalysisPanel(false) }}
-                  className={`rounded-xl border px-4 py-2 text-sm transition ${showImagePanel
-                    ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
-                    : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"}`}>
-                  🎨 Bild
-                </button>
-              )}
+              <button onClick={() => { setShowImagePanel(!showImagePanel); setShowChat(false); setShowAnalysisPanel(false) }}
+                className={`rounded-xl border px-4 py-2 text-sm transition ${showImagePanel
+                  ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
+                  : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"}`}>
+                🎨 Bild
+              </button>
               <button onClick={() => setIsEditing(true)}
                 className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] transition hover:scale-[1.02]">
                 Bearbeiten
@@ -850,7 +901,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
         )}
 
         {/* ── Bild-Panel ── */}
-        {!isEditing && showImagePanel && isDream && (
+        {!isEditing && showImagePanel && (
           <div className="space-y-6">
 
             {/* Vorhandene Thumbnails */}
@@ -862,19 +913,17 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                     <button key={img.id} type="button" onClick={() => setLightboxImage(img.image_url)}
                       className="relative rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition group w-[72px] h-[72px]">
                       <img src={img.image_url} alt="" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-sm">
-                        🔍
-                      </div>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-sm">🔍</div>
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="rounded-3xl border border-cyan-300/10 bg-cyan-300/3 p-6 space-y-6">
+            <div className="rounded-3xl border border-cyan-300/10 bg-cyan-300/3 p-6 space-y-5">
               <div>
-                <p className="text-sm font-medium text-white">Traum visualisieren</p>
-                <p className="text-xs text-white/35 mt-1">KI erstellt ein Bild basierend auf deinem Traum</p>
+                <p className="text-sm font-medium text-white">Traumbild</p>
+                <p className="text-xs text-white/35 mt-1">KI erstellt ein Bild basierend auf deinem Eintrag</p>
               </div>
 
               {/* Format-Auswahl */}
@@ -884,11 +933,27 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                   { key: "square",    emoji: "⬛", label: "Instagram Post",   sub: "1:1 Quadratisch" },
                   { key: "pinterest", emoji: "📌", label: "Pinterest & Blog", sub: "4:5 Hoch" },
                 ] as const).map((f) => (
-                  <button key={f.key} type="button" onClick={() => setImageFormat(f.key)}
+                  <button key={f.key} type="button"
+                    onClick={() => { setImageFormat(f.key); if (generatedImage && cardTitle) setTimeout(() => renderCanvas(generatedImage, cardTitle, f.key), 10) }}
                     className={`rounded-2xl border p-3 text-left transition-all ${imageFormat === f.key ? "border-cyan-300/30 bg-cyan-300/8" : "border-white/8 bg-white/3 hover:border-white/15"}`}>
                     <div className="text-lg mb-1">{f.emoji}</div>
                     <p className="text-xs font-medium text-white leading-tight">{f.label}</p>
                     <p className="text-[10px] text-white/40 mt-0.5">{f.sub}</p>
+                  </button>
+                ))}
+              </div>
+
+              {/* Stil-Auswahl */}
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { key: "surreal",      emoji: "🌌", label: "Surreal" },
+                  { key: "illustration", emoji: "🎨", label: "Illustration" },
+                  { key: "cinematic",    emoji: "⚡", label: "Cinematic" },
+                ] as const).map((s) => (
+                  <button key={s.key} type="button"
+                    onClick={() => { setImageStyle(s.key); if (generatedImage && cardTitle) setTimeout(() => renderCanvas(generatedImage, cardTitle, imageFormat), 10) }}
+                    className={`rounded-2xl border py-2.5 text-sm font-medium transition-all ${imageStyle === s.key ? "border-cyan-300/30 bg-cyan-300/8 text-white" : "border-white/8 bg-white/3 text-white/60 hover:border-white/15 hover:text-white/80"}`}>
+                    {s.emoji} {s.label}
                   </button>
                 ))}
               </div>
@@ -905,7 +970,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               {generatingImage && (
                 <div className="rounded-2xl border border-cyan-300/10 bg-white/3 p-6 text-center space-y-4">
                   <div className="animate-pulse text-2xl">🌙</div>
-                  <p className="text-sm text-white/65">Dein Traum wird visualisiert…</p>
+                  <p className="text-sm text-white/65">Dein Traumbild wird erstellt…</p>
                   <div className="h-1 w-full rounded-full bg-white/8 overflow-hidden">
                     <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-cyan-300/50 to-violet-400/50 animate-pulse" />
                   </div>
@@ -913,21 +978,36 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
 
-              {/* Generiertes Bild */}
+              {/* Live Canvas Preview */}
               {generatedImage && !generatingImage && (
                 <div className="space-y-4">
-                  <img src={generatedImage} alt="Generiertes Traumbild" className="w-full rounded-2xl" />
+                  {cardTitle && (
+                    <p className="text-xs text-cyan-300/60 text-center italic">"{cardTitle}"</p>
+                  )}
+                  <div className={`flex justify-center ${imageFormat === "stories" ? "" : ""}`}>
+                    <canvas
+                      ref={canvasRef}
+                      className="rounded-2xl w-full"
+                      style={
+                        imageFormat === "stories"
+                          ? { maxHeight: 440, aspectRatio: "9/16", width: "auto" }
+                          : imageFormat === "pinterest"
+                          ? { maxWidth: 300, aspectRatio: "4/5", width: "100%" }
+                          : { maxWidth: 340, aspectRatio: "1/1", width: "100%" }
+                      }
+                    />
+                  </div>
                   <div className="flex gap-3">
-                    <button type="button" onClick={() => downloadShareCard(generatedImage)}
+                    <button type="button" onClick={downloadCard}
                       className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/70 hover:bg-white/10 hover:text-white transition flex items-center justify-center gap-2">
                       ⬇ Herunterladen
                     </button>
-                    <button type="button" onClick={() => shareImage(generatedImage)}
+                    <button type="button" onClick={shareCard}
                       className="flex-1 rounded-xl border border-cyan-300/20 bg-cyan-300/8 px-4 py-2.5 text-sm text-cyan-100 hover:bg-cyan-300/12 transition flex items-center justify-center gap-2">
                       📤 Teilen
                     </button>
                   </div>
-                  <button type="button" onClick={() => setGeneratedImage(null)}
+                  <button type="button" onClick={() => { setGeneratedImage(null); setCardTitle("") }}
                     className="w-full rounded-2xl border border-white/8 bg-white/3 px-6 py-3 text-sm text-white/50 hover:text-white/75 transition">
                     Neu generieren
                   </button>
@@ -1197,11 +1277,11 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
         <div className="relative w-full max-w-sm space-y-4" onClick={(e) => e.stopPropagation()}>
           <img src={lightboxImage} alt="" className="w-full rounded-2xl" />
           <div className="flex gap-3">
-            <button type="button" onClick={() => downloadShareCard(lightboxImage)}
+            <button type="button" onClick={downloadCard}
               className="flex-1 rounded-xl border border-white/10 bg-white/8 px-4 py-2.5 text-sm text-white/70 hover:bg-white/12 hover:text-white transition flex items-center justify-center gap-2">
               ⬇ Herunterladen
             </button>
-            <button type="button" onClick={() => shareImage(lightboxImage)}
+            <button type="button" onClick={shareCard}
               className="flex-1 rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-2.5 text-sm text-cyan-100 hover:bg-cyan-300/15 transition flex items-center justify-center gap-2">
               📤 Teilen
             </button>
