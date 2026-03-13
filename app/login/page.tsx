@@ -1,71 +1,209 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import Link from "next/link"
+
+type Mode = "login" | "register" | "forgot"
 
 export default function LoginPage() {
+  const router = useRouter()
+  const [mode, setMode] = useState<Mode>("login")
   const [email, setEmail] = useState("")
-  const [message, setMessage] = useState("")
-  const [isSending, setIsSending] = useState(false)
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setIsSending(true)
-    setMessage("")
+    setLoading(true)
+    setError(null)
+    setSuccess(null)
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: "https://www.meintraum.app/auth/callback",
-      },
-    })
-
-    if (error) {
-      setMessage("Fehler beim Senden des Login-Links. Bitte versuche es erneut.")
-    } else {
-      setMessage("Magic Link wurde gesendet. Prüfe deine E-Mail. ✓")
+    if (mode === "login") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        setError("E-Mail oder Passwort falsch.")
+      } else {
+        router.push("/dashboard")
+      }
     }
 
-    setIsSending(false)
+    if (mode === "register") {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: "https://www.meintraum.app/auth/callback" },
+      })
+      if (error) {
+        setError("Registrierung fehlgeschlagen. Versuche es nochmal.")
+      } else {
+        setSuccess("Fast geschafft! Bestätige deine E-Mail-Adresse – wir haben dir einen Link geschickt.")
+      }
+    }
+
+    if (mode === "forgot") {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: "https://www.meintraum.app/auth/callback",
+      })
+      if (error) {
+        setError("Fehler beim Senden. Bitte versuche es nochmal.")
+      } else {
+        setSuccess("Link gesendet! Schau in deine E-Mails.")
+      }
+    }
+
+    setLoading(false)
+  }
+
+  async function handleGoogle() {
+    setError(null)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: "https://www.meintraum.app/auth/callback" },
+    })
+    if (error) setError("Google-Anmeldung fehlgeschlagen.")
   }
 
   return (
-    <main className="min-h-screen bg-[#070b14] text-white px-6 py-16">
-      <div className="mx-auto max-w-md">
-        <p className="text-sm uppercase tracking-[0.2em] text-cyan-300/80">
-          Anmelden
-        </p>
-        <h1 className="mt-4 text-3xl font-semibold">
-          Willkommen zurück
-        </h1>
-        <p className="mt-4 leading-8 text-white/60">
-          Gib deine E-Mail-Adresse ein. Wir schicken dir einen Magic Link zum Einloggen.
-        </p>
+    <main className="min-h-screen bg-[#070b14] text-white flex items-center justify-center px-5">
+      <div className="w-full max-w-sm space-y-8">
 
-        <form onSubmit={handleLogin} className="mt-8 flex flex-col gap-4">
-          <input
-            type="email"
-            required
-            placeholder="deine@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-white placeholder:text-white/30 focus:border-cyan-300/40 focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={isSending}
-            className="rounded-2xl bg-white px-6 py-3 font-medium text-[#070b14] transition hover:scale-[1.01] disabled:opacity-60"
-          >
-            {isSending ? "Wird gesendet..." : "Magic Link senden"}
-          </button>
-        </form>
-
-        {message && (
-          <div className="mt-6 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 text-sm text-cyan-100">
-            {message}
+        {/* Logo */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-cyan-300/20 to-violet-400/20 border border-white/10 mb-2">
+            <span className="text-2xl">🌙</span>
           </div>
+          <h1 className="text-2xl font-semibold">
+            {mode === "login" && "Willkommen zurück"}
+            {mode === "register" && "Konto erstellen"}
+            {mode === "forgot" && "Passwort vergessen"}
+          </h1>
+          <p className="text-sm text-white/40">
+            {mode === "login" && "Melde dich an um dein Traumarchiv zu öffnen"}
+            {mode === "register" && "Kostenlos starten – keine Kreditkarte"}
+            {mode === "forgot" && "Wir schicken dir einen Reset-Link"}
+          </p>
+        </div>
+
+        {success ? (
+          <div className="rounded-3xl border border-cyan-300/15 bg-cyan-300/5 p-8 text-center space-y-4">
+            <p className="text-3xl">✉️</p>
+            <p className="text-sm text-white/60 leading-7">{success}</p>
+            <button onClick={() => { setSuccess(null); setMode("login") }}
+              className="text-xs text-white/30 hover:text-white/60 transition underline underline-offset-2">
+              Zurück zur Anmeldung
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Google Button – nur bei login/register */}
+            {mode !== "forgot" && (
+              <>
+                <button onClick={handleGoogle}
+                  className="w-full flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white active:scale-[0.99]">
+                  <GoogleIcon />
+                  Mit Google {mode === "register" ? "registrieren" : "anmelden"}
+                </button>
+
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-px bg-white/8" />
+                  <span className="text-xs text-white/25">oder per E-Mail</span>
+                  <div className="flex-1 h-px bg-white/8" />
+                </div>
+              </>
+            )}
+
+            {/* Formular */}
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="E-Mail-Adresse"
+                required
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm text-white placeholder:text-white/25 focus:border-cyan-300/30 focus:outline-none transition"
+              />
+
+              {mode !== "forgot" && (
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Passwort"
+                  required
+                  minLength={6}
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm text-white placeholder:text-white/25 focus:border-cyan-300/30 focus:outline-none transition"
+                />
+              )}
+
+              {error && (
+                <p className="text-xs text-red-300/70 px-1">{error}</p>
+              )}
+
+              <button type="submit" disabled={loading}
+                className="w-full rounded-2xl bg-white px-5 py-3.5 text-sm font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50">
+                {loading ? "Bitte warten…" : (
+                  mode === "login" ? "Anmelden →" :
+                  mode === "register" ? "Konto erstellen →" :
+                  "Reset-Link senden →"
+                )}
+              </button>
+            </form>
+
+            {/* Mode-Wechsel Links */}
+            <div className="text-center space-y-2">
+              {mode === "login" && (
+                <>
+                  <button onClick={() => { setMode("register"); setError(null) }}
+                    className="block w-full text-xs text-white/30 hover:text-white/60 transition">
+                    Noch kein Konto? <span className="underline underline-offset-2">Jetzt registrieren</span>
+                  </button>
+                  <button onClick={() => { setMode("forgot"); setError(null) }}
+                    className="block w-full text-xs text-white/25 hover:text-white/50 transition">
+                    Passwort vergessen?
+                  </button>
+                </>
+              )}
+              {mode === "register" && (
+                <button onClick={() => { setMode("login"); setError(null) }}
+                  className="text-xs text-white/30 hover:text-white/60 transition">
+                  Bereits ein Konto? <span className="underline underline-offset-2">Anmelden</span>
+                </button>
+              )}
+              {mode === "forgot" && (
+                <button onClick={() => { setMode("login"); setError(null) }}
+                  className="text-xs text-white/30 hover:text-white/60 transition">
+                  ← Zurück zur Anmeldung
+                </button>
+              )}
+            </div>
+          </>
         )}
+
+        {/* Datenschutz */}
+        <p className="text-center text-xs text-white/20 leading-6">
+          Mit der Anmeldung stimmst du unserer{" "}
+          <Link href="/datenschutz" className="underline underline-offset-2 hover:text-white/50 transition">
+            Datenschutzerklärung
+          </Link>{" "}
+          zu.
+        </p>
+
       </div>
     </main>
+  )
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+      <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.96L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+    </svg>
   )
 }
