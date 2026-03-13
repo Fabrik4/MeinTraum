@@ -228,6 +228,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+  const analysisResultRef = useRef<HTMLDivElement>(null)
 
   // Revision state
   const [revisions, setRevisions] = useState<Revision[]>([])
@@ -628,8 +629,10 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
     try {
       const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       const data = await res.json()
-      if (data.analysis) { setCurrentAnalysis(data.analysis); setCurrentAnalysisMode(selectedMode) }
-      else setMessage("Analyse fehlgeschlagen.")
+      if (data.analysis) {
+        setCurrentAnalysis(data.analysis); setCurrentAnalysisMode(selectedMode)
+        setTimeout(() => analysisResultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
+      } else setMessage("Analyse fehlgeschlagen.")
     } catch { setMessage("Analyse konnte nicht erstellt werden.") }
     setAnalyzing(false)
   }
@@ -865,7 +868,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               <p className={`text-sm uppercase tracking-[0.2em] mb-6 ${accent === "amber" ? "text-amber-300/70" : "text-cyan-300/70"}`}>
                 Analyse-Modus wählen
               </p>
-              <div className="grid gap-3 sm:grid-cols-2 mb-8">
+              <div className="grid grid-cols-2 gap-3 mb-8">
                 {ANALYSIS_MODES.map((mode) => (
                   <button key={mode.value} type="button" onClick={() => setSelectedMode(mode.value)}
                     className={`rounded-2xl border p-4 text-left transition-all ${selectedMode === mode.value
@@ -884,7 +887,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 {analyzing ? <span className="flex items-center justify-center gap-2"><span className="animate-spin">✦</span> Analysiere…</span> : "Analysieren"}
               </button>
             </div>
-            {currentAnalysis && <AnalysisCard analysis={currentAnalysis} mode={currentAnalysisMode} onSave={saveAnalysis} saving={savingAnalysis} accent={accent} />}
+            {currentAnalysis && <div ref={analysisResultRef}><AnalysisCard analysis={currentAnalysis} mode={currentAnalysisMode} onSave={saveAnalysis} saving={savingAnalysis} accent={accent} /></div>}
             {savedAnalyses.length > 0 && (
               <div className="space-y-4">
                 <p className="text-sm uppercase tracking-[0.15em] text-white/60">Gespeicherte Analysen</p>
