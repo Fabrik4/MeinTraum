@@ -48,6 +48,7 @@ export default function JournalNewPage() {
   const [savedId, setSavedId] = useState<number | null>(null)
   const [expanding, setExpanding] = useState(false)
   const [expandedPreview, setExpandedPreview] = useState<string | null>(null)
+  const [expandedText, setExpandedText] = useState<string | null>(null)
 
   // Speech-to-Text
   const onTranscript = useCallback((text: string) => {
@@ -69,9 +70,10 @@ export default function JournalNewPage() {
     if (!user) return
     setIsSubmitting(true)
 
+    const submitText = expandedText ?? bodyText
     const { data, error } = await supabase.from("journal_entries").insert([{
       user_id: user.id,
-      body_text: bodyText,
+      body_text: submitText,
       mood_score: moodScore,
       mood_label: MOOD_LABELS[moodScore].label,
       energy_level: energyLevel,
@@ -185,16 +187,41 @@ export default function JournalNewPage() {
                 )}
               </div>
 
-              {/* Expanded preview */}
+              {/* Auto-Text Vorschau */}
               {expandedPreview && (
                 <div className="mt-4 rounded-2xl border border-amber-300/15 bg-amber-300/5 p-5">
                   <p className="text-xs uppercase tracking-[0.15em] text-amber-300/60 mb-3">KI-Vorschlag</p>
                   <p className="text-sm leading-7 text-white/75 mb-4">{expandedPreview}</p>
                   <div className="flex gap-3">
-                    <button type="button" onClick={() => { setBodyText(expandedPreview); setExpandedPreview(null) }}
+                    <button type="button" onClick={() => { setExpandedText(expandedPreview); setExpandedPreview(null) }}
                       className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14]">Übernehmen</button>
                     <button type="button" onClick={() => setExpandedPreview(null)}
                       className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75">Verwerfen</button>
+                  </div>
+                </div>
+              )}
+
+              {/* Zwei-Block UI nach Übernehmen */}
+              {expandedText !== null && (
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-2xl border border-white/8 bg-white/3 px-4 py-3">
+                    <p className="text-xs text-white/45 mb-1.5">Deine Stichworte</p>
+                    <p className="text-sm text-white/50 leading-6">{bodyText}</p>
+                  </div>
+                  <div className="rounded-2xl border border-amber-300/15 bg-amber-300/4 px-4 py-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs uppercase tracking-[0.15em] text-amber-300/60">KI-Ausformulierung</p>
+                      <button type="button" onClick={() => setExpandedText(null)}
+                        className="text-xs text-white/30 hover:text-white/60 transition">
+                        ✕ Löschen
+                      </button>
+                    </div>
+                    <textarea
+                      value={expandedText}
+                      onChange={(e) => setExpandedText(e.target.value)}
+                      rows={5}
+                      className="w-full bg-transparent text-sm text-white/80 leading-7 focus:outline-none resize-none"
+                    />
                   </div>
                 </div>
               )}
@@ -303,7 +330,7 @@ export default function JournalNewPage() {
               <div className="flex gap-3">
                 <button type="button"
                   onClick={expandText}
-                  disabled={expanding || !bodyText.trim()}
+                  disabled={expanding || !bodyText.trim() || expandedText !== null}
                   className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-amber-300/20 bg-amber-300/8 px-4 py-4 text-sm font-medium text-amber-100 transition hover:bg-amber-300/15 disabled:opacity-35">
                   {expanding
                     ? <><span className="animate-spin">✦</span> Generiere…</>
