@@ -142,10 +142,6 @@ export default function TimelinePage() {
             <p className="mt-3 text-sm leading-7 text-white/70">Träume und Stimmungen im Verlauf – dein inneres Archiv.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/patterns"
-              className="inline-flex items-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-300/10 px-4 py-2.5 text-sm text-violet-100 transition hover:bg-violet-300/20">
-              ✦ Muster entdecken
-            </Link>
             <Link href="/entry"
               className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-2.5 text-sm text-cyan-100 transition hover:bg-cyan-300/20">
               🌙 Traum erfassen
@@ -153,6 +149,10 @@ export default function TimelinePage() {
             <Link href="/journal/new"
               className="inline-flex items-center gap-2 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-2.5 text-sm text-amber-100 transition hover:bg-amber-300/20">
               📓 Journal-Eintrag
+            </Link>
+            <Link href="/patterns"
+              className="inline-flex items-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-300/10 px-4 py-2.5 text-sm text-violet-100 transition hover:bg-violet-300/20">
+              ✦ Muster entdecken
             </Link>
           </div>
         </div>
