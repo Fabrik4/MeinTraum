@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/useAuth"
 import Link from "next/link"
 import { useSpeechRecorder } from "@/lib/useSpeechRecorder"
+import { getMoonPhase } from "@/lib/moonPhase"
 
 const EMOTIONS = ["Angst", "Freude", "Trauer", "Verwirrung", "Neugier", "Ruhe", "Wut", "Ekel"]
 const CLARITY_OPTIONS = ["Verschwommen", "Mittel", "Sehr klar"]
@@ -62,6 +63,8 @@ export default function DreamEntryPage() {
     if (!user) return
     setIsSubmitting(true)
     const selectedTone = TONE_OPTIONS[dreamTone].value
+    const dreamDate = dreamedAt ? new Date(dreamedAt) : new Date()
+    const moon = getMoonPhase(dreamDate)
     const { data, error } = await supabase.from("dream_entries").insert([{
       user_id: user.id,
       raw_input_text: rawInputText,
@@ -71,7 +74,9 @@ export default function DreamEntryPage() {
       familiar_person_flag: familiarPersonFlag,
       familiar_place_flag: familiarPlaceFlag,
       nightmare_flag: selectedTone === "nightmare",
-      dreamed_at: dreamedAt ? new Date(dreamedAt).toISOString() : new Date().toISOString(),
+      dreamed_at: dreamDate.toISOString(),
+      moon_phase: moon.phase,
+      moon_phase_name: moon.name,
     }]).select("id").single()
     setIsSubmitting(false)
     if (error || !data) return
@@ -107,6 +112,8 @@ export default function DreamEntryPage() {
     if (!user || !guestAnalysis) return
     setSavingToAccount(true)
     const selectedTone = TONE_OPTIONS[dreamTone].value
+    const dreamDate = dreamedAt ? new Date(dreamedAt) : new Date()
+    const moon = getMoonPhase(dreamDate)
     const { data } = await supabase.from("dream_entries").insert([{
       user_id: user.id,
       raw_input_text: guestDreamText,
@@ -116,7 +123,9 @@ export default function DreamEntryPage() {
       familiar_person_flag: familiarPersonFlag,
       familiar_place_flag: familiarPlaceFlag,
       nightmare_flag: selectedTone === "nightmare",
-      dreamed_at: dreamedAt ? new Date(dreamedAt).toISOString() : new Date().toISOString(),
+      dreamed_at: dreamDate.toISOString(),
+      moon_phase: moon.phase,
+      moon_phase_name: moon.name,
     }]).select("id").single()
     setSavingToAccount(false)
     if (data) router.push(`/entries/${data.id}?type=dream`)

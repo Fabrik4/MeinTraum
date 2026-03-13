@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/useAuth"
+import { moonNameToEmoji } from "@/lib/moonPhase"
 
 type PatternData = {
   // Stimmung
@@ -30,6 +31,9 @@ type PatternData = {
   totalJournal: number
   activeDays: number
   longestStreak: number
+
+  // Mondphasen
+  moonStats: Array<{ phase_name: string; dream_count: number; nightmare_count: number }>
 }
 
 type AIInsight = {
@@ -57,7 +61,7 @@ export default function PatternsPage() {
     setLoading(true)
     const since = new Date(Date.now() - timeRange * 864e5).toISOString()
 
-    const [dreamsRes, journalsRes, entitiesRes] = await Promise.all([
+    const [dreamsRes, journalsRes, entitiesRes, moonRes] = await Promise.all([
       supabase.from("dream_entries")
         .select("id, dream_tone, nightmare_flag, dream_clarity, dominant_emotion, dreamed_at, created_at")
         .eq("user_id", user!.id).gte("created_at", since).order("created_at", { ascending: true }),
@@ -67,6 +71,7 @@ export default function PatternsPage() {
       supabase.from("user_entities")
         .select("entity_type, entity_label, dream_entry_entities(count), journal_entry_entities(count)")
         .eq("user_id", user!.id).eq("is_confirmed", true),
+      supabase.rpc("get_moon_phase_stats", { p_user_id: user!.id }),
     ])
 
     const dreams = dreamsRes.data ?? []
@@ -161,12 +166,17 @@ export default function PatternsPage() {
       longestStreak = Math.max(longestStreak, currentStreak)
     }
 
+    const moonStats = (moonRes.data ?? []) as Array<{
+      phase_name: string; dream_count: number; nightmare_count: number
+    }>
+
     setData({
       moodByDay, moodAvg7d: avg7d, moodAvg30d: avg30d, moodTrend,
       topPersons, topPlaces, topEmotions,
       dreamTones: tones, avgDreamClarity, nightmareRate,
       totalDreams: dreams.length, totalJournal: journals.length,
       activeDays: uniqueDates.length, longestStreak,
+      moonStats,
     })
     setLoading(false)
   }
@@ -350,6 +360,33 @@ export default function PatternsPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mond & Träume */}
+        <div className="rounded-3xl border border-white/8 bg-white/3 p-6 space-y-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.15em] text-white/30 mb-1">Mond & Träume</p>
+            <p className="text-xs text-white/25 leading-5">Korrelation zwischen Mondphase und deinen Träumen.</p>
+          </div>
+          {data && data.moonStats.length === 0 ? (
+            <p className="text-sm text-white/25 text-center py-4">
+              Sammle mehr Träume um Mondmuster zu entdecken 🌙
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {data?.moonStats.map((m) => (
+                <div key={m.phase_name}
+                  className="rounded-2xl border border-amber-300/10 bg-amber-300/4 p-4 space-y-2 text-center">
+                  <p className="text-2xl">{moonNameToEmoji(m.phase_name)}</p>
+                  <p className="text-xs font-medium text-white/65 leading-4">{m.phase_name}</p>
+                  <p className="text-xs text-white/35">{m.dream_count} {m.dream_count === 1 ? "Traum" : "Träume"}</p>
+                  {m.nightmare_count > 0 && (
+                    <p className="text-xs text-red-300/45">{m.nightmare_count} Albtraum{m.nightmare_count > 1 ? "e" : ""}</p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/useAuth"
 import { useStreak } from "@/lib/useStreak"
+import { getMoonPhase } from "@/lib/moonPhase"
 
 type Stats = {
   totalDreams: number
@@ -23,6 +24,7 @@ type MoodData = {
 }
 
 const MOOD_COLOR = (s: number) => s <= 4 ? "text-red-300" : s <= 6 ? "text-amber-300" : "text-emerald-300"
+const todayMoon = getMoonPhase(new Date())
 
 function truncate(t: string, n = 90) { return t.length <= n ? t : t.slice(0, n).trim() + "…" }
 
@@ -174,9 +176,14 @@ export default function DashboardPage() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-3xl font-semibold">{greeting()}</h1>
-            <p className="mt-1.5 text-sm text-white/35">
-              {loading ? "Wird geladen…" : `${(stats?.totalDreams ?? 0) + (stats?.totalJournal ?? 0)} Einträge in deinem Archiv`}
-            </p>
+            <div className="mt-1.5 flex items-center gap-3 flex-wrap">
+              <p className="text-sm text-white/35">
+                {loading ? "Wird geladen…" : `${(stats?.totalDreams ?? 0) + (stats?.totalJournal ?? 0)} Einträge in deinem Archiv`}
+              </p>
+              <span className="inline-flex items-center gap-1.5 rounded-2xl border border-white/6 bg-white/3 px-3 py-1 text-xs text-white/40">
+                {todayMoon.emoji} {todayMoon.name} · {todayMoon.illumination}%
+              </span>
+            </div>
           </div>
           {streak > 0 && (
             <div className="flex items-center gap-2 rounded-2xl border border-orange-300/20 bg-orange-300/8 px-4 py-2.5">

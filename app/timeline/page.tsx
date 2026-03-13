@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/useAuth"
+import { moonNameToEmoji } from "@/lib/moonPhase"
 
 type DreamEntry = {
   id: number; type: "dream"
@@ -12,6 +13,7 @@ type DreamEntry = {
   dream_clarity: string | null; dream_tone: string | null
   nightmare_flag: boolean; created_at: string; dreamed_at: string | null
   is_key_event: boolean
+  moon_phase_name: string | null
   persons: string[]; places: string[]
 }
 type JournalEntry = {
@@ -219,6 +221,11 @@ function DreamCard({ dream, onPin, pinning }: { dream: DreamEntry; onPin: () => 
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-base">🌙</span>
             <span className="text-sm text-white/35">{formatDate(dream.dreamed_at || dream.created_at)}</span>
+            {dream.moon_phase_name && (
+              <span className="text-xs text-white/25" title={dream.moon_phase_name}>
+                {moonNameToEmoji(dream.moon_phase_name)}
+              </span>
+            )}
             {dream.dream_clarity && <span className="text-xs text-white/30">✨ {dream.dream_clarity}</span>}
             {dream.is_key_event && <span className="text-xs text-amber-300/70">📌 Keyevent</span>}
           </div>
