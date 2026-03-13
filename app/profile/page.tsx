@@ -259,6 +259,18 @@ export default function ProfilePage() {
           <p className="text-xs text-white/18 leading-5">Empfehlung: einmal pro Woche aktualisieren.</p>
         </div>
 
+        {/* Support-Banner */}
+        <div className="rounded-2xl border border-white/8 bg-white/3 px-5 py-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm text-white/55">☕ MeinTraum gefällt dir?</p>
+            <p className="text-xs text-white/40 mt-0.5">Unterstütze die Entwicklung mit einem Kaffee.</p>
+          </div>
+          <a href="/unterstuetzen"
+            className="shrink-0 text-xs text-white/40 hover:text-white/70 transition">
+            Unterstützen →
+          </a>
+        </div>
+
         {/* Footer */}
         <div className="border-t border-white/5 pt-6 flex gap-4 text-xs text-white/18">
           <a href="/datenschutz" className="hover:text-white/40 transition">Datenschutz</a>

@@ -205,6 +205,11 @@ export default function AppHeader() {
                           <GlobeIcon size={15} /> Zur Landingpage
                         </a>
                         <div className="border-t border-white/5 my-1" />
+                        <Link href="/unterstuetzen" onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
+                          ☕ MeinTraum unterstützen
+                        </Link>
+                        <div className="border-t border-white/5 my-1" />
                         <button onClick={handleSignOut}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-red-300/60 transition hover:bg-red-300/6 hover:text-red-200">
                           <LogoutIcon size={15} /> Abmelden
