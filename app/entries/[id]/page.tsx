@@ -868,7 +868,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
               <p className={`text-sm uppercase tracking-[0.2em] mb-6 ${accent === "amber" ? "text-amber-300/70" : "text-cyan-300/70"}`}>
                 Analyse-Modus wählen
               </p>
-              <div className="grid grid-cols-2 gap-3 mb-8">
+              <div className="grid gap-3 sm:grid-cols-2 mb-8">
                 {ANALYSIS_MODES.map((mode) => (
                   <button key={mode.value} type="button" onClick={() => setSelectedMode(mode.value)}
                     className={`rounded-2xl border p-4 text-left transition-all ${selectedMode === mode.value
