@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/useAuth"
 import { supabase } from "@/lib/supabase"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 
 // ── Icons ─────────────────────────────────────────────────────
 function HomeIcon({ size = 20, color = "currentColor" }) {
@@ -104,6 +104,15 @@ export default function AppHeader() {
   const pathname = usePathname()
   const { user, loading } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Auto-close on scroll (best practice)
+  useEffect(() => {
+    if (!menuOpen) return
+    const close = () => setMenuOpen(false)
+    window.addEventListener("scroll", close, { passive: true })
+    return () => window.removeEventListener("scroll", close)
+  }, [menuOpen])
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -169,10 +178,20 @@ export default function AppHeader() {
             {/* User Avatar / Auth */}
             {!loading && (
               user ? (
-                <div className="relative">
+                <div className="relative" ref={menuRef}>
                   <button onClick={() => setMenuOpen(!menuOpen)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-gradient-to-br from-cyan-300/20 to-violet-400/20 text-xs font-semibold text-white/80 transition hover:border-white/30 hover:text-white">
-                    {user.email?.slice(0, 1).toUpperCase()}
+                    className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                      menuOpen
+                        ? "border-cyan-300/40 bg-cyan-300/10 text-white shadow-[0_0_12px_rgba(103,232,249,0.12)]"
+                        : "border-white/15 bg-gradient-to-br from-cyan-300/15 to-violet-400/15 text-white/80 hover:border-white/30 hover:bg-white/8 hover:text-white"
+                    }`}>
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300/30 to-violet-400/30 text-[11px]">
+                      {user.email?.slice(0, 1).toUpperCase()}
+                    </span>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+                      className={`transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}>
+                      <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                   </button>
 
                   {menuOpen && (
@@ -204,6 +223,11 @@ export default function AppHeader() {
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
                           <GlobeIcon size={15} /> Zur Landingpage
                         </a>
+                        <div className="border-t border-white/5 my-1" />
+                        <Link href="/gallery" onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
+                          🎨 Traumbilder
+                        </Link>
                         <div className="border-t border-white/5 my-1" />
                         <Link href="/unterstuetzen" onClick={() => setMenuOpen(false)}
                           className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/6 hover:text-white">
@@ -245,7 +269,7 @@ export default function AppHeader() {
                     className="flex flex-col items-center gap-1 -mt-4">
                     <div className={`flex h-[54px] w-[54px] items-center justify-center rounded-[18px] transition-all duration-200 active:scale-95 ${
                       active
-                        ? "bg-white shadow-lg shadow-white/10"
+                        ? "bg-gradient-to-br from-cyan-200/90 to-violet-300/90 shadow-lg shadow-cyan-300/20"
                         : "bg-gradient-to-br from-cyan-300 to-violet-500 shadow-lg shadow-cyan-300/15"
                     }`}>
                       <item.Icon size={23} color="#070b14" />

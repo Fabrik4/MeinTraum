@@ -1,10 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import DreamChat from "@/app/DreamChat"
+import { useSpeechRecorder } from "@/lib/useSpeechRecorder"
 
 // ── Typen ─────────────────────────────────────────────────────
 type EntryType = "dream" | "journal"
@@ -31,6 +32,10 @@ type JournalEntry = {
 
 type SavedAnalysis = {
   id: number; mode: string; summary: string; themes: string[]; created_at: string
+}
+
+type Revision = {
+  id: number; text: string; expanded: string | null; created_at: string
 }
 
 // ── Konstanten ────────────────────────────────────────────────
@@ -211,6 +216,29 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   const [expanding, setExpanding] = useState(false)
   const [expandedPreview, setExpandedPreview] = useState<string | null>(null)
 
+  // Image generation state
+  const [showImagePanel, setShowImagePanel] = useState(false)
+  const [imageFormat, setImageFormat] = useState<"stories" | "square" | "pinterest">("square")
+  const [generatingImage, setGeneratingImage] = useState(false)
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null)
+  const [remainingToday, setRemainingToday] = useState<number | null>(null)
+  const [existingImages, setExistingImages] = useState<{ id: number; image_url: string; format: string; created_at: string }[]>([])
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+
+  // Revision state
+  const [revisions, setRevisions] = useState<Revision[]>([])
+  const [showInlineAdd, setShowInlineAdd] = useState(false)
+  const [inlineText, setInlineText] = useState("")
+  const [inlineExpanded, setInlineExpanded] = useState<string | null>(null)
+  const [inlineExpandedPreview, setInlineExpandedPreview] = useState<string | null>(null)
+  const [savingRevision, setSavingRevision] = useState(false)
+  const [expandingInline, setExpandingInline] = useState(false)
+
+  const onInlineTranscript = useCallback((text: string) => {
+    setInlineText((prev) => prev ? prev + " " + text : text)
+  }, [])
+  const { state: recInline, start: startInline, stop: stopInline } = useSpeechRecorder(onInlineTranscript)
+
   // Dream edit state
   const [rawText, setRawText] = useState("")
   const [dreamedAt, setDreamedAt] = useState("")
@@ -247,12 +275,16 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   async function fetchAll(type: EntryType) {
     setLoading(true)
     if (type === "dream") {
-      const [dreamRes, entitiesRes, analysisRes] = await Promise.all([
+      const [dreamRes, entitiesRes, analysisRes, revisionsRes, imagesRes] = await Promise.all([
         supabase.from("dream_entries").select("*").eq("id", resolvedId).single(),
         supabase.from("dream_entry_entities")
           .select("id, user_entity_id, user_entities(entity_type, entity_category, entity_label)")
           .eq("dream_entry_id", resolvedId),
         supabase.from("dream_analysis").select("id,mode,summary,themes,created_at")
+          .eq("dream_entry_id", resolvedId).order("created_at", { ascending: false }),
+        supabase.from("dream_revisions").select("id, text, expanded, created_at")
+          .eq("dream_entry_id", resolvedId).order("created_at", { ascending: true }),
+        supabase.from("dream_images").select("id, image_url, format, created_at")
           .eq("dream_entry_id", resolvedId).order("created_at", { ascending: false }),
       ])
       if (!dreamRes.error && dreamRes.data) {
@@ -266,6 +298,8 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
       }
       if (!entitiesRes.error && entitiesRes.data) mapEntities(entitiesRes.data)
       if (!analysisRes.error && analysisRes.data) setSavedAnalyses(analysisRes.data)
+      if (!revisionsRes.error && revisionsRes.data) setRevisions(revisionsRes.data)
+      if (!imagesRes.error && imagesRes.data) setExistingImages(imagesRes.data)
     } else {
       const [journalRes, entitiesRes, analysisRes] = await Promise.all([
         supabase.from("journal_entries").select("*").eq("id", resolvedId).single(),
@@ -349,6 +383,132 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
       if (data.expanded) setExpandedPreview(data.expanded)
     } catch { setMessage("Fehler bei der Textgenerierung.") }
     setExpanding(false)
+  }
+
+  async function generateImage() {
+    if (!dreamEntry) return
+    setGeneratingImage(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setGeneratingImage(false); return }
+    try {
+      const res = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dream_entry_id: Number(resolvedId),
+          user_id: user.id,
+          dream_text: dreamEntry.raw_input_text,
+          format: imageFormat,
+        }),
+      })
+      const data = await res.json()
+      if (data.image) {
+        setGeneratedImage(data.image.image_url)
+        setExistingImages((prev) => [data.image, ...prev])
+        if (data.remaining_today !== undefined) setRemainingToday(data.remaining_today)
+      } else {
+        setMessage(data.error ?? "Bildgenerierung fehlgeschlagen.")
+      }
+    } catch {
+      setMessage("Fehler bei der Bildgenerierung.")
+    }
+    setGeneratingImage(false)
+  }
+
+  async function downloadShareCard(imgUrl: string) {
+    const canvas = document.createElement("canvas")
+    const dims =
+      imageFormat === "stories" ? { w: 1080, h: 1920 } :
+      imageFormat === "pinterest" ? { w: 1080, h: 1350 } :
+      { w: 1080, h: 1080 }
+    canvas.width = dims.w
+    canvas.height = dims.h
+    const ctx = canvas.getContext("2d")!
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = () => reject()
+      img.src = imgUrl
+    })
+    ctx.drawImage(img, 0, 0, dims.w, dims.h)
+    const gradH = imageFormat === "stories" ? dims.h * 0.35 : imageFormat === "square" ? dims.h * 0.28 : dims.h * 0.22
+    const grad = ctx.createLinearGradient(0, dims.h - gradH, 0, dims.h)
+    grad.addColorStop(0, "transparent")
+    grad.addColorStop(1, "#070b14")
+    ctx.fillStyle = grad
+    ctx.fillRect(0, dims.h - gradH, dims.w, gradH)
+    const text = mainText.slice(0, 80) + (mainText.length > 80 ? "…" : "")
+    const fontSize = Math.round(dims.w * 0.032)
+    ctx.font = `italic ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
+    ctx.fillStyle = "rgba(255,255,255,0.82)"
+    ctx.textAlign = "center"
+    const maxW = dims.w - 100
+    const words = text.split(" ")
+    const lines: string[] = []
+    let line = ""
+    for (const w of words) {
+      const test = line ? line + " " + w : w
+      if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w }
+      else line = test
+    }
+    if (line) lines.push(line)
+    const lh = Math.round(dims.w * 0.044)
+    const ty = dims.h - Math.round(dims.h * 0.08) - lines.length * lh
+    lines.forEach((l, i) => ctx.fillText(l, dims.w / 2, ty + i * lh))
+    ctx.font = `${Math.round(dims.w * 0.022)}px -apple-system, BlinkMacSystemFont, sans-serif`
+    ctx.fillStyle = "rgba(255,255,255,0.38)"
+    ctx.fillText("🌙 MeinTraum · meintraum.app", dims.w / 2, dims.h - Math.round(dims.h * 0.03))
+    const link = document.createElement("a")
+    link.download = `traumkarte_${new Date().toISOString().slice(0, 10)}.png`
+    link.href = canvas.toDataURL("image/png")
+    link.click()
+  }
+
+  async function shareImage(imgUrl: string) {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        const blob = await (await fetch(imgUrl)).blob()
+        const file = new File([blob], "traumkarte.webp", { type: "image/webp" })
+        await navigator.share({ title: "Mein Traum", text: mainText.slice(0, 80), files: [file] })
+        return
+      } catch { /* fall through to download */ }
+    }
+    await downloadShareCard(imgUrl)
+  }
+
+  async function expandInlineText() {
+    setExpandingInline(true); setInlineExpandedPreview(null)
+    try {
+      const res = await fetch("/api/expand-dream", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawText: inlineText, emotion: dreamEntry?.dominant_emotion ?? "", persons: linkedPersons.map((e) => e.display_label), places: linkedPlaces.map((e) => e.display_label) }),
+      })
+      const data = await res.json()
+      if (data.expanded) setInlineExpandedPreview(data.expanded)
+    } catch { /* ignore */ }
+    setExpandingInline(false)
+  }
+
+  async function handleSaveRevision() {
+    if (!inlineText.trim()) return
+    setSavingRevision(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setSavingRevision(false); return }
+    const submitText = inlineExpanded ?? inlineText
+    const res = await fetch("/api/add-revision", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entry_id: Number(resolvedId), user_id: user.id, text: submitText, expanded: inlineExpanded ?? undefined }),
+    })
+    const data = await res.json()
+    if (data.revision) {
+      setRevisions((prev) => [...prev, data.revision])
+      setShowInlineAdd(false)
+      setInlineText("")
+      setInlineExpanded(null)
+      setInlineExpandedPreview(null)
+    }
+    setSavingRevision(false)
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -465,6 +625,7 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
   )
 
   return (
+    <>
     <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
       <div className="mx-auto max-w-3xl space-y-8">
 
@@ -475,16 +636,24 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
           </Link>
           {!isEditing && (
             <div className="flex gap-2 flex-wrap justify-end">
-              <button onClick={() => { setShowChat(!showChat); setShowAnalysisPanel(false) }}
+              <button onClick={() => { setShowChat(!showChat); setShowAnalysisPanel(false); setShowImagePanel(false) }}
                 className={`rounded-xl border px-4 py-2 text-sm transition ${showChat ? "border-violet-300/30 bg-violet-300/10 text-violet-100" : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"}`}>
                 💬 Gespräch
               </button>
-              <button onClick={() => { setShowAnalysisPanel(!showAnalysisPanel); setShowChat(false) }}
+              <button onClick={() => { setShowAnalysisPanel(!showAnalysisPanel); setShowChat(false); setShowImagePanel(false) }}
                 className={`rounded-xl border px-4 py-2 text-sm transition ${showAnalysisPanel
                   ? accent === "amber" ? "border-amber-300/30 bg-amber-300/10 text-amber-100" : "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
                   : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"}`}>
                 🧠 Analyse
               </button>
+              {isDream && (
+                <button onClick={() => { setShowImagePanel(!showImagePanel); setShowChat(false); setShowAnalysisPanel(false) }}
+                  className={`rounded-xl border px-4 py-2 text-sm transition ${showImagePanel
+                    ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-100"
+                    : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"}`}>
+                  🎨 Bild
+                </button>
+              )}
               <button onClick={() => setIsEditing(true)}
                 className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] transition hover:scale-[1.02]">
                 Bearbeiten
@@ -549,6 +718,77 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 <span key={e.id} className="rounded-full border border-amber-300/15 bg-amber-300/8 px-3 py-1 text-sm text-amber-200">📍 {e.display_label}</span>
               ))}
             </div>
+
+            {/* ── Revisions Timeline ── */}
+            {isDream && (
+              <div className="space-y-4 border-t border-white/5 pt-6">
+                {revisions.length > 0 && (
+                  <div className="relative pl-5">
+                    <div className="absolute left-1.5 top-2 bottom-2 w-px bg-white/10" />
+                    <div className="space-y-6">
+                      {revisions.map((rev) => (
+                        <div key={rev.id} className="relative">
+                          <div className="absolute -left-[15px] top-2 w-2 h-2 rounded-full bg-cyan-300/40 border border-cyan-300/20" />
+                          <p className="text-xs text-white/35 mb-1.5">
+                            {new Date(rev.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                          <p className="text-white/75 leading-7 text-sm">{rev.expanded ?? rev.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!showInlineAdd
+                  ? <button type="button" onClick={() => setShowInlineAdd(true)}
+                      className="flex items-center gap-2 text-sm text-white/35 hover:text-white/65 transition">
+                      <span className="text-base leading-none">＋</span> Erinnerung ergänzen
+                    </button>
+                  : <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/3 p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs uppercase tracking-[0.15em] text-cyan-300/60">Ergänzung hinzufügen</p>
+                        <button type="button" onClick={() => { setShowInlineAdd(false); setInlineText(""); setInlineExpanded(null); setInlineExpandedPreview(null) }}
+                          className="text-xs text-white/40 hover:text-white/70 transition">Abbrechen</button>
+                      </div>
+                      <div className="relative">
+                        <textarea value={inlineText} onChange={(e) => setInlineText(e.target.value)} rows={3}
+                          placeholder="Was erinnerst du dich noch…"
+                          className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 pr-12 text-white placeholder:text-white/35 focus:border-cyan-300/30 focus:outline-none resize-none transition" />
+                        <button type="button"
+                          onPointerDown={() => recInline === "idle" ? startInline() : stopInline()}
+                          className={`absolute right-3 bottom-3 rounded-xl p-2 transition ${recInline === "recording" ? "text-red-400 animate-pulse" : recInline === "transcribing" ? "text-cyan-300 animate-pulse" : "text-white/30 hover:text-white/60"}`}>
+                          🎤
+                        </button>
+                      </div>
+                      <button type="button" onClick={expandInlineText} disabled={expandingInline || !inlineText.trim()}
+                        className="flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-300/5 px-3 py-2 text-xs text-cyan-200 transition hover:opacity-80 disabled:opacity-40">
+                        {expandingInline ? <><span className="animate-spin inline-block">✦</span> Generiere…</> : <>✨ Ausformulieren</>}
+                      </button>
+                      {inlineExpandedPreview && (
+                        <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-4">
+                          <p className="text-xs uppercase tracking-[0.15em] text-cyan-300/60 mb-3">KI-Vorschlag</p>
+                          <p className="text-white/80 text-sm leading-7 mb-4">{inlineExpandedPreview}</p>
+                          <div className="flex gap-3">
+                            <button type="button" onClick={() => { setInlineExpanded(inlineExpandedPreview); setInlineExpandedPreview(null) }}
+                              className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[#070b14] hover:scale-[1.02] transition">Übernehmen</button>
+                            <button type="button" onClick={() => setInlineExpandedPreview(null)}
+                              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10 transition">Verwerfen</button>
+                          </div>
+                        </div>
+                      )}
+                      {inlineExpanded && !inlineExpandedPreview && (
+                        <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/8 px-4 py-3">
+                          <p className="text-xs text-cyan-300/50 mb-1">Ausformuliert</p>
+                          <p className="text-white/80 text-sm leading-7">{inlineExpanded}</p>
+                        </div>
+                      )}
+                      <button type="button" onClick={handleSaveRevision} disabled={savingRevision || !inlineText.trim()}
+                        className="w-full rounded-2xl bg-white px-6 py-3 font-medium text-sm text-[#070b14] transition hover:scale-[1.01] disabled:opacity-60">
+                        {savingRevision ? "Speichert…" : "Ergänzung speichern"}
+                      </button>
+                    </div>
+                }
+              </div>
+            )}
           </div>
         )}
 
@@ -606,6 +846,98 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Bild-Panel ── */}
+        {!isEditing && showImagePanel && isDream && (
+          <div className="space-y-6">
+
+            {/* Vorhandene Thumbnails */}
+            {existingImages.length > 0 && (
+              <div>
+                <p className="text-xs uppercase tracking-[0.15em] text-white/45 mb-3">Generierte Bilder</p>
+                <div className="flex gap-3 flex-wrap">
+                  {existingImages.map((img) => (
+                    <button key={img.id} type="button" onClick={() => setLightboxImage(img.image_url)}
+                      className="relative rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition group w-[72px] h-[72px]">
+                      <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-sm">
+                        🔍
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-3xl border border-cyan-300/10 bg-cyan-300/3 p-6 space-y-6">
+              <div>
+                <p className="text-sm font-medium text-white">Traum visualisieren</p>
+                <p className="text-xs text-white/35 mt-1">KI erstellt ein Bild basierend auf deinem Traum</p>
+              </div>
+
+              {/* Format-Auswahl */}
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { key: "stories",   emoji: "📱", label: "Stories & TikTok", sub: "9:16 Vertikal" },
+                  { key: "square",    emoji: "⬛", label: "Instagram Post",   sub: "1:1 Quadratisch" },
+                  { key: "pinterest", emoji: "📌", label: "Pinterest & Blog", sub: "4:5 Hoch" },
+                ] as const).map((f) => (
+                  <button key={f.key} type="button" onClick={() => setImageFormat(f.key)}
+                    className={`rounded-2xl border p-3 text-left transition-all ${imageFormat === f.key ? "border-cyan-300/30 bg-cyan-300/8" : "border-white/8 bg-white/3 hover:border-white/15"}`}>
+                    <div className="text-lg mb-1">{f.emoji}</div>
+                    <p className="text-xs font-medium text-white leading-tight">{f.label}</p>
+                    <p className="text-[10px] text-white/40 mt-0.5">{f.sub}</p>
+                  </button>
+                ))}
+              </div>
+
+              {/* Generieren Button */}
+              {!generatingImage && !generatedImage && (
+                <button type="button" onClick={generateImage}
+                  className="w-full rounded-2xl bg-white px-6 py-4 font-medium text-[#070b14] transition hover:scale-[1.01] active:scale-[0.99]">
+                  ✨ Bild generieren
+                </button>
+              )}
+
+              {/* Generierungs-Zustand */}
+              {generatingImage && (
+                <div className="rounded-2xl border border-cyan-300/10 bg-white/3 p-6 text-center space-y-4">
+                  <div className="animate-pulse text-2xl">🌙</div>
+                  <p className="text-sm text-white/65">Dein Traum wird visualisiert…</p>
+                  <div className="h-1 w-full rounded-full bg-white/8 overflow-hidden">
+                    <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-cyan-300/50 to-violet-400/50 animate-pulse" />
+                  </div>
+                  <p className="text-xs text-white/30">Das dauert etwa 15–30 Sekunden</p>
+                </div>
+              )}
+
+              {/* Generiertes Bild */}
+              {generatedImage && !generatingImage && (
+                <div className="space-y-4">
+                  <img src={generatedImage} alt="Generiertes Traumbild" className="w-full rounded-2xl" />
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => downloadShareCard(generatedImage)}
+                      className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/70 hover:bg-white/10 hover:text-white transition flex items-center justify-center gap-2">
+                      ⬇ Herunterladen
+                    </button>
+                    <button type="button" onClick={() => shareImage(generatedImage)}
+                      className="flex-1 rounded-xl border border-cyan-300/20 bg-cyan-300/8 px-4 py-2.5 text-sm text-cyan-100 hover:bg-cyan-300/12 transition flex items-center justify-center gap-2">
+                      📤 Teilen
+                    </button>
+                  </div>
+                  <button type="button" onClick={() => setGeneratedImage(null)}
+                    className="w-full rounded-2xl border border-white/8 bg-white/3 px-6 py-3 text-sm text-white/50 hover:text-white/75 transition">
+                    Neu generieren
+                  </button>
+                </div>
+              )}
+
+              {remainingToday !== null && (
+                <p className="text-xs text-white/25 text-center">Restliche Bilder heute: {remainingToday} von 20</p>
+              )}
+            </div>
           </div>
         )}
 
@@ -857,5 +1189,30 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
 
       </div>
     </main>
+
+    {/* ── Lightbox ── */}
+    {lightboxImage && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+        onClick={() => setLightboxImage(null)}>
+        <div className="relative w-full max-w-sm space-y-4" onClick={(e) => e.stopPropagation()}>
+          <img src={lightboxImage} alt="" className="w-full rounded-2xl" />
+          <div className="flex gap-3">
+            <button type="button" onClick={() => downloadShareCard(lightboxImage)}
+              className="flex-1 rounded-xl border border-white/10 bg-white/8 px-4 py-2.5 text-sm text-white/70 hover:bg-white/12 hover:text-white transition flex items-center justify-center gap-2">
+              ⬇ Herunterladen
+            </button>
+            <button type="button" onClick={() => shareImage(lightboxImage)}
+              className="flex-1 rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-2.5 text-sm text-cyan-100 hover:bg-cyan-300/15 transition flex items-center justify-center gap-2">
+              📤 Teilen
+            </button>
+          </div>
+          <button onClick={() => setLightboxImage(null)}
+            className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition text-sm">
+            ✕
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   )
 }

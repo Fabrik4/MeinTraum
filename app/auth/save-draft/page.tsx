@@ -26,7 +26,24 @@ export default function SaveDraftPage() {
       .eq("id", user!.id)
       .single()
 
-    const onboardingDone = profile?.onboarding_done ?? false
+    let onboardingDone = profile?.onboarding_done ?? false
+
+    // Fallback: Kein Profil oder onboarding_done=false, aber User hat bereits Einträge
+    // → bestehender User (z.B. vor Profiles-System registriert oder nach Datenbug)
+    if (!onboardingDone) {
+      const { count } = await supabase
+        .from("dream_entries")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+      if ((count ?? 0) > 0) {
+        onboardingDone = true
+        // Profil reparieren damit es beim nächsten Login direkt stimmt
+        await supabase.from("user_profiles").upsert(
+          { id: user!.id, onboarding_done: true, updated_at: new Date().toISOString() },
+          { onConflict: "id" }
+        )
+      }
+    }
 
     const raw = localStorage.getItem(STORAGE_KEY)
 

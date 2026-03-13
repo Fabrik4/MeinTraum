@@ -99,6 +99,9 @@ export default function DreamEntryPage() {
   const [expanding, setExpanding] = useState(false)
   const [expandedPreview, setExpandedPreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [savedEntryId, setSavedEntryId] = useState<number | null>(null)
+  const [extensionMode, setExtensionMode] = useState(false)
+  const [addingRevision, setAddingRevision] = useState(false)
 
   // Quick entry
   const [quickEmotion, setQuickEmotion] = useState("")
@@ -162,7 +165,35 @@ export default function DreamEntryPage() {
     }]).select("id").single()
     setIsSubmitting(false)
     if (error || !data) return
-    router.push(`/entries/${data.id}?type=dream`)
+    // Erste Revision speichern
+    await fetch("/api/add-revision", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entry_id: data.id, user_id: user.id, text: submitText, expanded: expandedText ?? undefined }),
+    })
+    // Erweiterungs-Modus statt Redirect
+    setSavedEntryId(data.id)
+    setExtensionMode(true)
+    setRawInputText("")
+    setExpandedText(null)
+    setExpandedPreview(null)
+    window.scrollTo(0, 0)
+  }
+
+  // ── Ergänzung speichern (Erweiterungs-Modus) ─────────────────
+  async function handleAddRevision(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!savedEntryId || !rawInputText.trim()) return
+    setAddingRevision(true)
+    await fetch("/api/add-revision", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entry_id: savedEntryId, user_id: user!.id, text: rawInputText, expanded: expandedText ?? undefined }),
+    })
+    setRawInputText("")
+    setExpandedText(null)
+    setExpandedPreview(null)
+    setAddingRevision(false)
   }
 
   // ── Quick Submit ──────────────────────────────────────────
@@ -442,10 +473,21 @@ export default function DreamEntryPage() {
           </button>
         </div>
 
+        {/* Erfolgs-Banner nach Speichern */}
+        {extensionMode && savedEntryId && (
+          <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/5 px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-emerald-200">✓ Traum gespeichert – du kannst ihn gleich erweitern</p>
+            <Link href={`/entries/${savedEntryId}?type=dream`}
+              className="shrink-0 text-xs text-white/50 hover:text-white/80 transition">
+              Ansehen →
+            </Link>
+          </div>
+        )}
+
         {entryMode === "normal" ? (
 
           /* ── Normaler Eintrag ──────────────────────────── */
-          <form onSubmit={user ? handleSubmit : (e) => { e.preventDefault(); handleGuestAnalysis() }} className="space-y-8">
+          <form onSubmit={user ? (extensionMode ? handleAddRevision : handleSubmit) : (e) => { e.preventDefault(); handleGuestAnalysis() }} className="space-y-8">
 
             {/* Traumtext */}
             <div>

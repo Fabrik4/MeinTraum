@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/useAuth"
 import AuthBanner from "@/app/AuthBanner"
@@ -34,7 +33,6 @@ const PRESET_TAGS = [
 ]
 
 export default function JournalNewPage() {
-  const router = useRouter()
   const { user, loading: authLoading } = useAuth()
 
   const [bodyText, setBodyText] = useState("")
@@ -86,6 +84,10 @@ export default function JournalNewPage() {
     setIsSubmitting(false)
     if (error || !data) return
     setSavedId(data.id)
+    setBodyText("")
+    setExpandedText(null)
+    setExpandedPreview(null)
+    window.scrollTo(0, 0)
   }
 
   async function expandText() {
@@ -101,38 +103,6 @@ export default function JournalNewPage() {
       if (data.expanded) setExpandedPreview(data.expanded)
     } catch { /* silent */ }
     setExpanding(false)
-  }
-
-  // ── Post-Save Screen ─────────────────────────────────────
-  if (savedId) {
-    return (
-      <main className="min-h-screen bg-[#070b14] px-6 pt-5 pb-24 md:py-16 text-white">
-        <div className="mx-auto max-w-2xl">
-          <div className="mb-12 text-center">
-            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full border border-amber-300/20 bg-amber-300/10 text-3xl">
-              📓
-            </div>
-            <h1 className="text-3xl font-semibold">Eintrag gespeichert.</h1>
-            <p className="mt-3 text-white/70">Möchtest du noch etwas ergänzen?</p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <button onClick={() => router.push(`/entries/${savedId}?type=journal&edit=true`)}
-              className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10 hover:border-white/20">
-              <span className="text-2xl">✏️</span>
-              <span className="font-medium text-white">Details ergänzen</span>
-              <span className="text-sm text-white/70">Eintrag bearbeiten oder KI-Reflexion starten.</span>
-            </button>
-            <button onClick={() => router.push("/timeline")}
-              className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-white/5 p-6 text-left transition hover:bg-white/10 hover:border-white/20">
-              <span className="text-2xl">✓</span>
-              <span className="font-medium text-white">Fertig</span>
-              <span className="text-sm text-white/70">Zurück zur Timeline.</span>
-            </button>
-          </div>
-        </div>
-      </main>
-    )
   }
 
   // ── Formular ─────────────────────────────────────────────
@@ -369,6 +339,16 @@ export default function JournalNewPage() {
                 </div>
               )}
             </div>
+
+            {savedId && (
+              <div className="rounded-2xl border border-amber-300/20 bg-amber-300/5 px-4 py-3 flex items-center justify-between gap-4">
+                <p className="text-sm text-amber-200">✓ Eintrag gespeichert – du kannst gleich weiterschreiben</p>
+                <a href={`/entries/${savedId}?type=journal`}
+                  className="shrink-0 text-xs text-white/50 hover:text-white/80 transition">
+                  Ansehen →
+                </a>
+              </div>
+            )}
 
           </form>
         </div>
