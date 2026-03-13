@@ -38,7 +38,7 @@ export default function GalleryPage() {
       .select("id, image_url, format, created_at, dream_entry_id, dream_entries(raw_input_text, dreamed_at)")
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false })
-    if (data) setImages(data as DreamImage[])
+    if (data) setImages(data as unknown as DreamImage[])
     setLoading(false)
   }
 
