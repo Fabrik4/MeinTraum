@@ -40,7 +40,7 @@ export default function JournalNewPage() {
   const [bodyText, setBodyText] = useState("")
   const [moodScore, setMoodScore] = useState(5)
   const [energyLevel, setEnergyLevel] = useState(3)
-  const [sleepHours, setSleepHours] = useState<string>("")
+  const [sleepHours, setSleepHours] = useState<string>("7.5")
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [customTag, setCustomTag] = useState("")
   const [entryDate, setEntryDate] = useState(() => new Date().toISOString().slice(0, 10))
@@ -362,7 +362,12 @@ export default function JournalNewPage() {
 }
 
 // ── Sleep Wheel Picker ────────────────────────────────────────
-const SLEEP_VALUES = ["", "4", "4.5", "5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10"]
+const SLEEP_VALUES = [
+  "", "1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5", "5.5", "6", "6.5", "7", "7.5",
+  "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "12.5", "13", "13.5", "14",
+  "14.5", "15", "15.5", "16", "16.5", "17", "17.5", "18", "18.5", "19", "19.5", "20",
+  "20.5", "21", "21.5", "22", "22.5", "23", "23.5", "24",
+]
 const ITEM_H = 44
 
 function SleepWheelPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
