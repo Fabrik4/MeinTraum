@@ -560,7 +560,10 @@ export default function EntryDetailPage({ params }: { params: Promise<{ id: stri
     ctx.shadowBlur = 0
     ctx.font = `${urlFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
     ctx.fillStyle = "rgba(255,255,255,0.45)"
-    ctx.fillText("meintraum.app", dims.w / 2, urlY)
+    const shareLabel = isDream
+      ? "🌙 Geträumt · meintraum.app"
+      : "📓 Festgehalten · meintraum.app"
+    ctx.fillText(shareLabel, dims.w / 2, urlY)
   }
 
   function downloadCard() {
